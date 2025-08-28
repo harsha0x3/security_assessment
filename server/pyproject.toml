@@ -1,0 +1,19 @@
+[project]
+name = "server"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "bcrypt>=4.3.0",
+    "fastapi[standard]>=0.116.1",
+    "jose>=1.0.0",
+    "jwt>=1.4.0",
+    "passlib>=1.7.4",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "pymysql>=1.1.2",
+    "pyotp>=2.9.0",
+    "qrcode>=8.2",
+    "sqlalchemy>=2.0.43",
+]
