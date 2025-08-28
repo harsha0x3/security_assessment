@@ -2,6 +2,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timezone, timedelta
 from typing import Any
 import os
+from fastapi import Response, HTTPException, status
 
 
 class JWTConfig:
@@ -52,5 +53,62 @@ def create_challenge_token(user_id: str) -> str:
     return jwt.encode(payload, JWTConfig.SECRET_KEY, algorithm=JWTConfig.ALGORITHM)
 
 
-def decode_token(token: str) -> dict[str, Any]:
+def decode_access_token(token: str) -> dict[str, Any]:
     return jwt.decode(token, JWTConfig.SECRET_KEY, algorithms=JWTConfig.ALGORITHM)
+
+
+def verify_refresh_token(token: str) -> dict[str, Any] | None:
+    try:
+        payload = jwt.decode(
+            token, JWTConfig.REFRESH_SECRET_KEY, algorithms=JWTConfig.ALGORITHM
+        )
+    except JWTError as je:
+        print(f"Encountered JWTERROR: {str(je)}")
+        raise
+    except Exception as e:
+        print(f"Encountered error in refresh verify: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Expired or invalid refresh token",
+        )
+
+    if payload:
+        if payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
+            )
+
+        return payload
+    return None
+
+
+def set_jwt_cookies(response: Response, access_token: str, refresh_token: str):
+    try:
+        access_exp = datetime.now(timezone.utc) + timedelta(
+            minutes=JWTConfig.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+        refresh_exp = datetime.now(timezone.utc) + timedelta(
+            days=JWTConfig.REFRESH_TOKEN_EXPIRE_DAYS
+        )
+
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            path="/",
+            expires=int(access_exp.timestamp()),
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            path="/",
+            expires=int(refresh_exp.timestamp()),
+        )
+    except Exception as e:
+        print(f"Encountered Error in Setting cookies {str(e)}")
+        raise

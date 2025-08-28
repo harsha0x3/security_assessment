@@ -7,7 +7,7 @@ from sqlalchemy import JSON, Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, validates
 from sqlalchemy.ext.mutable import MutableList
 
-from server.services.auth.utils import (
+from services.auth.utils import (
     generate_recovery_codes,
     generate_totp_secret,
     hash_password,
