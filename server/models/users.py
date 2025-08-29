@@ -4,7 +4,7 @@ import pyotp
 
 from db.base import Base, BaseMixin
 from sqlalchemy import JSON, Boolean, DateTime, String
-from sqlalchemy.orm import Mapped, mapped_column, validates
+from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 from sqlalchemy.ext.mutable import MutableList
 
 from services.auth.utils import (
@@ -38,6 +38,12 @@ class User(Base, BaseMixin):
     last_login: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # -----------------------Relationships-----------------------
+    applications = relationship("Application", back_populates="creator")
+    assignments = relationship("ChecklistAssignment", back_populates="user")
+    response = relationship("UserResponse", back_populates="user")
+
+    # ----------------------Functions---------------------------------
     def set_password(self, plain_password: str) -> None:
         self.password_hash = hash_password(plain_password)
 

@@ -7,7 +7,7 @@ from services.auth.jwt_handler import (
     set_jwt_cookies,
     verify_refresh_token,
 )
-from models.schemas import LoginRequest, RegisterRequest, Tokens
+from server.models.schemas.auth_schemas import LoginRequest, RegisterRequest, Tokens
 from models.users import User
 
 
