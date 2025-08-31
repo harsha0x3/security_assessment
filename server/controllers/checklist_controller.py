@@ -4,38 +4,53 @@ from models.checklists import Checklist
 from models.schemas.crud_schemas import (
     ChecklistCreate,
     ChecklistOut,
+    UserOut,
+    ChecklistUpdate,
 )
 from models.users import User
-from sqlalchemy import select
+from models.checklist_assignments import ChecklistAssignment
+from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
 
 def create_checklist(
-    payload: ChecklistCreate, db: Session, creator: User
+    payload: ChecklistCreate, app_id: str, db: Session, creator: UserOut
 ) -> ChecklistOut:
     try:
-        app = db.get(Application, payload.app_id)
+        app_ = db.get(Application, app_id)
+        if not app_:
+            print("APP NOt found")
+
+        app = db.scalar(select(Application).where(Application.id == app_id))
         if not app:
+            print("Another")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Application Not found. id: {payload.app_id}",
+                detail=f"Application Not found. id: {app_id}",
             )
 
-        checklist = Checklist(**payload.model_dump(), creator=creator.id)
+        checklist = Checklist(
+            **payload.model_dump(), creator_id=creator.id, app_id=app_id
+        )
         db.add(checklist)
         db.commit()
         db.refresh(checklist)
-        return ChecklistOut.model_validate(checklist)
+        data = checklist.to_dict()
+        data["app_name"] = checklist.app.name
+        return ChecklistOut(**data)
 
     except Exception as e:
         db.rollback()
+        print("Error", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create checklist: {str(e)}",
         )
 
 
-def get_checklists_for_app(app_id: str, db: Session, user: User) -> list[ChecklistOut]:
+def get_checklists_for_app(
+    app_id: str, db: Session, user: UserOut
+) -> list[ChecklistOut]:
     try:
         app = db.scalar(select(Application).where(Application.id == app_id))
 
@@ -45,23 +60,13 @@ def get_checklists_for_app(app_id: str, db: Session, user: User) -> list[Checkli
                 detail=f"Application not found. {app_id}",
             )
 
-        checklists = db.scalars(
-            select(Checklist).where(
-                Checklist.app_id == app.id, Checklist.creator_id == user.id
-            )
-        ).all()
-
-        user_ = db.scalar(select(User).where(User.id == user.id))
-        if not user_:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User not found. {user.id}",
-            )
-
-        user_role = user_.role
-
         results: list[ChecklistOut] = []
-        if user_role == "admin":
+        if user.role == "admin":
+            checklists = db.scalars(
+                select(Checklist).where(
+                    and_(Checklist.app_id == app.id, Checklist.creator_id == user.id)
+                )
+            ).all()
             for checklist in checklists:
                 results.append(
                     ChecklistOut(
@@ -76,6 +81,15 @@ def get_checklists_for_app(app_id: str, db: Session, user: User) -> list[Checkli
                 )
 
         else:
+            checklists = db.scalars(
+                select(Checklist).where(
+                    and_(
+                        Checklist.app_id == app.id,
+                        Checklist.assignments.user_id == user.id,
+                    )
+                )
+            ).all()
+
             for checklist in checklists:
                 results.append(
                     ChecklistOut(
@@ -95,22 +109,65 @@ def get_checklists_for_app(app_id: str, db: Session, user: User) -> list[Checkli
         )
 
 
-def get_checklists_for_user(user: User, db: Session) -> list[ChecklistOut]:
+def get_checklists_for_user(user: UserOut, db: Session) -> list[ChecklistOut]:
     try:
-        curr_user = db.scalar(select(User).where(User.id == user.id))
-        if not curr_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User not found. {user.id}",
-            )
         checklists = db.scalars(
-            select(Checklist).where(Checklist.creator_id == user.id)
+            select(Checklist)
+            .join(ChecklistAssignment)
+            .where(ChecklistAssignment.user_id == user.id)
         ).all()
 
         return [ChecklistOut.model_validate(checklist) for checklist in checklists]
+
     except Exception as e:
-        print(f"Error while getting the checklists for app: {str(e)}")
+        print(f"Error while getting checklists for user: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get checklissts for user {user.id}",
+            detail=f"Failed to get checklists for user {user.id}",
+        )
+
+
+def update_checklist(payload: ChecklistUpdate, checklist_id: str, db: Session):
+    try:
+        checklist = db.scalar(select(Checklist).where(Checklist.id == checklist_id))
+        if not checklist:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"no checklist found: {checklist_id}",
+            )
+
+        for key, val in payload.model_dump(exclude_unset=True, exclude_none=True):
+            setattr(checklist, key, val)
+
+        db.commit()
+        db.refresh(checklist)
+        return ChecklistOut.model_validate(checklist)
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update checklists {str(e)}",
+        )
+
+
+def remove_checklist(checklist_id: str, db: Session):
+    try:
+        checklist = db.scalar(select(Checklist).where(Checklist.id == checklist_id))
+        if not checklist:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"no checklist found: {checklist_id}",
+            )
+        db.delete(checklist)
+        db.commit()
+        db.refresh(checklist)
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete checklist {str(e)}",
         )

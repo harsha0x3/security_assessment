@@ -1,7 +1,14 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from routes import auth_routes
+from routes import (
+    auth_routes,
+    application_routes,
+    checklists_routes,
+    assignment_routes,
+    control_routes,
+    responses_routes,
+)
 from db.connection import init_db
 
 
@@ -20,3 +27,8 @@ async def health_check():
 
 
 app.include_router(auth_routes.router)
+app.include_router(application_routes.router)
+app.include_router(checklists_routes.router)
+app.include_router(assignment_routes.router)
+app.include_router(control_routes.router)
+app.include_router(control_routes.router)

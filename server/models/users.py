@@ -3,7 +3,7 @@ from datetime import datetime
 import pyotp
 
 from db.base import Base, BaseMixin
-from sqlalchemy import JSON, Boolean, DateTime, String
+from sqlalchemy import JSON, Boolean, DateTime, String, Index
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 from sqlalchemy.ext.mutable import MutableList
 
@@ -19,12 +19,8 @@ from services.auth.utils import (
 class User(Base, BaseMixin):
     __tablename__ = "users"
 
-    username: Mapped[str] = mapped_column(
-        String(50), unique=True, nullable=False, index=True
-    )
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, nullable=False, index=True
-    )
+    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=True)
@@ -38,10 +34,15 @@ class User(Base, BaseMixin):
     last_login: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    __table_args__ = (
+        Index("ix_users_username", "username"),
+        Index("ix_users_email", "email"),
+    )
+
     # -----------------------Relationships-----------------------
     applications = relationship("Application", back_populates="creator")
     assignments = relationship("ChecklistAssignment", back_populates="user")
-    response = relationship("UserResponse", back_populates="user")
+    responses = relationship("UserResponse", back_populates="user")
 
     # ----------------------Functions---------------------------------
     def set_password(self, plain_password: str) -> None:

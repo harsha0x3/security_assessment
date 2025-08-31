@@ -4,7 +4,7 @@ from controllers.auth_controller import login_user, refresh_access_token, regist
 from db.connection import get_db_conn
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
-from server.models.schemas.auth_schemas import (
+from models.schemas.auth_schemas import (
     LoginRequest,
     RegisterRequest,
 )

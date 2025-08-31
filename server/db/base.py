@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import DateTime, String, Boolean
+from sqlalchemy import DateTime, String, Boolean, Index
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
 
@@ -12,7 +12,7 @@ class Base(DeclarativeBase):
 
 class BaseMixin:
     id: Mapped[str] = mapped_column(
-        String(40), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
+        String(40), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc), nullable=False

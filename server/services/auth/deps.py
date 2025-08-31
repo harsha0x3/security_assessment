@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from db.connection import get_db_conn
 from models.users import User
 from .jwt_handler import decode_access_token
+from models.schemas.crud_schemas import UserOut
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -11,7 +12,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 def get_current_user(
     access_token: str | None = Cookie(default=None),
     db: Session = Depends(get_db_conn),
-) -> User:
+) -> UserOut:
     try:
         if access_token:
             payload = decode_access_token(access_token)
@@ -24,13 +25,14 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token"
         )
-    user = db.query(User).get(payload.get("sub"))
+    user_id = payload.get("sub")
+    user = db.get(User, user_id)
 
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user"
         )
-    return user
+    return UserOut.model_validate(user)
 
 
 # def require_mfa_verified(
