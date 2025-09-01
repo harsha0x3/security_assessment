@@ -14,7 +14,7 @@ class Application(Base, BaseMixin):
     owner_name: Mapped[str] = mapped_column(String(100), nullable=False)
     provider_name: Mapped[str] = mapped_column(String(64), nullable=False)
     infra_host: Mapped[str] = mapped_column(String(100), nullable=True)
-    app_technology: Mapped[str] = mapped_column(Text, nullable=True)
+    app_tech: Mapped[str] = mapped_column(Text, nullable=True)
 
     creator = relationship("User", back_populates="applications")
     checklists = relationship("Checklist", back_populates="app")

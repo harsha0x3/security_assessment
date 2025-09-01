@@ -38,11 +38,15 @@ async def get_app_checklists(
 
 
 @router.get("/checklists/my-checklists", response_model=list[ChecklistOut])
-async def get_user_checklists(
-    db: Annotated[Session, Depends(get_db_conn)],
-    current_user: Annotated[UserOut, Depends(get_current_user)],
-):
-    return get_checklists_for_user(user=current_user, db=db)
+def test():
+    return "Worked"
+
+
+# async def get_user_checklists(
+#     db: Annotated[Session, Depends(get_db_conn)],
+#     current_user: Annotated[UserOut, Depends(get_current_user)],
+# ):
+#     return get_checklists_for_user(user=current_user, db=db)
 
 
 @router.patch("/checklists/{checklist_id}", response_model=ChecklistOut)

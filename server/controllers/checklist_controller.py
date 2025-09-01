@@ -62,10 +62,9 @@ def get_checklists_for_app(
 
         results: list[ChecklistOut] = []
         if user.role == "admin":
+            print("admin")
             checklists = db.scalars(
-                select(Checklist).where(
-                    and_(Checklist.app_id == app.id, Checklist.creator_id == user.id)
-                )
+                select(Checklist).where(and_(Checklist.app_id == app.id))
             ).all()
             for checklist in checklists:
                 results.append(
@@ -81,11 +80,14 @@ def get_checklists_for_app(
                 )
 
         else:
+            # Non-admins: only checklists assigned to them
             checklists = db.scalars(
-                select(Checklist).where(
+                select(Checklist)
+                .join(ChecklistAssignment)
+                .where(
                     and_(
                         Checklist.app_id == app.id,
-                        Checklist.assignments.user_id == user.id,
+                        ChecklistAssignment.user_id == user.id,
                     )
                 )
             ).all()

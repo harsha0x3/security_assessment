@@ -45,6 +45,7 @@ async def fetch_controls(
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
 ) -> Annotated[list[ControlOut], "Function to create a control and output it"]:
+    # return {"msg":"Hello" }
     stmt = select(ChecklistAssignment.user_id).where(
         ChecklistAssignment.checklist_id == checklist_id,
         ChecklistAssignment.user_id == current_user.id,

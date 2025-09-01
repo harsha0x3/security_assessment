@@ -11,6 +11,8 @@ from models.schemas.auth_schemas import (
 from models.users import User
 from services.auth.deps import get_current_user
 from sqlalchemy.orm import Session
+from sqlalchemy import select
+from models.users import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -54,6 +56,17 @@ async def refresh_auth_tokens(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token"
         )
     return refresh_access_token(refresh_token=refresh_token, db=db, response=response)
+
+
+@router.get("/all")
+async def get_all_users(
+    current_user: Annotated[
+        User, Depends(get_current_user), "Fetching logged in user details"
+    ],
+    db: Annotated[Session, Depends(get_db_conn)],
+):
+    all_users = db.scalars(select(User)).all()
+    return all_users
 
 
 @router.get("/me")
