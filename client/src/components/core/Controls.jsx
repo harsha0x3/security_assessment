@@ -1,5 +1,8 @@
 import { useParams } from "react-router-dom";
-import { useGetAllControlsWithResponsesQuery } from "../../store/apiSlices/controlsApiSlice";
+import {
+  useGetAllControlsWithResponsesQuery,
+  useAddControlMutation,
+} from "../../store/apiSlices/controlsApiSlice";
 import { useSaveResponseMutation } from "../../store/apiSlices/responsesApiSlice";
 import { useState, useMemo } from "react";
 import { useSelector } from "react-redux";
@@ -9,8 +12,9 @@ import {
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table";
-import { Save, Edit3, X } from "lucide-react";
+import { Save, Edit3, X, Plus } from "lucide-react";
 import { Tooltip } from "react-tooltip";
+import { useForm } from "react-hook-form";
 
 const Controls = () => {
   const user = useSelector(selectAuth);
@@ -19,39 +23,53 @@ const Controls = () => {
     useGetAllControlsWithResponsesQuery(checklistId, { skip: !checklistId });
 
   const [saveResponse] = useSaveResponseMutation();
+  const [addControl] = useAddControlMutation();
+
   const [editingRowId, setEditingRowId] = useState(null);
+  const [adding, setAdding] = useState(false);
 
-  // Store the currently edited row
-  const [editedRow, setEditedRow] = useState(null);
+  // react-hook-form for editing responses
+  const { register, handleSubmit, reset } = useForm({
+    defaultValues: {
+      current_setting: "",
+      review_comment: "",
+      evidence_path: "",
+    },
+  });
 
-  // Start editing a row
+  // react-hook-form for adding controls
+  const {
+    register: registerAdd,
+    handleSubmit: handleAddSubmit,
+    reset: resetAdd,
+  } = useForm({
+    defaultValues: {
+      control_area: "",
+      severity: "",
+      control_text: "",
+    },
+  });
+
+  // Edit existing response
   const handleEdit = (controlId, rowData) => {
     setEditingRowId(controlId);
-    setEditedRow({
-      controlId,
+    reset({
       current_setting: rowData.current_setting || "",
       review_comment: rowData.review_comment || "",
       evidence_path: rowData.evidence_path || "",
     });
   };
 
-  // Cancel editing
   const handleCancel = () => {
     setEditingRowId(null);
-    setEditedRow(null);
+    reset();
   };
 
-  // Update input value
-  const handleChange = (field, value) => {
-    setEditedRow((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // Save edited response
-  const handleSave = async (controlId) => {
+  const onSubmitResponse = async (formData, controlId) => {
     const payload = {
-      current_setting: editedRow.current_setting,
-      review_comment: editedRow.review_comment,
-      evidence_path: editedRow.evidence_path,
+      current_setting: formData.current_setting,
+      review_comment: formData.review_comment,
+      evidence_path: formData.evidence_path,
     };
     const controlData = allControls?.find((c) => c.control_id === controlId);
     const responseId = controlData?.response_id;
@@ -59,40 +77,38 @@ const Controls = () => {
     try {
       await saveResponse({ controlId, payload, responseId }).unwrap();
       setEditingRowId(null);
-      setEditedRow(null);
+      reset();
     } catch (err) {
       console.error("Failed to save response:", err);
     }
   };
 
+  // Add new control
+  const onSubmitAddControl = async (data) => {
+    try {
+      await addControl({ payload: data, checklistId }).unwrap();
+      resetAdd();
+      setAdding(false);
+    } catch (err) {
+      console.error("Failed to add control:", err);
+    }
+  };
+
+  // ✅ stable columns
   const columns = useMemo(
     () => [
-      {
-        accessorKey: "control_area",
-        header: "Control Area",
-        enableResizing: true,
-      },
-      { accessorKey: "severity", header: "Severity", enableResizing: true },
-      {
-        accessorKey: "control_text",
-        header: "Control Text",
-        enableResizing: true,
-      },
+      { accessorKey: "control_area", header: "Control Area" },
+      { accessorKey: "severity", header: "Severity" },
+      { accessorKey: "control_text", header: "Control Text" },
       {
         accessorKey: "current_setting",
         header: "Current Setting",
-        enableResizing: true,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
-          const editing = editingRowId === controlId;
-          const value = editing
-            ? editedRow.current_setting
-            : row.original.current_setting || "";
-          return editing ? (
+          return editingRowId === controlId ? (
             <input
               className="border rounded px-2 py-1 text-sm w-full"
-              value={value}
-              onChange={(e) => handleChange("current_setting", e.target.value)}
+              {...register("current_setting")}
             />
           ) : (
             row.original.current_setting || "-"
@@ -102,18 +118,12 @@ const Controls = () => {
       {
         accessorKey: "review_comment",
         header: "Review Comment",
-        enableResizing: true,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
-          const editing = editingRowId === controlId;
-          const value = editing
-            ? editedRow.review_comment
-            : row.original.review_comment || "";
-          return editing ? (
+          return editingRowId === controlId ? (
             <input
               className="border rounded px-2 py-1 text-sm w-full"
-              value={value}
-              onChange={(e) => handleChange("review_comment", e.target.value)}
+              {...register("review_comment")}
             />
           ) : (
             row.original.review_comment || "-"
@@ -123,18 +133,12 @@ const Controls = () => {
       {
         accessorKey: "evidence_path",
         header: "Evidence Path",
-        enableResizing: true,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
-          const editing = editingRowId === controlId;
-          const value = editing
-            ? editedRow.evidence_path
-            : row.original.evidence_path || "";
-          return editing ? (
+          return editingRowId === controlId ? (
             <input
               className="border rounded px-2 py-1 text-sm w-full"
-              value={value}
-              onChange={(e) => handleChange("evidence_path", e.target.value)}
+              {...register("evidence_path")}
             />
           ) : (
             row.original.evidence_path || "-"
@@ -144,16 +148,18 @@ const Controls = () => {
       {
         id: "actions",
         header: "Actions",
-        enableResizing: false,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           const editing = editingRowId === controlId;
+
           return editing ? (
             <div className="flex gap-2">
               <Save
                 className="w-5 h-5 text-green-600 cursor-pointer"
                 data-tooltip-id={`save-tooltip-${controlId}`}
-                onClick={() => handleSave(controlId)}
+                onClick={handleSubmit((data) =>
+                  onSubmitResponse(data, controlId)
+                )}
               />
               <X
                 className="w-5 h-5 text-red-600 cursor-pointer"
@@ -188,14 +194,13 @@ const Controls = () => {
         },
       },
     ],
-    [editedRow]
+    [editingRowId, register, handleSubmit]
   );
 
   const table = useReactTable({
     data: allControls || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
-    columnResizeMode: "onChange",
   });
 
   if (isFetchingControls) return <p>Loading controls...</p>;
@@ -203,46 +208,97 @@ const Controls = () => {
 
   return (
     <div className="p-4 overflow-x-auto border rounded-lg shadow bg-white">
-      <table className="w-full border-collapse">
-        <thead className="bg-gray-50">
-          {table.getHeaderGroups().map((hg) => (
-            <tr key={hg.id}>
-              {hg.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="text-left px-4 py-2 border-b relative"
-                >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-                  {header.column.getCanResize() && (
-                    <div
-                      {...{
-                        onMouseDown: header.getResizeHandler(),
-                        onTouchStart: header.getResizeHandler(),
-                        className:
-                          "absolute right-0 top-0 h-full w-1 cursor-col-resize bg-gray-300",
-                      }}
-                    />
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.original.control_id} className="border-b">
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-4 py-2 text-sm">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Responses table (all users) */}
+      <form>
+        <table className="w-full border-collapse">
+          <thead className="bg-gray-50">
+            {table.getHeaderGroups().map((hg) => (
+              <tr key={hg.id}>
+                {hg.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className="text-left px-4 py-2 border-b font-medium text-sm"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.original.control_id} className="border-b">
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="px-4 py-2 text-sm">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </form>
+
+      {/* Add Control Section (admins only) */}
+      {user.role === "admin" && (
+        <div className="mt-4">
+          {adding ? (
+            <form
+              onSubmit={handleAddSubmit(onSubmitAddControl)}
+              className="flex gap-2 items-center"
+            >
+              <input
+                type="text"
+                placeholder="Control Area"
+                className="border rounded px-2 py-1 text-sm"
+                {...registerAdd("control_area", { required: true })}
+              />
+              <select
+                className="border rounded px-2 py-1 text-sm"
+                {...registerAdd("severity", { required: true })}
+              >
+                <option value="">Select Severity</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Control Text"
+                className="border rounded px-2 py-1 text-sm"
+                {...registerAdd("control_text", { required: true })}
+              />
+              <button
+                type="submit"
+                className="px-3 py-1 text-sm rounded bg-green-600 text-white"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAdding(false);
+                  resetAdd();
+                }}
+                className="px-3 py-1 text-sm rounded bg-gray-300"
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <button
+              onClick={() => setAdding(true)}
+              className="flex items-center gap-1 px-3 py-1 text-sm rounded bg-blue-600 text-white"
+            >
+              <Plus className="w-4 h-4" /> Add Control
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

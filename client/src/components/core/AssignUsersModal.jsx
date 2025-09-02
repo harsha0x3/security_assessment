@@ -3,18 +3,17 @@ import { useGetAllUsersQuery } from "../../store/apiSlices/authApiSlice";
 import { useAssignUsersMutation } from "../../store/apiSlices/userAssignApiSlice";
 import { useSelector } from "react-redux";
 import { getAssignedUsers } from "../../store/appSlices/checklistsSlice";
+import { X } from "lucide-react";
 
 const AssignUsersModal = ({ isOpen, onClose, checklistId }) => {
   const { data: users = [], isLoading: isLoadingUsers } = useGetAllUsersQuery();
   const [assignUsers, { isLoading: isAssigning }] = useAssignUsersMutation();
-
   const [selectedUsers, setSelectedUsers] = useState([]);
 
   const alreadyAssignedUsers = useSelector((state) =>
     getAssignedUsers(state, { payload: checklistId })
   );
 
-  // ✅ derive usernames of already assigned
   const existingAssignedUsers = useMemo(() => {
     if (!alreadyAssignedUsers) return [];
     return users
@@ -22,7 +21,6 @@ const AssignUsersModal = ({ isOpen, onClose, checklistId }) => {
       .map((user) => user.username);
   }, [alreadyAssignedUsers, users]);
 
-  // ✅ filter users for assignment (only those NOT already assigned)
   const availableUsers = useMemo(() => {
     if (!alreadyAssignedUsers) return users;
     return users.filter((user) => !alreadyAssignedUsers.includes(user.id));
@@ -44,11 +42,12 @@ const AssignUsersModal = ({ isOpen, onClose, checklistId }) => {
       return;
     }
 
+    if (selectedUsers.length === 0) {
+      alert("Please select at least one user to assign.");
+      return;
+    }
+
     try {
-      if (selectedUsers.length === 0) {
-        alert("Please select at least one user to assign.");
-        return;
-      }
       await assignUsers({
         checklistId,
         payload: { user_ids: selectedUsers },
@@ -64,8 +63,18 @@ const AssignUsersModal = ({ isOpen, onClose, checklistId }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-[400px] space-y-4">
-        <h2 className="text-lg font-semibold">Assign Users to Checklist</h2>
+      <div className="relative bg-white rounded-lg shadow-lg p-6 w-[400px] space-y-4">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <h2 className="text-lg font-semibold text-center">
+          Assign Users to Checklist
+        </h2>
 
         {/* Already Assigned Users */}
         {existingAssignedUsers.length > 0 && (
