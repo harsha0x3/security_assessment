@@ -4,6 +4,7 @@ from models.schemas.crud_schemas import (
     ControlOut,
     ControlUpdate,
     ControlRemove,
+    ControlWithResponseOut,
 )
 from typing import Annotated
 from models.schemas.crud_schemas import UserOut
@@ -15,6 +16,7 @@ from controllers.controls_controller import (
     get_controls,
     update_control,
     remove_controls,
+    get_controls_with_responses,
 )
 from sqlalchemy import select
 from models.users import User
@@ -46,17 +48,21 @@ async def fetch_controls(
     current_user: Annotated[UserOut, Depends(get_current_user)],
 ) -> Annotated[list[ControlOut], "Function to create a control and output it"]:
     # return {"msg":"Hello" }
-    stmt = select(ChecklistAssignment.user_id).where(
-        ChecklistAssignment.checklist_id == checklist_id,
-        ChecklistAssignment.user_id == current_user.id,
+
+    return get_controls(checklist_id=checklist_id, db=db, current_user=current_user)
+
+
+@router.get("/checklists/{checklist_id}/controls-responses")
+async def fetch_controls_with_responses(
+    checklist_id: Annotated[str, Path(title="Checklist Id")],
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+) -> Annotated[
+    list[ControlWithResponseOut], "Function to create a control and output it"
+]:
+    return get_controls_with_responses(
+        checklist_id=checklist_id, db=db, current_user=current_user
     )
-    user_assigned_list = db.scalars(stmt).first()
-    if not user_assigned_list:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"You don't have any assigned checklists. {current_user.username}",
-        )
-    return get_controls(checklist_id=checklist_id, db=db)
 
 
 @router.patch("/control/{control_id}")

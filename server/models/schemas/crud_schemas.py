@@ -1,5 +1,3 @@
-from enum import Enum
-
 from pydantic import BaseModel, ConfigDict
 
 
@@ -10,6 +8,8 @@ class ApplicationCreate(BaseModel):
     region: str
     owner_name: str
     provider_name: str
+    infra_host: str | None = None
+    app_tech: str | None = None
 
 
 class ApplicationOut(BaseModel):
@@ -20,6 +20,8 @@ class ApplicationOut(BaseModel):
     region: str
     owner_name: str
     provider_name: str
+    infra_host: str | None = None
+    app_tech: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -118,4 +120,20 @@ class UserResponseOut(BaseModel):
     review_comment: str
     evidence_path: str
 
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ControlWithResponseOut(BaseModel):
+    checklist_id: str
+    response_id: str | None = None
+    control_id: str
+    control_area: str
+    severity: str
+    control_text: str
+    current_setting: str | None = None
+    review_comment: str | None = None
+    evidence_path: str | None = None
+
+
+class ControlsWithChecklist(BaseModel):
     model_config = ConfigDict(from_attributes=True)

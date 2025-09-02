@@ -16,7 +16,7 @@ def create_app(
     payload: ApplicationCreate, db: Session, creator: UserOut
 ) -> ApplicationOut:
     try:
-        app = Application(**payload.dict(), creator_id=creator.id)
+        app = Application(**payload.model_dump(), creator_id=creator.id)
         db.add(app)
         db.commit()
         db.refresh(app)
@@ -45,6 +45,7 @@ def list_apps(db: Session, user: UserOut) -> list[ApplicationOut]:
         stmt = stmt.where(Application.creator_id == user.id)
 
     apps = db.scalars(stmt).all()
+    print("Apps in app controller", apps)
     return [ApplicationOut.model_validate(app) for app in apps]
 
 

@@ -95,8 +95,8 @@ def set_jwt_cookies(response: Response, access_token: str, refresh_token: str):
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,
-            samesite="strict",
+            secure=True,
+            samesite="none",
             path="/",
             expires=int(access_exp.timestamp()),
         )
@@ -104,8 +104,8 @@ def set_jwt_cookies(response: Response, access_token: str, refresh_token: str):
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            secure=False,
-            samesite="strict",
+            secure=True,
+            samesite="none",
             path="/",
             expires=int(refresh_exp.timestamp()),
         )

@@ -65,9 +65,13 @@ def update_user_response(
     try:
         response = db.scalar(select(UserResponse).where(UserResponse.id == response_id))
         if not response:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Response not found: {response_id}",
+            return UserResponseOut(
+                id=response_id,
+                control_id="",
+                user_id="",
+                current_setting="",
+                review_comment="",
+                evidence_path="",
             )
 
         if response.user_id != current_user.id and current_user.role != "admin":
@@ -75,7 +79,7 @@ def update_user_response(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You are not allowed to edit this response",
             )
-        update_data = payload.model_dump(exclude_none=True, exclude_unset=True)
+        update_data = payload.model_dump(exclude_unset=True)
 
         for key, val in update_data.items():
             setattr(response, key, val)
@@ -84,9 +88,6 @@ def update_user_response(
         db.refresh(response)
 
         return UserResponseOut.model_validate(response)
-
-    except HTTPException:
-        raise
 
     except Exception as e:
         db.rollback()
