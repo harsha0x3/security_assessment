@@ -139,6 +139,38 @@ def get_controls_with_responses(
     checklist_id: str, db: Session, current_user: UserOut
 ) -> list[ControlWithResponseOut]:
     try:
+        if current_user.role == "admin":
+            # Validate checklist exists
+            checklist = db.scalar(select(Checklist).where(Checklist.id == checklist_id))
+            if not checklist:
+                return []
+
+            stmt = (
+                select(Control, UserResponse)
+                .outerjoin(UserResponse, and_(UserResponse.control_id == Control.id))
+                .where(Control.checklist_id == checklist_id)
+            )
+
+            results = db.execute(stmt).all()
+
+            # Validate with Pydantic
+            controls_with_responses = [
+                ControlWithResponseOut(
+                    checklist_id=checklist_id,
+                    response_id=response.id if response else None,
+                    control_id=control.id,
+                    control_area=control.control_area,
+                    severity=control.severity,
+                    control_text=control.control_text,
+                    current_setting=response.current_setting if response else None,
+                    review_comment=response.review_comment if response else None,
+                    evidence_path=response.evidence_path if response else None,
+                )
+                for control, response in results
+            ]
+
+            return controls_with_responses
+
         # Check assignment
         stmt = select(ChecklistAssignment.user_id).where(
             and_(
@@ -147,7 +179,7 @@ def get_controls_with_responses(
             )
         )
         user_assigned = db.scalar(stmt)
-        if not user_assigned and current_user.role != "admin":
+        if not user_assigned:
             return []
 
         # Join controls with responses for this user
@@ -182,12 +214,6 @@ def get_controls_with_responses(
         ]
 
         return controls_with_responses
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch controls with responses. {str(e)}",
-        )
 
     except Exception as e:
         raise HTTPException(

@@ -108,11 +108,13 @@ const applicationSlice = createSlice({
 
     setCurrentApplication: (state, action) => {
       if (action.payload) {
+        console.log("PAYLOAD IN SET CURRENT APP", action.payload);
         const { appId } = action.payload;
         const index = state.apps.findIndex((app) => app.appId === appId);
         state.currentApp = state.apps[index];
         return;
       }
+      console.log("NO PAYLOAD IN SET CURRENT APP", action.payload);
       state.currentApp = { ...initialState.currentApp };
     },
   },

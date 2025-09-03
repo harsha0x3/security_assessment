@@ -32,7 +32,7 @@ function App() {
   useEffect(() => {
     if (data && isSuccess) {
       dispatch(loadApps(data));
-      dispatch(setCurrentApplication({ appId: data[0].id }));
+      dispatch(setCurrentApplication({ appId: data[0]?.id }));
     }
   }, [data, isSuccess, dispatch]);
 

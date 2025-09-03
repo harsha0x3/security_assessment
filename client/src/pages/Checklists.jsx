@@ -1,3 +1,4 @@
+// Updated Checklists component with better layout integration
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
@@ -17,6 +18,7 @@ import {
   useAddChecklistMutation,
 } from "../store/apiSlices/checklistsApiSlice";
 import AssignUsersModal from "../components/core/AssignUsersModal";
+import { Plus, Users, CheckSquare } from "lucide-react";
 
 const Checklists = () => {
   const { appId: paramAppId } = useParams();
@@ -87,100 +89,124 @@ const Checklists = () => {
   };
 
   return (
-    <div className="mt-20 px-4">
-      {/* App Tabs */}
-      <div className="flex border-b border-gray-300 mb-4">
-        {apps.map((app) => (
-          <button
-            key={app.appId}
-            onClick={() => handleSelectApp(app)}
-            className={`px-4 py-2 font-medium ${
-              selectedAppId === app.appId
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-600 hover:text-blue-500"
-            }`}
-          >
-            {app.name}
-          </button>
-        ))}
+    <div className="space-y-2">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-bold text-gray-900 dark:text-gray-900">
+          Checklists{" "}
+          {currentApp && (
+            <span className="text-gray-900 dark:text-gray-900 font-bold">
+              for {currentApp.name}
+            </span>
+          )}
+        </h1>
       </div>
 
-      {/* Checklist Tabs */}
-      <div className="flex border-b justify-between border-gray-200 mb-4">
-        <div className="flex border-b border-gray-200 mb-4">
-          {checklists.map((chk) => (
+      {/* App Tabs */}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="flex space-x-8 overflow-x-auto">
+          {apps.map((app) => (
             <button
-              key={chk.checklistId}
-              onClick={() => handleSelectChecklist(chk)}
-              className={`px-4 py-2 font-medium ${
-                selectedChecklistId === chk.checklistId
-                  ? "border-b-2 border-black text-black"
-                  : "text-gray-500 hover:text-black"
+              key={app.appId}
+              onClick={() => handleSelectApp(app)}
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                selectedAppId === app.appId
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
-              {chk.checklistType}
+              {app.name}
             </button>
           ))}
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowModal(true)}
-            className="border rounded-md bg-blue-400 px-4 py-2 text-white"
-          >
-            Add Checklist
-          </button>
-          {selectedChecklistId && (
-            <button
-              onClick={() => setIsAssignModalOpen(true)}
-              className="px-4 py-2 mt-2 bg-blue-600 text-white rounded-md"
-            >
-              Assign Users
-            </button>
-          )}
-        </div>
-
-        <AssignUsersModal
-          isOpen={isAssignModalOpen}
-          onClose={() => setIsAssignModalOpen(false)}
-          checklistId={selectedChecklistId}
-        />
+        </nav>
       </div>
 
-      {/* Checklist Content */}
-      <div className="mt-4">
-        {currentChecklist ? (
-          <div>
-            <h3 className="text-lg font-semibold mb-2">
-              {currentChecklist.checklistType} Controls
-            </h3>
-            <div className="border rounded-md p-4 text-gray-500">
-              Controls table will go here
+      {/* Checklist Management */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+        {/* Checklist Header */}
+        <div className="px-6 py-3 dark:border-gray-700">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex space-x-1 overflow-x-auto">
+              {checklists.map((chk) => (
+                <button
+                  key={chk.checklistId}
+                  onClick={() => handleSelectChecklist(chk)}
+                  className={`whitespace-nowrap px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    selectedChecklistId === chk.checklistId
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {chk.checklistType}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setShowModal(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Checklist
+              </button>
+
+              {selectedChecklistId && (
+                <button
+                  onClick={() => setIsAssignModalOpen(true)}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Assign Users
+                </button>
+              )}
             </div>
           </div>
-        ) : (
-          <p className="text-gray-500">
-            Select a checklist to see its controls.
-          </p>
+        </div>
+
+        {/* Checklist Content */}
+
+        {!selectedChecklistId && (
+          <div className="p-1">
+            <div className="text-center py-12">
+              <CheckSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 text-lg">
+                Select a checklist to see its controls
+              </p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+                Choose from the tabs above or create a new checklist
+              </p>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Modal */}
+      {/* Assign Users Modal */}
+      <AssignUsersModal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        checklistId={selectedChecklistId}
+      />
+
+      {/* Add Checklist Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-            <h2 className="text-xl font-semibold mb-4">Create Checklist</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-96 max-w-md mx-4">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+              Create Checklist
+            </h2>
             <form onSubmit={handleAddChecklist} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Checklist Type
                 </label>
                 <select
                   value={checklistType}
                   onChange={(e) => setChecklistType(e.target.value)}
-                  className="w-full border rounded-md px-3 py-2"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
-                  <option value="">-- Select --</option>
+                  <option value="">-- Select Type --</option>
                   <option value="Checklist Infra">Checklist Infra</option>
                   <option value="Checklist AppSec">Checklist AppSec</option>
                   <option value="Checklist for IAM">Checklist for IAM</option>
@@ -191,36 +217,40 @@ const Checklists = () => {
                 </select>
               </div>
 
-              {/* Extra input only if "Other" is selected */}
               {checklistType === "Other" && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Enter Custom Checklist Name
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Custom Checklist Name
                   </label>
                   <input
                     type="text"
                     value={customChecklist}
                     onChange={(e) => setCustomChecklist(e.target.value)}
-                    className="w-full border rounded-md px-3 py-2"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter custom checklist name"
                     required
                   />
                 </div>
               )}
 
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-md border"
+                  onClick={() => {
+                    setShowModal(false);
+                    setChecklistType("");
+                    setCustomChecklist("");
+                  }}
+                  className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isAdding}
-                  className="px-4 py-2 rounded-md bg-blue-500 text-white"
+                  className="px-4 py-2 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {isAdding ? "Adding..." : "Add"}
+                  {isAdding ? "Adding..." : "Add Checklist"}
                 </button>
               </div>
             </form>

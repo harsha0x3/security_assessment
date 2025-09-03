@@ -12,12 +12,14 @@ import {
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table";
+import { selectCurrentChecklist } from "../../store/appSlices/checklistsSlice";
 import { Save, Edit3, X, Plus } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import { useForm } from "react-hook-form";
 
 const Controls = () => {
   const user = useSelector(selectAuth);
+  console.log("user", user.role);
   const { checklistId } = useParams();
   const { data: allControls, isLoading: isFetchingControls } =
     useGetAllControlsWithResponsesQuery(checklistId, { skip: !checklistId });
@@ -27,6 +29,7 @@ const Controls = () => {
 
   const [editingRowId, setEditingRowId] = useState(null);
   const [adding, setAdding] = useState(false);
+  const currentChecklist = useSelector(selectCurrentChecklist);
 
   // react-hook-form for editing responses
   const { register, handleSubmit, reset } = useForm({
@@ -204,10 +207,79 @@ const Controls = () => {
   });
 
   if (isFetchingControls) return <p>Loading controls...</p>;
-  if (!allControls?.length) return <p>No controls found for this checklist.</p>;
+  if (!allControls?.length)
+    return (
+      <div>
+        <p>No controls found for this checklist.</p>
+        {/* Add Control Section (admins only) */}
+        {user.role === "admin" && (
+          <div className="mt-4">
+            {adding ? (
+              <form
+                onSubmit={handleAddSubmit(onSubmitAddControl)}
+                className="flex gap-2 items-center"
+              >
+                <input
+                  type="text"
+                  placeholder="Control Area"
+                  className="border rounded px-2 py-1 text-sm"
+                  {...registerAdd("control_area", { required: true })}
+                />
+                <select
+                  className="border rounded px-2 py-1 text-sm"
+                  {...registerAdd("severity", { required: true })}
+                >
+                  <option value="">Select Severity</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Critical">Critical</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Control Text"
+                  className="border rounded px-2 py-1 text-sm"
+                  {...registerAdd("control_text", { required: true })}
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1 text-sm rounded bg-green-600 text-white"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdding(false);
+                    resetAdd();
+                  }}
+                  className="px-3 py-1 text-sm rounded bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </form>
+            ) : (
+              <button
+                onClick={() => setAdding(true)}
+                className="flex items-center gap-1 px-3 py-1 text-sm rounded bg-blue-600 text-white"
+              >
+                <Plus className="w-4 h-4" /> Add Control
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
 
   return (
-    <div className="p-4 overflow-x-auto border rounded-lg shadow bg-white">
+    <div className="p-2 overflow-x-auto border rounded-lg shadow bg-white">
+      {currentChecklist && (
+        <div>
+          <h3 className="text-md font-semibold mb-2 px-5 text-gray-900 dark:text-gray-900">
+            {currentChecklist.checklistType} Controls
+          </h3>
+        </div>
+      )}
       {/* Responses table (all users) */}
       <form>
         <table className="w-full border-collapse">
@@ -241,7 +313,6 @@ const Controls = () => {
           </tbody>
         </table>
       </form>
-
       {/* Add Control Section (admins only) */}
       {user.role === "admin" && (
         <div className="mt-4">

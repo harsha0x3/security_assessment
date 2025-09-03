@@ -198,7 +198,7 @@ const Applications = () => {
                 placeholder="App Name"
                 value={appName}
                 onChange={(e) => setAppName(e.target.value)}
-                disabled={!isEditing}
+                disabled={!isEditing && !isNewApp}
               />
             </div>
 
@@ -211,7 +211,7 @@ const Applications = () => {
                 placeholder="Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                disabled={!isEditing}
+                disabled={!isEditing && !isNewApp}
               />
             </div>
 
@@ -225,7 +225,7 @@ const Applications = () => {
                   placeholder="Platform"
                   value={platform}
                   onChange={(e) => setPlatform(e.target.value)}
-                  disabled={!isEditing}
+                  disabled={!isEditing && !isNewApp}
                 />
               </div>
 
@@ -236,7 +236,7 @@ const Applications = () => {
                   placeholder="Region"
                   value={region}
                   onChange={(e) => setRegion(e.target.value)}
-                  disabled={!isEditing}
+                  disabled={!isEditing && !isNewApp}
                 />
               </div>
             </div>
@@ -251,7 +251,7 @@ const Applications = () => {
                   placeholder="Owner Name"
                   value={ownerName}
                   onChange={(e) => setOwnerName(e.target.value)}
-                  disabled={!isEditing}
+                  disabled={!isEditing && !isNewApp}
                 />
               </div>
               <div>
@@ -263,7 +263,7 @@ const Applications = () => {
                   placeholder="Provider Name"
                   value={providerName}
                   onChange={(e) => setProviderName(e.target.value)}
-                  disabled={!isEditing}
+                  disabled={!isEditing && !isNewApp}
                 />
               </div>
             </div>
@@ -278,7 +278,7 @@ const Applications = () => {
                   placeholder="Infra Host"
                   value={infraHost}
                   onChange={(e) => setInfraHost(e.target.value)}
-                  disabled={!isEditing}
+                  disabled={!isEditing && !isNewApp}
                 />
               </div>
               <div>
@@ -290,7 +290,7 @@ const Applications = () => {
                   placeholder="App Tech"
                   value={appTech}
                   onChange={(e) => setAppTech(e.target.value)}
-                  disabled={!isEditing}
+                  disabled={!isEditing && !isNewApp}
                 />
               </div>
             </div>
@@ -338,7 +338,7 @@ const Applications = () => {
 
             {!isNewApp && !isEditing && (
               <Link
-                to={`/${currentApp.appId}/checklists`}
+                to={`/${currentApp?.appId}/checklists`}
                 className="flex items-center gap-2 px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition"
               >
                 Show Checklist

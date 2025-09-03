@@ -44,13 +44,15 @@ const checklistsSlice = createSlice({
     },
     setCurrentChecklist: (state, action) => {
       if (action.payload) {
-        const checklistId = action.payload;
+        console.log("ACRTION", action.payload);
+        const checklistId = action.payload.checklistId;
         const index = state.allChecklists.findIndex(
           (chk) => chk.checklistId === checklistId
         );
         state.currentChecklist = state.allChecklists[index];
         return;
       }
+      console.log(" NO ACRTION", action.payload);
       state.currentChecklist = { ...initialState.currentChecklist };
     },
   },

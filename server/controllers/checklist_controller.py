@@ -162,9 +162,11 @@ def remove_checklist(checklist_id: str, db: Session):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"no checklist found: {checklist_id}",
             )
+        data = ChecklistOut.model_validate(checklist)
+
         db.delete(checklist)
         db.commit()
-        db.refresh(checklist)
+        return data
     except HTTPException:
         raise
     except Exception as e:
