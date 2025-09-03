@@ -23,7 +23,7 @@ def create_db_engine():
 
 def create_session_factory():
     engine = create_db_engine()
-    SessionLocal = sessionmaker(autoflush=True, autocommit=False, bind=engine)
+    SessionLocal = sessionmaker(autoflush=False, autocommit=False, bind=engine)
     return SessionLocal
 
 

@@ -15,13 +15,15 @@ def add_user_response(
     payload: UserResponseCreate, control_id: str, db: Session, current_user: UserOut
 ):
     try:
-        control = db.scalar(select(Control).where(Control.id == control_id))
+        # Fetch the control
+        control = db.get(Control, control_id)
         if not control:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Control not found {control_id}",
             )
 
+        # Prevent duplicate response
         existing = db.scalar(
             select(UserResponse).where(
                 and_(
@@ -35,6 +37,8 @@ def add_user_response(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You have already submitted a response for this control",
             )
+
+        # Create response
         response = UserResponse(
             control_id=control_id,
             user_id=current_user.id,
@@ -46,6 +50,10 @@ def add_user_response(
         db.add(response)
         db.commit()
         db.refresh(response)
+
+        # Update checklist completion for this user
+        # update_checklist_completion_for_user(control.checklist_id, current_user.id, db)
+        # db.commit()  # commit the checklist update
 
         return UserResponseOut.model_validate(response)
 

@@ -8,12 +8,61 @@ from models.schemas.crud_schemas import (
     ControlUpdate,
     UserOut,
     ControlWithResponseOut,
+    TotalsCount,
+    ControlWithResponseOutNonList,
 )
 from sqlalchemy import select, and_
 from models.checklists import Checklist
 from sqlalchemy.orm import Session
 from models.checklist_assignments import ChecklistAssignment
 from models.user_responses import UserResponse
+
+from sqlalchemy import func
+
+
+def update_checklist_completion_for_user(checklist_id: str, user: UserOut, db: Session):
+    """
+    Check if all controls in the checklist have responses for the given user.
+    Update checklist.is_completed accordingly.
+    """
+    checklist = db.get(Checklist, checklist_id)
+    if not checklist:
+        print(f"Checklist with ID {checklist_id} not found.")
+        return
+
+    # Get all control IDs for this checklist
+    control_ids = db.scalars(
+        select(Control.id).where(Control.checklist_id == checklist_id)
+    ).all()
+
+    if not control_ids:
+        print(f"No controls found for checklist {checklist_id}.")
+        checklist.is_completed = False
+        return
+
+    # Count responses by this user for these controls
+    if user.role == "admin":
+        # Admins can see all responses
+        print("Admin user, counting all responses for controls.")
+        responses_count = db.scalar(
+            select(func.count(UserResponse.id)).where(
+                UserResponse.control_id.in_(control_ids),
+            )
+        )
+    else:
+        print(f"Counting responses for user {user.id} for controls.")
+        responses_count = db.scalar(
+            select(func.count(UserResponse.id)).where(
+                UserResponse.user_id == user.id,
+                UserResponse.control_id.in_(control_ids),
+            )
+        )
+    print(
+        f"Responses count, controls count for checklist {checklist_id}: {responses_count} , {len(control_ids)}"
+    )
+    checklist.is_completed = responses_count == len(control_ids)
+    db.commit()  # ensures SQLAlchemy tracks the change
+    db.refresh(checklist)  # refresh to get the updated state
 
 
 def add_controls(control: ControlCreate, checklist_id: str, db: Session) -> ControlOut:
@@ -35,6 +84,7 @@ def add_controls(control: ControlCreate, checklist_id: str, db: Session) -> Cont
         db.add(new_control)
         db.commit()
         db.refresh(new_control)
+
         return ControlOut.model_validate(new_control)
 
     except Exception as e:
@@ -137,7 +187,7 @@ def get_controls(
 
 def get_controls_with_responses(
     checklist_id: str, db: Session, current_user: UserOut
-) -> list[ControlWithResponseOut]:
+) -> ControlWithResponseOut:
     try:
         if current_user.role == "admin":
             # Validate checklist exists
@@ -152,10 +202,17 @@ def get_controls_with_responses(
             )
 
             results = db.execute(stmt).all()
+            total_controls = len(results)
+            total_responses = sum(1 for _, response in results if response is not None)
+
+            total_counts = TotalsCount(
+                total_responses=total_responses,
+                total_controls=total_controls,
+            )
 
             # Validate with Pydantic
-            controls_with_responses = [
-                ControlWithResponseOut(
+            controls_with_responses_non = [
+                ControlWithResponseOutNonList(
                     checklist_id=checklist_id,
                     response_id=response.id if response else None,
                     control_id=control.id,
@@ -169,6 +226,14 @@ def get_controls_with_responses(
                 for control, response in results
             ]
 
+            controls_with_responses = ControlWithResponseOut(
+                list_controls=controls_with_responses_non,
+                total_counts=total_counts,
+            )
+
+            update_checklist_completion_for_user(
+                checklist_id=checklist_id, user=current_user, db=db
+            )
             return controls_with_responses
 
         # Check assignment
@@ -197,9 +262,16 @@ def get_controls_with_responses(
 
         results = db.execute(stmt).all()
 
+        total_controls = len(results)
+        total_responses = sum(1 for _, response in results if response is not None)
+
+        total_counts = TotalsCount(
+            total_responses=total_responses,
+            total_controls=total_controls,
+        )
         # Validate with Pydantic
-        controls_with_responses = [
-            ControlWithResponseOut(
+        controls_with_responses_non = [
+            ControlWithResponseOutNonList(
                 checklist_id=checklist_id,
                 response_id=response.id if response else None,
                 control_id=control.id,
@@ -209,9 +281,21 @@ def get_controls_with_responses(
                 current_setting=response.current_setting if response else None,
                 review_comment=response.review_comment if response else None,
                 evidence_path=response.evidence_path if response else None,
+                response_created_at=response.created_at if response else None,
+                response_updated_at=response.updated_at if response else None,
+                control_created_at=control.created_at if control else None,
+                control_updated_at=control.updated_at if control else None,
             )
             for control, response in results
         ]
+
+        controls_with_responses = ControlWithResponseOut(
+            list_controls=controls_with_responses_non,
+            total_counts=total_counts,
+        )
+        update_checklist_completion_for_user(
+            checklist_id=checklist_id, user=current_user, db=db
+        )
 
         return controls_with_responses
 
@@ -225,7 +309,7 @@ def get_controls_with_responses(
 def update_control(payload: ControlUpdate, control_id: str, db: Session):
     try:
         control = get_control(control_id=control_id, db=db)
-        for key, val in payload.model_dump(exclude_none=True, exclude_unset=True):
+        for key, val in payload.model_dump(exclude_unset=True).items():
             setattr(control, key, val)
 
         db.commit()

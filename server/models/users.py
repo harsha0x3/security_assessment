@@ -35,8 +35,8 @@ class User(Base, BaseMixin):
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
     __table_args__ = (
-        Index("ix_users_username", "username"),
-        Index("ix_users_email", "email"),
+        Index("ix_users_username", "username", unique=True),
+        Index("ix_users_email", "email", unique=True),
     )
 
     # -----------------------Relationships-----------------------

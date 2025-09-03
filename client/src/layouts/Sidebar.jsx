@@ -59,24 +59,10 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
     <>
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 z-40 ${
+        className={`fixed left-0 top-12 h-[calc(100vh-3rem)] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 z-40 ${
           isCollapsed ? "w-16" : "w-64"
         }`}
       >
-        {/* Toggle Button */}
-        <div className="flex justify-end p-2 border-b border-gray-200 dark:border-gray-700">
-          <button
-            onClick={onToggle}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-            ) : (
-              <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-            )}
-          </button>
-        </div>
-
         {/* Navigation Items */}
         <nav className="p-2 space-y-1">
           {navigationItems.map((item) => {

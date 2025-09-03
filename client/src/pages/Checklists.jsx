@@ -18,7 +18,7 @@ import {
   useAddChecklistMutation,
 } from "../store/apiSlices/checklistsApiSlice";
 import AssignUsersModal from "../components/core/AssignUsersModal";
-import { Plus, Users, CheckSquare } from "lucide-react";
+import { Plus, Users, CheckSquare, CheckCircle2 } from "lucide-react";
 
 const Checklists = () => {
   const { appId: paramAppId } = useParams();
@@ -137,7 +137,14 @@ const Checklists = () => {
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
                   }`}
                 >
-                  {chk.checklistType}
+                  {chk.checklistType}{" "}
+                  <span>
+                    {chk.isCompleted && (
+                      <span>
+                        <CheckCircle2 />
+                      </span>
+                    )}
+                  </span>
                 </button>
               ))}
             </div>

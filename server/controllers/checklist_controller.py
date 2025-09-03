@@ -7,10 +7,12 @@ from models.schemas.crud_schemas import (
     UserOut,
     ChecklistUpdate,
 )
-from models.users import User
 from models.checklist_assignments import ChecklistAssignment
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
+from models.controls import Control
+from models.user_responses import UserResponse
+from sqlalchemy import func
 
 
 def create_checklist(
@@ -66,6 +68,10 @@ def get_checklists_for_app(
             checklists = db.scalars(
                 select(Checklist).where(and_(Checklist.app_id == app.id))
             ).all()
+            print(
+                "Checklist is complete",
+                [checklist.is_completed for checklist in checklists],
+            )
             for checklist in checklists:
                 results.append(
                     ChecklistOut(
@@ -76,6 +82,9 @@ def get_checklists_for_app(
                             assignment.user.to_dict_safe()
                             for assignment in checklist.assignments
                         ],
+                        is_completed=checklist.is_completed,
+                        created_at=checklist.created_at,
+                        updated_at=checklist.updated_at,
                     )
                 )
 
@@ -98,6 +107,9 @@ def get_checklists_for_app(
                         id=checklist.id,
                         app_name=app.name,
                         checklist_type=checklist.checklist_type,
+                        is_completed=checklist.is_completed,
+                        created_at=checklist.created_at,
+                        updated_at=checklist.updated_at,
                     )
                 )
 
@@ -118,7 +130,10 @@ def get_checklists_for_user(user: UserOut, db: Session) -> list[ChecklistOut]:
             .join(ChecklistAssignment)
             .where(ChecklistAssignment.user_id == user.id)
         ).all()
-
+        print(
+            "Checklist is complete",
+            [checklist.is_completed for checklist in checklists],
+        )
         return [ChecklistOut.model_validate(checklist) for checklist in checklists]
 
     except Exception as e:
@@ -175,3 +190,48 @@ def remove_checklist(checklist_id: str, db: Session):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete checklist {str(e)}",
         )
+
+
+def checklist_submission(checklist_id: str, user: UserOut, db: Session):
+    """
+    Check if all controls in the checklist have responses for the given user.
+    Update checklist.is_completed accordingly.
+    """
+    checklist = db.get(Checklist, checklist_id)
+    if not checklist:
+        print(f"Checklist with ID {checklist_id} not found.")
+        return
+
+    # Get all control IDs for this checklist
+    control_ids = db.scalars(
+        select(Control.id).where(Control.checklist_id == checklist_id)
+    ).all()
+
+    if not control_ids:
+        print(f"No controls found for checklist {checklist_id}.")
+        checklist.is_completed = False
+        return
+
+    # Count responses by this user for these controls
+    if user.role == "admin":
+        # Admins can see all responses
+        print("Admin user, counting all responses for controls.")
+        responses_count = db.scalar(
+            select(func.count(UserResponse.id)).where(
+                UserResponse.control_id.in_(control_ids),
+            )
+        )
+    else:
+        print(f"Counting responses for user {user.id} for controls.")
+        responses_count = db.scalar(
+            select(func.count(UserResponse.id)).where(
+                UserResponse.user_id == user.id,
+                UserResponse.control_id.in_(control_ids),
+            )
+        )
+    print(
+        f"Responses count, controls count for checklist {checklist_id}: {responses_count} , {len(control_ids)}"
+    )
+    checklist.is_completed = responses_count == len(control_ids)
+    db.commit()  # ensures SQLAlchemy tracks the change
+    db.refresh(checklist)  # refresh to get the updated state

@@ -1,6 +1,6 @@
 from db.base import Base, BaseMixin
 from sqlalchemy import ForeignKey, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 
 
 class Application(Base, BaseMixin):
@@ -15,9 +15,14 @@ class Application(Base, BaseMixin):
     provider_name: Mapped[str] = mapped_column(String(64), nullable=False)
     infra_host: Mapped[str] = mapped_column(String(100), nullable=True)
     app_tech: Mapped[str] = mapped_column(Text, nullable=True)
+    is_completed: Mapped[bool] = mapped_column(default=False)
 
     creator = relationship("User", back_populates="applications")
     checklists = relationship("Checklist", back_populates="app")
+
+    def refresh_completion_status(self):
+        """Recalculate is_completed based on checklists."""
+        self.is_completed = all(c.is_completed for c in self.checklists)
 
     def __repr__(self) -> str:
         return f"<app_id={self.id}, app_name={self.id}>"

@@ -45,11 +45,23 @@ export const checklistsApiSlice = apiSlice.injectEndpoints({
         console.error(error);
       }
     },
+
+    submitChecklist: builder.mutation({
+      query: (checklistId) => ({
+        url: `/checklists/${checklistId}/submission`,
+        method: "POST",
+      }),
+      invalidatesTags: (result, error, checklistId) => [
+        { type: "Checklists", id: checklistId },
+        { type: "Checklists", id: "LIST" },
+      ],
+    }),
   }),
 });
 
 export const {
   useAddChecklistMutation,
   useGetAllChecklistsQuery,
-  useLazyGetAllChecklistsQuerys,
+  useLazyGetAllChecklistsQuery,
+  useSubmitChecklistMutation,
 } = checklistsApiSlice;

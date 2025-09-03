@@ -9,6 +9,7 @@ class Checklist(Base, BaseMixin):
     app_id: Mapped[str] = mapped_column(String(40), ForeignKey("applications.id"))
     checklist_type: Mapped[str] = mapped_column(String(25), nullable=False)
     creator_id: Mapped[str] = mapped_column(String(40), ForeignKey("users.id"))
+    is_completed: Mapped[bool] = mapped_column(default=False)
 
     # ----------------Relationships------------
     app = relationship("Application", back_populates="checklists")

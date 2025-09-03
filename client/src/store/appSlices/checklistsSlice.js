@@ -15,6 +15,9 @@ const checklistsSlice = createSlice({
         checklistId: checklist.id,
         appName: checklist.app_nama,
         checklistType: checklist.checklist_type,
+        isCompleted: checklist.is_completed || false,
+        createdAt: checklist.created_at,
+        updatedAt: checklist.updated_at,
       };
       if (checklist.assigned_users) {
         newChecklist["assignedUsers"] = checklist.assigned_users;
@@ -31,6 +34,9 @@ const checklistsSlice = createSlice({
           checklistId: chk.id,
           appName: chk.app_nama,
           checklistType: chk.checklist_type,
+          isCompleted: chk.is_completed || false,
+          createdAt: chk.created_at,
+          updatedAt: chk.updated_at,
         };
         if (chk.assigned_users) {
           checklist["assignedUsers"] = chk.assigned_users;

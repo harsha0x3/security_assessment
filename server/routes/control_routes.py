@@ -57,9 +57,7 @@ async def fetch_controls_with_responses(
     checklist_id: Annotated[str, Path(title="Checklist Id")],
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
-) -> Annotated[
-    list[ControlWithResponseOut], "Function to create a control and output it"
-]:
+) -> Annotated[ControlWithResponseOut, "Function to create a control and output it"]:
     return get_controls_with_responses(
         checklist_id=checklist_id, db=db, current_user=current_user
     )

@@ -1,0 +1,1898 @@
+{
+    "type": "MySQLNotebook",
+    "version": "1.0",
+    "caption": "DB Notebook",
+    "content": "\\about\nUSE security_assessment_db;\nSHOW TABLES;\nSELECT * FROM applications;\nSELECT * FROM checklists;\nSELECT * FROM checklist_assignments;\nSELECT * FROM user_responses;\nSELECT * FROM users;\nSELECT * FROM controls;\n\n",
+    "options": {
+        "tabSize": 4,
+        "indentSize": 4,
+        "insertSpaces": true,
+        "defaultEOL": "LF",
+        "trimAutoWhitespace": true
+    },
+    "viewState": {
+        "cursorState": [
+            {
+                "inSelectionMode": false,
+                "selectionStart": {
+                    "lineNumber": 11,
+                    "column": 1
+                },
+                "position": {
+                    "lineNumber": 11,
+                    "column": 1
+                }
+            }
+        ],
+        "viewState": {
+            "scrollLeft": 0,
+            "firstPosition": {
+                "lineNumber": 6,
+                "column": 1
+            },
+            "firstPositionDeltaTop": -22
+        },
+        "contributionsState": {
+            "editor.contrib.folding": {},
+            "editor.contrib.wordHighlighter": false
+        }
+    },
+    "contexts": [
+        {
+            "state": {
+                "start": 1,
+                "end": 1,
+                "language": "mysql",
+                "result": {
+                    "type": "text",
+                    "text": [
+                        {
+                            "type": 2,
+                            "content": "Welcome to the MySQL Shell - DB Notebook.\n\nPress Ctrl+Enter to execute the code block.\n\nExecute \\sql to switch to SQL, \\js to JavaScript and \\ts to TypeScript mode.\nExecute \\help or \\? for help;",
+                            "language": "ansi"
+                        }
+                    ]
+                },
+                "currentHeight": 28,
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 6
+                        },
+                        "contentStart": 0,
+                        "state": 0
+                    }
+                ]
+            },
+            "data": []
+        },
+        {
+            "state": {
+                "start": 2,
+                "end": 3,
+                "language": "mysql",
+                "result": {
+                    "type": "resultIds",
+                    "list": [
+                        "02d383ca-6515-4dbe-d124-5637b971a336",
+                        "4d67af43-6a1e-498e-c114-e188bfd30819"
+                    ]
+                },
+                "currentHeight": 36,
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 27
+                        },
+                        "contentStart": 0,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 27,
+                            "length": 13
+                        },
+                        "contentStart": 28,
+                        "state": 0
+                    }
+                ]
+            },
+            "data": [
+                {
+                    "tabId": "944e1f7d-7268-41bb-c35d-c1a5fcea556c",
+                    "resultId": "02d383ca-6515-4dbe-d124-5637b971a336",
+                    "rows": [
+                        {
+                            "0": "alembic_version"
+                        },
+                        {
+                            "0": "applications"
+                        },
+                        {
+                            "0": "checklist_assignments"
+                        },
+                        {
+                            "0": "checklists"
+                        },
+                        {
+                            "0": "controls"
+                        },
+                        {
+                            "0": "user_responses"
+                        },
+                        {
+                            "0": "users"
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "Tables_in_security_assessment_db",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 7 records retrieved in 5.112ms"
+                    },
+                    "totalRowCount": 7,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 1,
+                    "sql": "\nSHOW TABLES",
+                    "updatable": false
+                },
+                {
+                    "tabId": "944e1f7d-7268-41bb-c35d-c1a5fcea556c",
+                    "resultId": "4d67af43-6a1e-498e-c114-e188bfd30819",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 2.146ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 0,
+                    "sql": "USE security_assessment_db",
+                    "updatable": false
+                }
+            ]
+        },
+        {
+            "state": {
+                "start": 4,
+                "end": 10,
+                "language": "mysql",
+                "result": {
+                    "type": "resultIds",
+                    "list": [
+                        "0206a0a7-77c8-451e-e422-f9e15450acb5",
+                        "3c37cdc3-464a-4a16-e9d4-cbde8a6a4a43",
+                        "eae8691c-fc2d-439c-876a-0c49af21113a",
+                        "ae247da8-fa8a-4cf5-b84f-c1111dcab2ea",
+                        "ceb20fe9-c4f4-4098-cd95-3e63ea3b2a35",
+                        "b4b456b7-f3fc-4dec-bbf8-a5b06f5ff250"
+                    ]
+                },
+                "currentHeight": 159,
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 27
+                        },
+                        "contentStart": 0,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 27,
+                            "length": 26
+                        },
+                        "contentStart": 28,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 53,
+                            "length": 37
+                        },
+                        "contentStart": 54,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 90,
+                            "length": 30
+                        },
+                        "contentStart": 91,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 120,
+                            "length": 21
+                        },
+                        "contentStart": 121,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 141,
+                            "length": 24
+                        },
+                        "contentStart": 142,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 165,
+                            "length": 1
+                        },
+                        "contentStart": 164,
+                        "state": 3
+                    }
+                ]
+            },
+            "data": [
+                {
+                    "tabId": "944e1f7d-7268-41bb-c35d-c1a5fcea556c",
+                    "resultId": "0206a0a7-77c8-451e-e422-f9e15450acb5",
+                    "rows": [
+                        {
+                            "0": "SOC Dashboard",
+                            "1": "Dashboard containing data of automated alerts",
+                            "2": "onPrem",
+                            "3": "Domestic",
+                            "4": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "5": "suman",
+                            "6": "InfoSec",
+                            "7": "48b826a1-2cc3-4ec2-af83-4f36a27d49cc",
+                            "8": "2025-09-02 16:19:41",
+                            "9": "2025-09-02 16:19:41",
+                            "10": 1,
+                            "11": "Host",
+                            "12": "Python",
+                            "13": 0
+                        },
+                        {
+                            "0": "SOC",
+                            "1": "asd",
+                            "2": "asd",
+                            "3": "asdf",
+                            "4": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "5": "sdf",
+                            "6": "dfs",
+                            "7": "a588b44a-12fb-450a-a865-71f9f045f86d",
+                            "8": "2025-09-03 06:50:19",
+                            "9": "2025-09-03 06:50:19",
+                            "10": 1,
+                            "11": "sf",
+                            "12": "df",
+                            "13": 0
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "name",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "description",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "platform",
+                            "field": "2",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "region",
+                            "field": "3",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "creator_id",
+                            "field": "4",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "owner_name",
+                            "field": "5",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "provider_name",
+                            "field": "6",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "id",
+                            "field": "7",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": true,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "created_at",
+                            "field": "8",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "updated_at",
+                            "field": "9",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "is_active",
+                            "field": "10",
+                            "dataType": {
+                                "type": 42,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "infra_host",
+                            "field": "11",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "app_tech",
+                            "field": "12",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "is_completed",
+                            "field": "13",
+                            "dataType": {
+                                "type": 42,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 2 records retrieved in 1.516ms"
+                    },
+                    "totalRowCount": 2,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 0,
+                    "sql": "SELECT * FROM applications",
+                    "updatable": true,
+                    "fullTableName": "applications"
+                },
+                {
+                    "tabId": "944e1f7d-7268-41bb-c35d-c1a5fcea556c",
+                    "resultId": "3c37cdc3-464a-4a16-e9d4-cbde8a6a4a43",
+                    "rows": [
+                        {
+                            "0": "a588b44a-12fb-450a-a865-71f9f045f86d",
+                            "1": "Checklist Infra",
+                            "2": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "3": "3dc75cc6-a66e-4991-aab6-1eb7d0e953e4",
+                            "4": "2025-09-03 11:46:09",
+                            "5": "2025-09-03 11:46:09",
+                            "6": 1,
+                            "7": 0
+                        },
+                        {
+                            "0": "48b826a1-2cc3-4ec2-af83-4f36a27d49cc",
+                            "1": "Others test",
+                            "2": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "3": "7f82f624-9d8b-4455-a1e1-7e127a26bd01",
+                            "4": "2025-09-03 05:03:19",
+                            "5": "2025-09-03 10:20:04",
+                            "6": 1,
+                            "7": 1
+                        },
+                        {
+                            "0": "48b826a1-2cc3-4ec2-af83-4f36a27d49cc",
+                            "1": "AI application checklist",
+                            "2": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "3": "c3f96cdc-1735-47cf-8501-70b6b1fbf2ac",
+                            "4": "2025-09-02 16:19:58",
+                            "5": "2025-09-03 08:42:12",
+                            "6": 1,
+                            "7": 1
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "app_id",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "checklist_type",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "creator_id",
+                            "field": "2",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "id",
+                            "field": "3",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": true,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "created_at",
+                            "field": "4",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "updated_at",
+                            "field": "5",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "is_active",
+                            "field": "6",
+                            "dataType": {
+                                "type": 42,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "is_completed",
+                            "field": "7",
+                            "dataType": {
+                                "type": 42,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 3 records retrieved in 1.887ms"
+                    },
+                    "totalRowCount": 3,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 1,
+                    "sql": "\nSELECT * FROM checklists",
+                    "updatable": true,
+                    "fullTableName": "checklists"
+                },
+                {
+                    "tabId": "944e1f7d-7268-41bb-c35d-c1a5fcea556c",
+                    "resultId": "eae8691c-fc2d-439c-876a-0c49af21113a",
+                    "rows": [
+                        {
+                            "0": "c3f96cdc-1735-47cf-8501-70b6b1fbf2ac",
+                            "1": "2ce1976c-dde6-4f2b-acd5-9ac8fded2aad",
+                            "2": "663f2964-993a-41b2-b855-b871ddf3dd23",
+                            "3": "2025-09-02 16:45:42",
+                            "4": "2025-09-02 16:45:42",
+                            "5": 1
+                        },
+                        {
+                            "0": "7f82f624-9d8b-4455-a1e1-7e127a26bd01",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "a9feaaa4-bfc1-4737-a39f-8e6625381dc7",
+                            "3": "2025-09-03 11:06:48",
+                            "4": "2025-09-03 11:06:48",
+                            "5": 1
+                        },
+                        {
+                            "0": "7f82f624-9d8b-4455-a1e1-7e127a26bd01",
+                            "1": "2ce1976c-dde6-4f2b-acd5-9ac8fded2aad",
+                            "2": "fdae6871-4e20-4866-b1b5-4a847c6ae103",
+                            "3": "2025-09-03 10:18:56",
+                            "4": "2025-09-03 10:18:56",
+                            "5": 1
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "checklist_id",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "user_id",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "id",
+                            "field": "2",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": true,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "created_at",
+                            "field": "3",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "updated_at",
+                            "field": "4",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "is_active",
+                            "field": "5",
+                            "dataType": {
+                                "type": 42,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 3 records retrieved in 1.943ms"
+                    },
+                    "totalRowCount": 3,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 2,
+                    "sql": "\nSELECT * FROM checklist_assignments",
+                    "updatable": true,
+                    "fullTableName": "checklist_assignments"
+                },
+                {
+                    "tabId": "944e1f7d-7268-41bb-c35d-c1a5fcea556c",
+                    "resultId": "ae247da8-fa8a-4cf5-b84f-c1111dcab2ea",
+                    "rows": [
+                        {
+                            "0": "7d1e09c1-417b-4bba-bc20-10a6966da5b0",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "d",
+                            "3": "d",
+                            "4": "d",
+                            "5": "032d1930-9cab-461c-87d3-2cc2ab9000d2",
+                            "6": "2025-09-03 09:14:36",
+                            "7": "2025-09-03 09:14:36",
+                            "8": 1
+                        },
+                        {
+                            "0": "f2f19b20-672c-4eea-8ee2-9b7f2f896823",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "fd",
+                            "3": "d",
+                            "4": "s",
+                            "5": "035393d6-db66-418a-9a0d-9933e70d7e65",
+                            "6": "2025-09-03 07:19:42",
+                            "7": "2025-09-03 07:19:42",
+                            "8": 1
+                        },
+                        {
+                            "0": "89dc2fbc-c949-40ca-9051-7a7cf911e928",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "asd",
+                            "3": "fd",
+                            "4": "fd",
+                            "5": "06c81ee4-48eb-4fc2-a662-c2ea6781cc56",
+                            "6": "2025-09-03 07:02:45",
+                            "7": "2025-09-03 07:02:45",
+                            "8": 1
+                        },
+                        {
+                            "0": "08698647-fde4-43f6-9e47-afab08e73364",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "s",
+                            "3": "set1",
+                            "4": "sd",
+                            "5": "3fb61abe-00cc-4abb-b710-4774369d8f9b",
+                            "6": "2025-09-03 07:22:42",
+                            "7": "2025-09-03 07:22:42",
+                            "8": 1
+                        },
+                        {
+                            "0": "a6353836-4c85-4ee9-bbba-f472734c3dc2",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "asd",
+                            "3": "affff",
+                            "4": "a",
+                            "5": "6a4ce6ab-da15-43a4-91c8-6789d50ebcc7",
+                            "6": "2025-09-03 07:32:51",
+                            "7": "2025-09-03 07:32:51",
+                            "8": 1
+                        },
+                        {
+                            "0": "55b891b1-fa68-414d-8f08-dfa185878548",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "q",
+                            "3": "w",
+                            "4": "w",
+                            "5": "760ac94f-c8fd-4192-a35b-e3e3b4843593",
+                            "6": "2025-09-03 07:25:11",
+                            "7": "2025-09-03 07:25:11",
+                            "8": 1
+                        },
+                        {
+                            "0": "519a4d15-0443-41e5-8690-42bf7dff859a",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "fd",
+                            "3": "g",
+                            "4": "g",
+                            "5": "7ce00445-7bae-487b-8ba7-18b6aa336213",
+                            "6": "2025-09-03 07:25:04",
+                            "7": "2025-09-03 07:25:04",
+                            "8": 1
+                        },
+                        {
+                            "0": "7f701e69-32ee-4bc0-98c5-599e2d4bb5d9",
+                            "1": "2ce1976c-dde6-4f2b-acd5-9ac8fded2aad",
+                            "2": "set",
+                            "3": "set1",
+                            "4": "ste",
+                            "5": "9e25fb15-bacd-4054-b6f4-3b4cd5effc30",
+                            "6": "2025-09-03 03:52:48",
+                            "7": "2025-09-03 03:52:48",
+                            "8": 1
+                        },
+                        {
+                            "0": "9ef844dc-93e8-4e4a-b4df-786186df4e60",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "f",
+                            "3": "ff",
+                            "4": "f",
+                            "5": "b0ab5879-0af3-41eb-8bf3-0438349dd216",
+                            "6": "2025-09-03 07:01:22",
+                            "7": "2025-09-03 07:01:22",
+                            "8": 1
+                        },
+                        {
+                            "0": "cde788ce-fbdc-43b7-9dc8-1a0690b79796",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "dd",
+                            "3": "d",
+                            "4": "d",
+                            "5": "c3727982-59c4-41c6-b504-7fc6cde235ae",
+                            "6": "2025-09-03 07:05:01",
+                            "7": "2025-09-03 07:05:01",
+                            "8": 1
+                        },
+                        {
+                            "0": "d6952146-adbb-46d2-a63d-d1404635f303",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "d",
+                            "3": "d",
+                            "4": "f",
+                            "5": "c4aa4c4e-d614-46c6-b381-49973e7dac81",
+                            "6": "2025-09-03 07:00:51",
+                            "7": "2025-09-03 07:00:51",
+                            "8": 1
+                        },
+                        {
+                            "0": "378485ef-460d-4a5b-95b6-a8929c39eeef",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "q",
+                            "3": "q",
+                            "4": "q",
+                            "5": "d7f01c72-46c9-4967-89fd-be586244cb67",
+                            "6": "2025-09-03 07:27:48",
+                            "7": "2025-09-03 07:27:48",
+                            "8": 1
+                        },
+                        {
+                            "0": "8d1d70e3-85fa-48f9-8a3b-f61136159e70",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "f",
+                            "3": "d",
+                            "4": "d",
+                            "5": "e33aabce-3e26-46ad-8002-5949f9728259",
+                            "6": "2025-09-03 10:06:34",
+                            "7": "2025-09-03 10:06:34",
+                            "8": 1
+                        },
+                        {
+                            "0": "a3ca72b3-786c-47f7-8a63-278cc6f84c58",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "set",
+                            "3": "set1",
+                            "4": "ste",
+                            "5": "eedc2d6c-c174-4639-b44d-b69b75c1d438",
+                            "6": "2025-09-03 06:55:28",
+                            "7": "2025-09-03 06:55:28",
+                            "8": 1
+                        },
+                        {
+                            "0": "e99a2613-1aff-4d62-bcf7-f38ba5257bcc",
+                            "1": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "2": "j",
+                            "3": "h",
+                            "4": "j",
+                            "5": "fa3198e3-3097-4c38-88e1-6d941efa0cd3",
+                            "6": "2025-09-03 10:20:04",
+                            "7": "2025-09-03 10:20:04",
+                            "8": 1
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "control_id",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "user_id",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "current_setting",
+                            "field": "2",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "review_comment",
+                            "field": "3",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "evidence_path",
+                            "field": "4",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "id",
+                            "field": "5",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": true,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "created_at",
+                            "field": "6",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "updated_at",
+                            "field": "7",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "is_active",
+                            "field": "8",
+                            "dataType": {
+                                "type": 42,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 15 records retrieved in 1.728ms"
+                    },
+                    "totalRowCount": 15,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 3,
+                    "sql": "\nSELECT * FROM user_responses",
+                    "updatable": true,
+                    "fullTableName": "user_responses"
+                },
+                {
+                    "tabId": "944e1f7d-7268-41bb-c35d-c1a5fcea556c",
+                    "resultId": "ceb20fe9-c4f4-4098-cd95-3e63ea3b2a35",
+                    "rows": [
+                        {
+                            "0": "gaga",
+                            "1": "user2@example.com",
+                            "2": "$2b$12$FsT4skEw/8e9eiHZaDzaJu1YC3O0LIRR.lBQoTWMBnW8xaf2Qhi5a",
+                            "3": "gaga",
+                            "4": "user2",
+                            "5": "user",
+                            "6": 0,
+                            "7": null,
+                            "8": null,
+                            "9": null,
+                            "10": 0,
+                            "11": "2ce1976c-dde6-4f2b-acd5-9ac8fded2aad",
+                            "12": "2025-08-30 07:34:04",
+                            "13": "2025-08-30 07:34:04",
+                            "14": 1
+                        },
+                        {
+                            "0": "harsha",
+                            "1": "user@example.com",
+                            "2": "$2b$12$d4liagJyUcs.6UhtyvRdiej7GNsNu/r5Njx3hmwmpqHsNfXIm8zai",
+                            "3": "string",
+                            "4": "string",
+                            "5": "admin",
+                            "6": 0,
+                            "7": null,
+                            "8": null,
+                            "9": null,
+                            "10": 0,
+                            "11": "c80ebe2b-7cb0-4776-a75c-40efbf93aa02",
+                            "12": "2025-08-30 07:32:43",
+                            "13": "2025-08-30 07:32:43",
+                            "14": 1
+                        },
+                        {
+                            "0": "jim",
+                            "1": "user1@example.com",
+                            "2": "$2b$12$NowDIPp9yYoUs0CuIdzx1eOzWXuPImJMgetlQznvE5B8bybS/6lPu",
+                            "3": "jim",
+                            "4": "user1",
+                            "5": "user",
+                            "6": 0,
+                            "7": null,
+                            "8": null,
+                            "9": null,
+                            "10": 0,
+                            "11": "e0ef5860-0565-483c-b445-262fdbc4aa59",
+                            "12": "2025-08-30 07:33:40",
+                            "13": "2025-08-30 07:33:40",
+                            "14": 1
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "username",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "email",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "password_hash",
+                            "field": "2",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "first_name",
+                            "field": "3",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "last_name",
+                            "field": "4",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "role",
+                            "field": "5",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "mfa_enabled",
+                            "field": "6",
+                            "dataType": {
+                                "type": 42,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "mfa_secret",
+                            "field": "7",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "mfa_recovery_codes",
+                            "field": "8",
+                            "dataType": {
+                                "type": 40,
+                                "needsQuotes": true
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "last_login",
+                            "field": "9",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "disabled",
+                            "field": "10",
+                            "dataType": {
+                                "type": 42,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "id",
+                            "field": "11",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": true,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "created_at",
+                            "field": "12",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "updated_at",
+                            "field": "13",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "is_active",
+                            "field": "14",
+                            "dataType": {
+                                "type": 42,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 3 records retrieved in 2.121ms"
+                    },
+                    "totalRowCount": 3,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 4,
+                    "sql": "\nSELECT * FROM users",
+                    "updatable": true,
+                    "fullTableName": "users"
+                },
+                {
+                    "tabId": "944e1f7d-7268-41bb-c35d-c1a5fcea556c",
+                    "resultId": "b4b456b7-f3fc-4dec-bbf8-a5b06f5ff250",
+                    "rows": [
+                        {
+                            "0": "c3f96cdc-1735-47cf-8501-70b6b1fbf2ac",
+                            "1": "f",
+                            "2": "Low",
+                            "3": ",k",
+                            "4": "08698647-fde4-43f6-9e47-afab08e73364",
+                            "5": "2025-09-03 07:22:28",
+                            "6": "2025-09-03 07:22:28",
+                            "7": 1
+                        },
+                        {
+                            "0": "7f82f624-9d8b-4455-a1e1-7e127a26bd01",
+                            "1": "g",
+                            "2": "Critical",
+                            "3": "h",
+                            "4": "378485ef-460d-4a5b-95b6-a8929c39eeef",
+                            "5": "2025-09-03 07:27:41",
+                            "6": "2025-09-03 07:27:41",
+                            "7": 1
+                        },
+                        {
+                            "0": "7f82f624-9d8b-4455-a1e1-7e127a26bd01",
+                            "1": "IAM",
+                            "2": "Medium",
+                            "3": "gas",
+                            "4": "519a4d15-0443-41e5-8690-42bf7dff859a",
+                            "5": "2025-09-03 05:39:48",
+                            "6": "2025-09-03 05:39:48",
+                            "7": 1
+                        },
+                        {
+                            "0": "7f82f624-9d8b-4455-a1e1-7e127a26bd01",
+                            "1": "a",
+                            "2": "Critical",
+                            "3": "d",
+                            "4": "55b891b1-fa68-414d-8f08-dfa185878548",
+                            "5": "2025-09-03 05:40:05",
+                            "6": "2025-09-03 05:40:05",
+                            "7": 1
+                        },
+                        {
+                            "0": "7f82f624-9d8b-4455-a1e1-7e127a26bd01",
+                            "1": "d",
+                            "2": "Critical",
+                            "3": "d",
+                            "4": "7d1e09c1-417b-4bba-bc20-10a6966da5b0",
+                            "5": "2025-09-03 08:49:43",
+                            "6": "2025-09-03 08:49:43",
+                            "7": 1
+                        },
+                        {
+                            "0": "c3f96cdc-1735-47cf-8501-70b6b1fbf2ac",
+                            "1": "IAM",
+                            "2": "Low",
+                            "3": "something",
+                            "4": "7f701e69-32ee-4bc0-98c5-599e2d4bb5d9",
+                            "5": "2025-09-02 16:25:21",
+                            "6": "2025-09-03 05:38:31",
+                            "7": 1
+                        },
+                        {
+                            "0": "c3f96cdc-1735-47cf-8501-70b6b1fbf2ac",
+                            "1": "d",
+                            "2": "Critical",
+                            "3": "d",
+                            "4": "89dc2fbc-c949-40ca-9051-7a7cf911e928",
+                            "5": "2025-09-03 07:02:33",
+                            "6": "2025-09-03 07:02:33",
+                            "7": 1
+                        },
+                        {
+                            "0": "7f82f624-9d8b-4455-a1e1-7e127a26bd01",
+                            "1": "f",
+                            "2": "Low",
+                            "3": "f",
+                            "4": "8d1d70e3-85fa-48f9-8a3b-f61136159e70",
+                            "5": "2025-09-03 09:38:54",
+                            "6": "2025-09-03 09:38:54",
+                            "7": 1
+                        },
+                        {
+                            "0": "c3f96cdc-1735-47cf-8501-70b6b1fbf2ac",
+                            "1": "d",
+                            "2": "Critical",
+                            "3": "d",
+                            "4": "9ef844dc-93e8-4e4a-b4df-786186df4e60",
+                            "5": "2025-09-03 07:01:08",
+                            "6": "2025-09-03 07:01:08",
+                            "7": 1
+                        },
+                        {
+                            "0": "c3f96cdc-1735-47cf-8501-70b6b1fbf2ac",
+                            "1": "IAM",
+                            "2": "Medium",
+                            "3": "jg",
+                            "4": "a3ca72b3-786c-47f7-8a63-278cc6f84c58",
+                            "5": "2025-09-03 04:22:12",
+                            "6": "2025-09-03 04:22:12",
+                            "7": 1
+                        },
+                        {
+                            "0": "c3f96cdc-1735-47cf-8501-70b6b1fbf2ac",
+                            "1": "h",
+                            "2": "Low",
+                            "3": "kl",
+                            "4": "a6353836-4c85-4ee9-bbba-f472734c3dc2",
+                            "5": "2025-09-03 07:32:45",
+                            "6": "2025-09-03 07:32:45",
+                            "7": 1
+                        },
+                        {
+                            "0": "c3f96cdc-1735-47cf-8501-70b6b1fbf2ac",
+                            "1": "c",
+                            "2": "Critical",
+                            "3": "d",
+                            "4": "cde788ce-fbdc-43b7-9dc8-1a0690b79796",
+                            "5": "2025-09-03 07:04:40",
+                            "6": "2025-09-03 07:04:40",
+                            "7": 1
+                        },
+                        {
+                            "0": "7f82f624-9d8b-4455-a1e1-7e127a26bd01",
+                            "1": "s",
+                            "2": "High",
+                            "3": "f",
+                            "4": "d6952146-adbb-46d2-a63d-d1404635f303",
+                            "5": "2025-09-03 07:00:43",
+                            "6": "2025-09-03 07:00:43",
+                            "7": 1
+                        },
+                        {
+                            "0": "7f82f624-9d8b-4455-a1e1-7e127a26bd01",
+                            "1": "f",
+                            "2": "Low",
+                            "3": "sdf",
+                            "4": "e99a2613-1aff-4d62-bcf7-f38ba5257bcc",
+                            "5": "2025-09-03 10:13:01",
+                            "6": "2025-09-03 10:13:01",
+                            "7": 1
+                        },
+                        {
+                            "0": "c3f96cdc-1735-47cf-8501-70b6b1fbf2ac",
+                            "1": "s",
+                            "2": "High",
+                            "3": "f",
+                            "4": "f2f19b20-672c-4eea-8ee2-9b7f2f896823",
+                            "5": "2025-09-03 07:19:31",
+                            "6": "2025-09-03 07:19:31",
+                            "7": 1
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "checklist_id",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "control_area",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "severity",
+                            "field": "2",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "control_text",
+                            "field": "3",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "id",
+                            "field": "4",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": true,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "created_at",
+                            "field": "5",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "updated_at",
+                            "field": "6",
+                            "dataType": {
+                                "type": 26,
+                                "dateTimePrecision": 8,
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "is_active",
+                            "field": "7",
+                            "dataType": {
+                                "type": 42,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 15 records retrieved in 2.388ms"
+                    },
+                    "totalRowCount": 15,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 5,
+                    "sql": "\nSELECT * FROM controls",
+                    "updatable": true,
+                    "fullTableName": "controls"
+                }
+            ]
+        },
+        {
+            "state": {
+                "start": 11,
+                "end": 11,
+                "language": "mysql",
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 0
+                        },
+                        "contentStart": 0,
+                        "state": 0
+                    }
+                ]
+            },
+            "data": []
+        }
+    ]
+}

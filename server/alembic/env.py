@@ -6,6 +6,15 @@ from sqlalchemy import pool
 from alembic import context
 from db.base import Base
 
+from models import (
+    applications,
+    checklists,
+    users,
+    controls,
+    checklist_assignments,
+    user_responses,
+)
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

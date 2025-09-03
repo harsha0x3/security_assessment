@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+# from db.events import checklist_complete_update
+from db.events.app_complete_update import update_application_completion
 from routes import (
     auth_routes,
     application_routes,

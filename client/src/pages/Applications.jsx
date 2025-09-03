@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import { useSelector, useDispatch } from "react-redux";
-import { Save, X } from "lucide-react";
+import { Save, X, CheckCircle, Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useGetAllChecklistsQuery } from "../store/apiSlices/checklistsApiSlice";
 import {
   selectCurrentApp,
   setCurrentApplication,
@@ -11,10 +12,13 @@ import {
   loadApps,
 } from "../store/appSlices/applicationSlice";
 import {
+  selectAllChecklists,
+  loadChecklists,
+} from "../store/appSlices/checklistsSlice";
+import {
   useAddApplicationMutation,
   useGetApplicationsQuery,
   useUpdateApplicationMutation,
-  useLazyGetApplicationsQuery,
 } from "../store/apiSlices/applicationApiSlice";
 
 const Applications = () => {
@@ -26,9 +30,11 @@ const Applications = () => {
   const [addAppMutation] = useAddApplicationMutation();
   const [updateAppMutation] = useUpdateApplicationMutation();
 
+  const allChecklists = useSelector(selectAllChecklists);
   const currentApp = useSelector(selectCurrentApp);
+  const allApps = useSelector(loadAllApps);
 
-  // Form state
+  // ---------------- Form State ----------------
   const [appName, setAppName] = useState("");
   const [description, setDescription] = useState("");
   const [platform, setPlatform] = useState("");
@@ -37,11 +43,13 @@ const Applications = () => {
   const [providerName, setProviderName] = useState("");
   const [infraHost, setInfraHost] = useState("");
   const [appTech, setAppTech] = useState("");
-
   const [isEditing, setIsEditing] = useState(false);
   const [isNewApp, setIsNewApp] = useState(false);
+  const [selectedAppId, setSelectedAppId] = useState(null);
+  const { data: appChecklists, isSuccess: checklistsSuccess } =
+    useGetAllChecklistsQuery(selectedAppId);
 
-  // Sync form fields when currentApp changes
+  // Sync form with selected app
   useEffect(() => {
     if (currentApp && !isNewApp) {
       setAppName(currentApp.name || "");
@@ -56,13 +64,18 @@ const Applications = () => {
   }, [currentApp, isNewApp]);
 
   useEffect(() => {
+    if (appChecklists && checklistsSuccess) {
+      dispatch(loadChecklists(appChecklists));
+    }
+  }, [appChecklists, dispatch, checklistsSuccess]);
+
+  useEffect(() => {
     if (isSuccess && data) {
       dispatch(loadApps(data));
     }
   }, [data, dispatch, isSuccess]);
 
-  const allApps = useSelector(loadAllApps);
-
+  // ---------------- Handlers ----------------
   const resetForm = () => {
     setAppName("");
     setDescription("");
@@ -75,6 +88,7 @@ const Applications = () => {
   };
 
   const handleSelect = (appId) => {
+    setSelectedAppId(appId);
     dispatch(setCurrentApplication({ appId }));
     setIsNewApp(false);
   };
@@ -124,9 +138,9 @@ const Applications = () => {
       }
     }
   };
+
   const handleCreateNewAppSubmit = async (e) => {
     e.preventDefault();
-
     const payload = {
       name: appName,
       description,
@@ -137,7 +151,6 @@ const Applications = () => {
       infra_host: infraHost,
       app_tech: appTech,
     };
-
     try {
       if (isNewApp) {
         const result = await addAppMutation({ payload }).unwrap();
@@ -151,8 +164,9 @@ const Applications = () => {
 
   // Load initial sizes from localStorage
   const savedSizes = JSON.parse(localStorage.getItem("paneSizes")) || [
+    "20%",
+    "50%",
     "30%",
-    "70%",
   ];
 
   return (
@@ -163,7 +177,7 @@ const Applications = () => {
           localStorage.setItem("paneSizes", JSON.stringify(sizes))
         }
       >
-        {/* Left Pane: App List */}
+        {/* Left Pane: Applications List */}
         <div className="p-4 border-r border-gray-300 bg-gray-50 overflow-y-auto">
           <h3 className="text-lg font-semibold mb-4">Applications</h3>
           <button
@@ -185,8 +199,8 @@ const Applications = () => {
           </ul>
         </div>
 
-        {/* Right Pane: Create/Edit App Form */}
-        <div className="p-6 overflow-y-auto">
+        {/* Middle Pane: Create/Edit Form */}
+        <div className="p-6 overflow-y-auto border-r border-gray-300">
           <h3 className="text-xl font-semibold mb-4">
             {isNewApp ? "Create New Application" : "Edit Application"}
           </h3>
@@ -295,6 +309,7 @@ const Applications = () => {
               </div>
             </div>
           </form>
+
           <div className="flex gap-3 mt-4">
             {isNewApp && (
               <button
@@ -305,7 +320,6 @@ const Applications = () => {
                 Create
               </button>
             )}
-
             {!isNewApp && (
               <button
                 type="button"
@@ -315,16 +329,14 @@ const Applications = () => {
                 } text-white hover:bg-green-700 transition`}
               >
                 {isEditing ? (
-                  <span>
-                    <span>"Save"</span>
-                    <Save className="w-4 h-4" />
+                  <span className="flex gap-2 items-center">
+                    Save <Save className="w-4 h-4" />
                   </span>
                 ) : (
                   "Edit"
                 )}
               </button>
             )}
-
             {!isNewApp && isEditing && (
               <button
                 type="button"
@@ -335,16 +347,65 @@ const Applications = () => {
                 Cancel
               </button>
             )}
-
             {!isNewApp && !isEditing && (
               <Link
                 to={`/${currentApp?.appId}/checklists`}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition"
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition"
               >
                 Show Checklist
               </Link>
             )}
           </div>
+        </div>
+
+        {/* Right Pane: Checklist Details */}
+        <div className="p-6 overflow-y-auto bg-gray-50">
+          <h3 className="text-xl font-semibold mb-4">Checklists</h3>
+          {allChecklists.length === 0 ? (
+            <p className="text-gray-500">No checklists available.</p>
+          ) : (
+            <ul className="space-y-4">
+              {allChecklists.map((chk) => (
+                <li
+                  key={chk.checklistId}
+                  className="p-4 rounded-lg border border-gray-200 bg-white shadow-sm"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="text-lg font-medium">{chk.checklistType}</h4>
+                    {chk.isCompleted ? (
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <Clock className="w-5 h-5 text-yellow-500" />
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Created: {new Date(chk.createdAt).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Updated: {new Date(chk.updatedAt).toLocaleString()}
+                  </p>
+
+                  {chk.assignedUsers && chk.assignedUsers.length > 0 && (
+                    <div>
+                      <h5 className="text-sm font-semibold mb-1">
+                        Assigned Users:
+                      </h5>
+                      <ul className="space-y-1">
+                        {chk.assignedUsers.map((user) => (
+                          <li
+                            key={user.id}
+                            className="text-sm text-gray-700 border-b last:border-0 py-1"
+                          >
+                            {user.username} — {user.email}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </Allotment>
     </div>

@@ -8,6 +8,7 @@ from controllers.checklist_controller import (
     get_checklists_for_user,
     update_checklist,
     remove_checklist,
+    checklist_submission,
 )
 from models.schemas.crud_schemas import UserOut
 from db.connection import get_db_conn
@@ -77,3 +78,15 @@ async def delete_checklist(
             detail=f"You can't access to update {current_user.username}",
         )
     return remove_checklist(checklist_id, db)
+
+
+@router.post("/checklists/{checklist_id}/submission")
+async def submit_checklist(
+    checklist_id: Annotated[str, Path(title="Checklist ID")],
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+):
+    """
+    Endpoint to submit a checklist.
+    """
+    return checklist_submission(checklist_id, current_user, db)

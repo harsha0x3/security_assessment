@@ -10,7 +10,7 @@ const controlsApiSlice = apiSlice.injectEndpoints({
           body: payload,
         };
       },
-      invalidatesTags: ["Controls"],
+      invalidatesTags: [{ type: "Controls", id: "LIST" }],
     }),
 
     getAllControls: builder.query({
@@ -23,10 +23,27 @@ const controlsApiSlice = apiSlice.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.map((c) => ({ type: "Controls", id: c.control_id })),
+              ...(result.list_controls || []).map((c) => ({
+                type: "Controls",
+                id: c.control_id,
+              })),
               { type: "Controls", id: "LIST" },
             ]
           : [{ type: "Controls", id: "LIST" }],
+    }),
+
+    updateControls: builder.mutation({
+      query: ({ payload, controlId }) => {
+        return {
+          url: `/control/${controlId}`,
+          method: "PATCH",
+          body: payload,
+        };
+      },
+      invalidatesTags: (result, error, { controlId }) => [
+        { type: "Controls", id: controlId },
+        { type: "Controls", id: "LIST" },
+      ],
     }),
   }),
 });
@@ -35,4 +52,5 @@ export const {
   useAddControlMutation,
   useGetAllControlsQuery,
   useGetAllControlsWithResponsesQuery,
+  useUpdateControlsMutation,
 } = controlsApiSlice;
