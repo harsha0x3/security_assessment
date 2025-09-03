@@ -103,18 +103,25 @@ const Controls = () => {
   };
 
   const onSubmitResponse = async (formData, controlId) => {
-    const payload = {
-      current_setting: formData.current_setting,
-      review_comment: formData.review_comment,
-      evidence_path: formData.evidence_path,
-    };
+    const form = new FormData();
+    form.append("current_setting", formData.current_setting);
+    form.append("review_comment", formData.review_comment);
+    if (formData.evidence_file && formData.evidence_file[0]) {
+      form.append("evidence_file", formData.evidence_file[0]);
+    }
+
+    // const payload = {
+    //   current_setting: formData.current_setting,
+    //   review_comment: formData.review_comment,
+    //   evidence_path: formData.evidence_path,
+    // };
     const controlData = allControls?.list_controls?.find(
       (c) => c.control_id === controlId
     );
     const responseId = controlData?.response_id;
 
     try {
-      await saveResponse({ controlId, payload, responseId }).unwrap();
+      await saveResponse({ controlId, payload: form, responseId }).unwrap();
       setEditingRowId(null);
       reset();
     } catch (err) {
@@ -256,14 +263,38 @@ const Controls = () => {
         header: "Evidence Path",
         cell: ({ row }) => {
           const controlId = row.original.control_id;
-          return editingRowId === controlId ? (
-            <input
-              className="border rounded px-2 py-1 text-sm w-full"
-              {...register("evidence_path")}
-            />
+          if (editingRowId === controlId) {
+            return (
+              <input
+                type="file"
+                className="border rounded px-2 py-1 text-sm w-full"
+                {...register("evidence_file")}
+              />
+            );
+          }
+          const evidencePath = row.original.evidence_path;
+          return evidencePath ? (
+            <a
+              href={`http://localhost:8000/uploads/${evidencePath}`} // prepend backend URL
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              View Evidence
+            </a>
           ) : (
-            row.original.evidence_path || "-"
+            "-"
           );
+          // return editingRowId === controlId ? (
+          //   <input
+          //     type="file"
+          //     className="border rounded px-2 py-1 text-sm w-full"
+          //     {...register("evidence_file")}
+          //   />
+          // ) : (
+
+          //   row.original.evidence_path || "-"
+          // );
         },
       },
       {

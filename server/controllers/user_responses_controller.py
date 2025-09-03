@@ -8,7 +8,12 @@ from models.schemas.crud_schemas import (
 )
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Form, File, UploadFile
+import os, shutil
+
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+UPLOAD_DIR = os.path.join(ROOT_DIR, "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 def add_user_response(
@@ -73,6 +78,7 @@ def update_user_response(
     try:
         response = db.scalar(select(UserResponse).where(UserResponse.id == response_id))
         if not response:
+            print("Not Found REsponse")
             return UserResponseOut(
                 id=response_id,
                 control_id="",
@@ -88,6 +94,9 @@ def update_user_response(
                 detail="You are not allowed to edit this response",
             )
         update_data = payload.model_dump(exclude_unset=True)
+        # print(update_data)
+        if "evidence_path" in update_data and update_data["evidence_path"] is None:
+            del update_data["evidence_path"]
 
         for key, val in update_data.items():
             setattr(response, key, val)
@@ -103,3 +112,19 @@ def update_user_response(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update the response. {str(e)}",
         )
+
+
+def save_uploaded_file(
+    file: UploadFile | None, user_id: str, control_id: str
+) -> str | None:
+    if not file:
+        return None
+
+    file_name = f"{user_id}_{control_id}_{file.filename}"
+    file_path = os.path.join(UPLOAD_DIR, file_name)
+
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return f"{file_name}"

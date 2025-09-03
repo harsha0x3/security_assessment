@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from fastapi.staticfiles import StaticFiles
 
 # from db.events import checklist_complete_update
 from db.events.app_complete_update import update_application_completion
@@ -13,6 +14,7 @@ from routes import (
     responses_routes,
 )
 from db.connection import init_db
+from controllers.user_responses_controller import UPLOAD_DIR
 
 
 @asynccontextmanager
@@ -30,6 +32,8 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=True,
 )
+
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
 @app.get("/health")
