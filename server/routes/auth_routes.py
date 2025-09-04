@@ -1,6 +1,11 @@
 from typing import Annotated, Any
 
-from controllers.auth_controller import login_user, refresh_access_token, register_user
+from controllers.auth_controller import (
+    login_user,
+    refresh_access_token,
+    register_user,
+    clear_jwt_cookies,
+)
 from db.connection import get_db_conn
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -76,3 +81,11 @@ def get_me(
     ],
 ):
     return current_user
+
+
+@router.post("/logout")
+def logout_user(response: Response):
+    """
+    Logs out the user by clearing the JWT cookies.
+    """
+    clear_jwt_cookies(response)

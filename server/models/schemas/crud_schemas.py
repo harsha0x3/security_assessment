@@ -132,7 +132,7 @@ class UserResponseCreate(BaseModel):
 
 
 class UserResponseUpdate(BaseModel):
-    current_sestting: str | None = None
+    current_setting: str | None = None
     review_comment: str | None = None
     evidence_path: str | None = None
 
@@ -143,7 +143,7 @@ class UserResponseOut(BaseModel):
     user_id: str
     current_setting: str
     review_comment: str
-    evidence_path: str
+    evidence_path: str | None = None
 
     created_at: datetime | None = None
     updated_at: datetime | None = None

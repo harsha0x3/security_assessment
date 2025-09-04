@@ -36,9 +36,11 @@ from controllers.user_responses_controller import (
     add_user_response,
     update_user_response,
     save_uploaded_file,
+    UPLOAD_DIR,
 )
 from uuid import uuid4
 from models.user_responses import UserResponse
+import os
 
 router = APIRouter(tags=["responses"])
 
@@ -70,6 +72,7 @@ async def edit_user_response(
     review_comment: Annotated[str, Form(...)],
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
+    remove_evidence: Annotated[bool, Form(...)] = False,
     evidence_file: UploadFile | None = File(None),
 ) -> Annotated[UserResponseOut, "Func to update user responses"]:
     control_id = db.scalar(
@@ -77,11 +80,20 @@ async def edit_user_response(
     )
     if not control_id:
         control_id = f"{uuid4().hex}"
-    evidence_path = save_uploaded_file(evidence_file, current_user.id, control_id)
+    if evidence_file:
+        evidence_path = save_uploaded_file(evidence_file, current_user.id, control_id)
+    elif remove_evidence:
+        existing = db.scalar(select(UserResponse).where(UserResponse.id == response_id))
+        if existing and existing.evidence_path:
+            try:
+                os.remove(os.path.join(UPLOAD_DIR, existing.evidence_path))
+            except FileNotFoundError:
+                pass
+        evidence_path = None
     payload = UserResponseUpdate(
-        current_sestting=current_setting,
+        current_setting=current_setting,
         review_comment=review_comment,
-        evidence_path=evidence_path,
+        evidence_path=evidence_path if evidence_file else None,
     )
     return update_user_response(
         payload=payload, response_id=response_id, db=db, current_user=current_user

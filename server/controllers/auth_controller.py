@@ -140,3 +140,20 @@ def refresh_access_token(
         "msg": "Token Refreshed successfully",
         "user": user.to_dict_safe(),
     }
+
+
+def clear_jwt_cookies(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+    )
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+    )

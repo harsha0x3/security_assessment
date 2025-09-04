@@ -9,7 +9,8 @@ from models.schemas.crud_schemas import (
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Form, File, UploadFile
-import os, shutil
+import os
+import shutil
 
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 UPLOAD_DIR = os.path.join(ROOT_DIR, "uploads")
@@ -94,9 +95,7 @@ def update_user_response(
                 detail="You are not allowed to edit this response",
             )
         update_data = payload.model_dump(exclude_unset=True)
-        # print(update_data)
-        if "evidence_path" in update_data and update_data["evidence_path"] is None:
-            del update_data["evidence_path"]
+        print(update_data)
 
         for key, val in update_data.items():
             setattr(response, key, val)
