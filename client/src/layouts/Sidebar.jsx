@@ -18,11 +18,6 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
 
   const navigationItems = [
     {
-      name: "Dashboard",
-      path: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
       name: "Applications",
       path: "/applications",
       icon: FolderOpen,
@@ -37,11 +32,6 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
         ]
       : []),
     {
-      name: "User Assignment",
-      path: "/user-assignment",
-      icon: Users,
-    },
-    {
       name: "Profile",
       path: "/profile",
       icon: User,
@@ -49,8 +39,8 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
   ];
 
   const isActiveRoute = (path) => {
-    if (path === "/dashboard") {
-      return location.pathname === "/" || location.pathname === "/dashboard";
+    if (path === "/applications") {
+      return location.pathname === "/" || location.pathname === "/applications";
     }
     return location.pathname.startsWith(path);
   };

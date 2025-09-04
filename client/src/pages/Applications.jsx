@@ -371,7 +371,16 @@ const Applications = () => {
                   className="p-4 rounded-lg border border-gray-200 bg-white shadow-sm"
                 >
                   <div className="flex justify-between items-center mb-2">
-                    <h4 className="text-lg font-medium">{chk.checklistType}</h4>
+                    <h4
+                      className="text-lg font-medium cursor-pointer"
+                      onClick={() =>
+                        navigate(
+                          `/${currentApp?.appId}/checklists/${chk.checklistId}`
+                        )
+                      }
+                    >
+                      {chk.checklistType}
+                    </h4>
                     {chk.isCompleted ? (
                       <CheckCircle className="w-5 h-5 text-green-600" />
                     ) : (

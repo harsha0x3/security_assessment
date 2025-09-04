@@ -15,7 +15,7 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { selectCurrentChecklist } from "../../store/appSlices/checklistsSlice";
-import { Save, Edit3, X, Plus, Settings } from "lucide-react";
+import { Save, Edit3, X, Plus, Settings, Shredder, Upload } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import { useForm } from "react-hook-form";
 
@@ -110,11 +110,10 @@ const Controls = () => {
       form.append("evidence_file", formData.evidence_file[0]);
     }
 
-    // const payload = {
-    //   current_setting: formData.current_setting,
-    //   review_comment: formData.review_comment,
-    //   evidence_path: formData.evidence_path,
-    // };
+    if (formData.remove_evidence) {
+      form.append("remove_evidence", "true");
+    }
+
     const controlData = allControls?.list_controls?.find(
       (c) => c.control_id === controlId
     );
@@ -220,7 +219,7 @@ const Controls = () => {
             />
           ) : (
             <div
-              className="max-w-xs truncate"
+              className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1"
               title={row.original.control_text}
             >
               {row.original.control_text || "-"}
@@ -239,7 +238,9 @@ const Controls = () => {
               {...register("current_setting")}
             />
           ) : (
-            row.original.current_setting || "-"
+            <div className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1">
+              {row.original.current_setting || "-"}
+            </div>
           );
         },
       },
@@ -254,25 +255,61 @@ const Controls = () => {
               {...register("review_comment")}
             />
           ) : (
-            row.original.review_comment || "-"
+            <div className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1">
+              {row.original.review_comment || "-"}
+            </div>
           );
         },
       },
       {
         accessorKey: "evidence_path",
-        header: "Evidence Path",
+        header: "Evidence",
         cell: ({ row }) => {
           const controlId = row.original.control_id;
+          const evidencePath = row.original.evidence_path;
+
           if (editingRowId === controlId) {
             return (
-              <input
-                type="file"
-                className="border rounded px-2 py-1 text-sm w-full"
-                {...register("evidence_file")}
-              />
+              <>
+                <div className="flex felx-col gap-2">
+                  {evidencePath && (
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`http://localhost:8000/uploads/${evidencePath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        Current File
+                      </a>
+                      <button
+                        className="text-red-600 text-xs underline"
+                        disabled={!evidencePath}
+                        onClick={() => {
+                          reset((prev) => ({
+                            ...prev,
+                            evidence_file: null,
+                            remove_evidence: true,
+                          }));
+                        }}
+                      >
+                        Remove{" "}
+                        <span>
+                          <Shredder className="text-red-600" />
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  className="border rounded px-2 py-1 text-sm w-full"
+                  {...register("evidence_file")}
+                />
+              </>
             );
           }
-          const evidencePath = row.original.evidence_path;
+
           return evidencePath ? (
             <a
               href={`http://localhost:8000/uploads/${evidencePath}`} // prepend backend URL

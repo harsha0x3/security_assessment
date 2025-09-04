@@ -131,20 +131,14 @@ const Checklists = () => {
                 <button
                   key={chk.checklistId}
                   onClick={() => handleSelectChecklist(chk)}
-                  className={`whitespace-nowrap px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  className={`flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                     selectedChecklistId === chk.checklistId
                       ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
                   }`}
                 >
-                  {chk.checklistType}{" "}
-                  <span>
-                    {chk.isCompleted && (
-                      <span>
-                        <CheckCircle2 />
-                      </span>
-                    )}
-                  </span>
+                  <span>{chk.checklistType}</span>
+                  {chk.isCompleted && <CheckCircle2 className="inline-block" />}
                 </button>
               ))}
             </div>

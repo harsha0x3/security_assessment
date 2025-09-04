@@ -16,8 +16,8 @@ import {
 import {
   selectIsLoading,
   selectError,
-  clearError,
-} from "../../slices/authSlice";
+  setError,
+} from "../../store/appSlices/authSlice";
 
 const RegisterForm = ({ onSwitchToLogin, onClose }) => {
   const dispatch = useDispatch();
@@ -47,7 +47,7 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
 
   // Clear errors when component mounts
   useEffect(() => {
-    dispatch(clearError());
+    dispatch(setError(null));
   }, []);
 
   // Validate password strength

@@ -47,8 +47,8 @@ function App() {
           {/* Protected Routes */}
           <Route path="/" element={<ProtectedLayout />}>
             <Route path="/" element={<RootLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
+              <Route index element={<Navigate to="/applications" replace />} />
+              {/* <Route path="dashboard" element={<Dashboard />} /> */}
               <Route path="applications" element={<Applications />} />
               <Route path=":appId/checklists" element={<ChecklistsLayout />}>
                 <Route path=":checklistId" element={<Controls />} />
