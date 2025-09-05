@@ -162,6 +162,8 @@ const Controls = () => {
       {
         accessorKey: "control_area",
         header: "Control Area",
+        minSize: 70, // minimum width
+        maxSize: 400,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
@@ -233,12 +235,15 @@ const Controls = () => {
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingRowId === controlId ? (
-            <input
-              className="border rounded px-2 py-1 text-sm w-full"
+            <textarea
+              className="border rounded px-2 py-1 text-sm w-full min-h-[60px] resize-y"
               {...register("current_setting")}
             />
           ) : (
-            <div className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1">
+            <div
+              className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1"
+              title={row.original.current_setting}
+            >
               {row.original.current_setting || "-"}
             </div>
           );
@@ -250,12 +255,15 @@ const Controls = () => {
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingRowId === controlId ? (
-            <input
-              className="border rounded px-2 py-1 text-sm w-full"
+            <textarea
+              className="border rounded px-2 py-1 text-sm w-full min-h-[60px] resize-y"
               {...register("review_comment")}
             />
           ) : (
-            <div className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1">
+            <div
+              className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1"
+              title={row.original.review_comment}
+            >
               {row.original.review_comment || "-"}
             </div>
           );
@@ -451,6 +459,7 @@ const Controls = () => {
     data: allControls?.list_controls || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
+    columnResizeMode: "onChange",
   });
 
   if (isFetchingControls)
@@ -561,12 +570,29 @@ const Controls = () => {
                 {hg.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="text-left px-4 py-3 border-b font-medium text-sm text-gray-700"
+                    className="relative text-left px-4 py-3 border-b font-medium text-sm text-gray-700"
+                    style={{
+                      width: header.getSize(), // dynamic width
+                      minWidth: header.column.columnDef.minSize,
+                      maxWidth: header.column.columnDef.maxSize,
+                    }}
                   >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
+                    <div className="flex items-center justify-between">
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {header.column.getCanResize() && (
+                        <div
+                          {...{
+                            onMouseDown: header.getResizeHandler(),
+                            onTouchStart: header.getResizeHandler(),
+                            className:
+                              "absolute right-0 top-0 h-full w-1 cursor-col-resize z-10",
+                          }}
+                        />
+                      )}
+                    </div>
                   </th>
                 ))}
               </tr>
@@ -597,7 +623,7 @@ const Controls = () => {
               {adding ? (
                 <form
                   onSubmit={handleAddSubmit(onSubmitAddControl)}
-                  className="bg-gray-50 p-4 rounded-lg space-y-4"
+                  className="rounded-lg space-y-4"
                 >
                   <h4 className="font-medium text-gray-900 mb-3">
                     Add New Control
@@ -606,11 +632,11 @@ const Controls = () => {
                     <input
                       type="text"
                       placeholder="Control Area"
-                      className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="border rounded px-3 py-2 text-sm focus:ring-2 w-full focus:ring-blue-500 focus:border-transparent"
                       {...registerAdd("control_area", { required: true })}
                     />
                     <select
-                      className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="border rounded px-3 py-2 text-sm focus:ring-2 w-full focus:ring-blue-500 focus:border-transparent"
                       {...registerAdd("severity", { required: true })}
                     >
                       <option value="">Select Severity</option>
@@ -622,7 +648,7 @@ const Controls = () => {
                     <div className="md:col-span-1">
                       <textarea
                         placeholder="Control Text"
-                        className="border rounded px-3 py-2 text-sm w-full h-20 resize-y focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="border rounded px-3 py-2 text-sm focus:ring-2 w-full focus:ring-blue-500 focus:border-transparent"
                         {...registerAdd("control_text", { required: true })}
                       />
                     </div>

@@ -9,6 +9,7 @@ import {
 import {
   selectAuth,
   userLogout as logoutAction,
+  selectError,
 } from "../store/appSlices/authSlice";
 
 import { toast } from "react-toastify";
@@ -16,6 +17,7 @@ import { toast } from "react-toastify";
 export const useAuth = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const loginError = useSelector(selectError);
 
   const auth = useSelector(selectAuth);
   const isAuthenticated = auth.isAuthenticated;
@@ -28,7 +30,7 @@ export const useAuth = () => {
 
   const login = async (credentials) => {
     try {
-      console.log("inside useauth login");
+      console.log("inside useauth login", credentials);
       const data = await loginMutation(credentials).unwrap();
       console.log(data);
       toast.success("Login Succesful!");
@@ -37,23 +39,22 @@ export const useAuth = () => {
     } catch (error) {
       console.log(error);
       console.error("Error logging in", error.data?.detail || "Login Failed");
-      toast.error(error);
+      toast.error(error.data?.detail || "Login Failed");
       return { success: false, error: error.data?.detail || "Login Failed" };
     }
   };
 
   const register = async (userData) => {
     try {
-      await registerMutation(userData).unwrap();
+      const response = await registerMutation(userData).unwrap();
       toast.success("Registration Successful!");
-      navigate("/dashboard");
-      return { success: true };
+      return { success: true, response: response };
     } catch (error) {
       console.error(
         "Error registration",
         error.data?.detail || "Registration failed"
       );
-      toast.error(error);
+      toast.error(error.data?.detail || "Login Failed");
     }
   };
 
@@ -64,7 +65,7 @@ export const useAuth = () => {
       dispatch(logoutAction());
       navigate("/login");
     } catch (error) {
-      toast.info("logged out");
+      toast.info(error.data?.detail || "Logout failed");
       dispatch(logoutAction());
       navigate("/login");
     }

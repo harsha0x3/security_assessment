@@ -10,8 +10,9 @@ import { selectAuth, setError } from "../../store/appSlices/authSlice";
 
 const LoginForm = ({ onSwitchToRegister, onClose }) => {
   const [formData, setFormData] = useState({
-    username_or_email: "",
+    email_or_username: "",
     password: "",
+    mfa_code: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const auth = useSelector(selectAuth);
@@ -32,7 +33,7 @@ const LoginForm = ({ onSwitchToRegister, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.username_or_email || !formData.password) {
+    if (!formData.email_or_username || !formData.password) {
       return;
     }
 
@@ -72,8 +73,8 @@ const LoginForm = ({ onSwitchToRegister, onClose }) => {
             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-textMuted" />
             <input
               type="text"
-              name="username_or_email"
-              value={formData.username_or_email}
+              name="email_or_username"
+              value={formData.email_or_username}
               onChange={handleChange}
               placeholder="Enter email or username"
               className="w-full pl-10 pr-4 py-3 text-blue-300 border border-border rounded-xl focus:border-accent focus:ring-1 focus:ring-accent/50 transition-colors"
@@ -111,6 +112,19 @@ const LoginForm = ({ onSwitchToRegister, onClose }) => {
           </div>
         </div>
         <div>
+          <label className="block text-sm font-medium text-text mb-2">
+            MFA Code
+          </label>
+          <input
+            type="text"
+            name="mfa_code"
+            value={formData.mfa_code}
+            onChange={handleChange}
+            placeholder="Enter MFA code (if enabled)"
+            className="w-full pl-10 pr-12 py-3 border text-black border-border rounded-xl focus:border-accent focus:ring-1 focus:ring-accent/50 transition-colors"
+          />
+        </div>
+        <div>
           <button
             type="button"
             className="text-sm text-accent hover:text-accent/80 transition-colors"
@@ -124,7 +138,7 @@ const LoginForm = ({ onSwitchToRegister, onClose }) => {
           size="lg"
           className="w-full"
           disabled={
-            isLoading || !formData.username_or_email || !formData.password
+            isLoading || !formData.email_or_username || !formData.password
           }
           icon={isLoading ? Loader : null}
           loading={isLoading}

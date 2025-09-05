@@ -7,6 +7,7 @@ import {
   setCurrentApplication,
   loadAllApps,
 } from "../store/appSlices/applicationSlice";
+import { selectAuth } from "../store/appSlices/authSlice";
 import {
   setCurrentChecklist,
   loadChecklists,
@@ -45,6 +46,7 @@ const Checklists = () => {
   // API hooks
   const { data, isSuccess } = useGetAllChecklistsQuery(selectedAppId);
   const [addChecklist, { isLoading: isAdding }] = useAddChecklistMutation();
+  const user = useSelector(selectAuth);
 
   // Load checklists when app changes
   useEffect(() => {
@@ -143,25 +145,27 @@ const Checklists = () => {
               ))}
             </div>
 
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setShowModal(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Checklist
-              </button>
-
-              {selectedChecklistId && (
+            {user.role === "admin" && (
+              <div className="flex items-center space-x-3">
                 <button
-                  onClick={() => setIsAssignModalOpen(true)}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  onClick={() => setShowModal(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
                 >
-                  <Users className="w-4 h-4 mr-2" />
-                  Assign Users
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Checklist
                 </button>
-              )}
-            </div>
+
+                {selectedChecklistId && (
+                  <button
+                    onClick={() => setIsAssignModalOpen(true)}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Assign Users
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

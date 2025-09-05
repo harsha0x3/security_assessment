@@ -18,6 +18,7 @@ import {
   selectError,
   setError,
 } from "../../store/appSlices/authSlice";
+import { set } from "mongoose";
 
 const RegisterForm = ({ onSwitchToLogin, onClose }) => {
   const dispatch = useDispatch();
@@ -29,8 +30,10 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
     confirmPassword: "",
     first_name: "",
     last_name: "",
+    isEnableMfa: true,
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [registrationResult, setRegistrationResult] = useState(null);
   //   const [acceptTerms, setAcceptTerms] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState({
     length: false,
@@ -96,13 +99,16 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
       password: formData.password,
       first_name: formData.first_name || null,
       last_name: formData.last_name || null,
+      enable_mfa: formData.isEnableMfa,
+      role: formData.role || "user",
     };
 
     // Attempt registration
     const result = await register(registrationData);
 
     if (result.success) {
-      onClose?.();
+      setRegistrationResult(result.response);
+      // onClose?.();
     }
   };
 
@@ -306,6 +312,36 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
             )}
         </div>
 
+        <div>
+          <input
+            type="checkbox"
+            name="isEnableMfa"
+            value={formData.isEnableMfa}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                isEnableMfa: e.target.checked,
+              }))
+            }
+          />
+          <label>Enable MFA</label>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text mb-2">
+            Role *
+          </label>
+          <select
+            name="role"
+            value={formData.role || "user"}
+            onChange={handleChange}
+            className="w-full px-3 py-3 border border-border rounded-xl focus:border-accent focus:ring-1 focus:ring-accent/50 transition-colors"
+            required
+          >
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
         {/* Terms and Conditions */}
         {/* <div className="flex items-start space-x-3">
           <input
@@ -347,6 +383,23 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
           {isLoading ? "Creating Account..." : "Create Account"}
         </Button>
       </form>
+
+      {registrationResult && registrationResult?.qr_code && (
+        <div className="mt-4 text-center">
+          <h3 className="font-bold">Scan this QR in Authenticator App</h3>
+          <img
+            src={registrationResult.qr_code}
+            alt="MFA QR"
+            className="mx-auto mt-2"
+          />
+          <h4 className="mt-4 font-semibold">Recovery Codes:</h4>
+          <ul className="bg-gray-100 rounded p-3 text-sm">
+            {registrationResult.recovery_codes.map((code, i) => (
+              <li key={i}>{code}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Switch to Login */}
       <div className="text-center mt-6">

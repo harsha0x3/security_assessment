@@ -8,7 +8,6 @@ from controllers.auth_controller import (
 )
 from db.connection import get_db_conn
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
-from fastapi.security import OAuth2PasswordRequestForm
 from models.schemas.auth_schemas import (
     LoginRequest,
     RegisterRequest,
@@ -37,12 +36,14 @@ async def register(
 async def login(
     db: Annotated[Session, Depends(get_db_conn)],
     response: Annotated[Response, "response to pass down to set cookies"],
-    form_data: Annotated[
-        OAuth2PasswordRequestForm, Depends(), "User login form fields"
+    login_data: Annotated[
+        LoginRequest, "Login form fields, including email/username and password"
     ],
 ) -> Annotated[dict[str, Any], "Logs in users and returns Tokens"]:
     log_user = LoginRequest(
-        email_or_username=form_data.username, password=form_data.password
+        email_or_username=login_data.email_or_username,
+        password=login_data.password,
+        mfa_code=login_data.mfa_code,
     )
     return login_user(log_user=log_user, db=db, response=response)
 

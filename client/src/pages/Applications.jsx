@@ -2,9 +2,18 @@ import { useState, useEffect } from "react";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import { useSelector, useDispatch } from "react-redux";
-import { Save, X, CheckCircle, Clock } from "lucide-react";
+import {
+  Save,
+  X,
+  CheckCircle,
+  Clock,
+  PackagePlus,
+  SquareX,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useGetAllChecklistsQuery } from "../store/apiSlices/checklistsApiSlice";
+import { toast } from "react-toastify";
+import { selectAuth } from "../store/appSlices/authSlice";
 import {
   selectCurrentApp,
   setCurrentApplication,
@@ -14,6 +23,7 @@ import {
 import {
   selectAllChecklists,
   loadChecklists,
+  selectCurrentChecklist,
 } from "../store/appSlices/checklistsSlice";
 import {
   useAddApplicationMutation,
@@ -25,14 +35,21 @@ const Applications = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { data, isSuccess } = useGetApplicationsQuery();
+  const {
+    data,
+    isSuccess,
+    isError: isAppFetchError,
+    error: appFetchError,
+  } = useGetApplicationsQuery();
 
-  const [addAppMutation] = useAddApplicationMutation();
-  const [updateAppMutation] = useUpdateApplicationMutation();
+  const [addAppMutation, { error: appAddError }] = useAddApplicationMutation();
+  const [updateAppMutation, { error: updateAppError }] =
+    useUpdateApplicationMutation();
 
   const allChecklists = useSelector(selectAllChecklists);
   const currentApp = useSelector(selectCurrentApp);
   const allApps = useSelector(loadAllApps);
+  const user = useSelector(selectAuth);
 
   // ---------------- Form State ----------------
   const [appName, setAppName] = useState("");
@@ -45,10 +62,44 @@ const Applications = () => {
   const [appTech, setAppTech] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [isNewApp, setIsNewApp] = useState(false);
-  const [selectedAppId, setSelectedAppId] = useState(null);
-  const { data: appChecklists, isSuccess: checklistsSuccess } =
-    useGetAllChecklistsQuery(selectedAppId);
+  const [selectedAppId, setSelectedAppId] = useState(currentApp?.appId || null);
+  const [isVertical, setIsVertical] = useState(window.innerWidth < 750);
+  const {
+    data: appChecklists,
+    isSuccess: checklistsSuccess,
+    isError: isChecklistFetchError,
+    error: checklistFetchError,
+  } = useGetAllChecklistsQuery(selectedAppId);
+  const currentChecklist = useSelector(selectCurrentChecklist);
 
+  useEffect(() => {
+    if (user.isAuthenticated && isAppFetchError) {
+      toast.error(appFetchError?.data?.detail || "Error loading applications");
+    }
+  }, [isAppFetchError, appFetchError, user]);
+
+  useEffect(() => {
+    if (appAddError) {
+      toast.error(
+        appAddError?.data?.detail || "Error creating new application"
+      );
+    }
+  }, [appAddError]);
+
+  useEffect(() => {
+    if (updateAppError) {
+      toast.error(updateAppError?.data?.detail || "Error updating application");
+    }
+  }, [updateAppError]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsVertical(window.innerWidth < 750);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   // Sync form with selected app
   useEffect(() => {
     if (currentApp && !isNewApp) {
@@ -62,6 +113,20 @@ const Applications = () => {
       setAppTech(currentApp.appTech || "");
     }
   }, [currentApp, isNewApp]);
+
+  useEffect(() => {
+    if (isChecklistFetchError && allChecklists.length < 1) {
+      let errText =
+        checklistFetchError?.data?.detail || "Error loading checklists";
+      if (selectedAppId === null) {
+        errText =
+          errText + "\nPlease select an application to view its checklists.";
+      }
+      toast.error(errText || "Error loading checklists for this app", {
+        autoClose: 4000,
+      });
+    }
+  }, [isChecklistFetchError, checklistFetchError, appChecklists]);
 
   useEffect(() => {
     if (appChecklists && checklistsSuccess) {
@@ -139,6 +204,11 @@ const Applications = () => {
     }
   };
 
+  const handleCreateCancel = () => {
+    resetForm();
+    setIsNewApp(false);
+  };
+
   const handleCreateNewAppSubmit = async (e) => {
     e.preventDefault();
     const payload = {
@@ -151,6 +221,15 @@ const Applications = () => {
       infra_host: infraHost,
       app_tech: appTech,
     };
+    const firstEmptyField = Object.entries(payload).find(
+      ([key, value]) => !value || value === ""
+    );
+
+    if (firstEmptyField) {
+      const [key] = firstEmptyField;
+      toast.error(`Please fill the ${key.replace("_", " ")}`); // show toast for first empty
+      return; // stop further execution
+    }
     try {
       if (isNewApp) {
         const result = await addAppMutation({ payload }).unwrap();
@@ -162,260 +241,352 @@ const Applications = () => {
     }
   };
 
+  const handleShowAssesmentClick = (appId) => {
+    if (currentChecklist && currentChecklist?.checklistId) {
+      navigate(`/${appId}/checklists/${currentChecklist?.checklistId}`);
+    } else {
+      navigate(`/${appId}/checklists`);
+    }
+  };
+
   // Load initial sizes from localStorage
   const savedSizes = JSON.parse(localStorage.getItem("paneSizes")) || [
-    "20%",
-    "50%",
-    "30%",
+    "250",
+    "500",
+    "450",
   ];
 
   return (
-    <div className="h-screen mt-2 font-sans">
+    <div className="h-[calc(100vh-4rem)] overflow-hidden">
       <Allotment
-        defaultSizes={savedSizes}
-        onChange={(sizes) =>
-          localStorage.setItem("paneSizes", JSON.stringify(sizes))
-        }
+        vertical={isVertical}
+        // defaultSizes={savedSizes}
+        // onChange={(sizes) =>
+        //   localStorage.setItem("paneSizes", JSON.stringify(sizes))
+        // }
       >
         {/* Left Pane: Applications List */}
-        <div className="p-4 border-r border-gray-300 bg-gray-50 overflow-y-auto">
-          <h3 className="text-lg font-semibold mb-4">Applications</h3>
-          <button
-            onClick={handleCreateNewApp}
-            className="w-full mb-4 px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
-          >
-            + New App
-          </button>
-          <ul className="space-y-2">
-            {allApps.map((app) => (
-              <li
-                key={app.appId}
-                onClick={() => handleSelect(app.appId)}
-                className="p-2 rounded-md border border-gray-300 hover:bg-blue-50 cursor-pointer"
+        <Allotment.Pane
+          minSize={isVertical ? 150 : 200}
+          preferredSize={isVertical ? 200 : 300}
+          className="bg-white border rounded-xl shadow-sm"
+        >
+          <div className="p-4 h-full overflow-y-auto ">
+            <h3 className="text-lg font-semibold mb-4 text-center border-b pb-2 border-gray-200">
+              Applications
+            </h3>
+            {user.role === "admin" && (
+              <button
+                onClick={handleCreateNewApp}
+                className="w-full mb-4 px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition flex items-center justify-center gap-2"
               >
-                {app.name}
-              </li>
-            ))}
-          </ul>
-        </div>
+                <PackagePlus />
+                New App
+              </button>
+            )}
+            <ul className="space-y-2">
+              {allApps.map((app) => {
+                const isSelected = app.appId === selectedAppId;
+                return (
+                  <li
+                    key={app.appId}
+                    onClick={() => handleSelect(app.appId)}
+                    className={`p-3 rounded-md border cursor-pointer shadow-sm transition hover:shadow-md 
+          ${
+            isSelected
+              ? "bg-blue-100 border-blue-500"
+              : "border-gray-300 hover:bg-blue-50"
+          }`}
+                  >
+                    {app.name}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </Allotment.Pane>
 
         {/* Middle Pane: Create/Edit Form */}
-        <div className="p-6 overflow-y-auto border-r border-gray-300">
-          <h3 className="text-xl font-semibold mb-4">
-            {isNewApp ? "Create New Application" : "Edit Application"}
-          </h3>
-          <form className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">App Name</label>
-              <input
-                className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                placeholder="App Name"
-                value={appName}
-                onChange={(e) => setAppName(e.target.value)}
-                disabled={!isEditing && !isNewApp}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Description
-              </label>
-              <textarea
-                className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                placeholder="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={!isEditing && !isNewApp}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+        <Allotment.Pane
+          minSize={isVertical ? 400 : 450}
+          preferredSize={isVertical ? 500 : 600}
+        >
+          <div
+            className={` rounded-xl shadow-sm px-6 py-3 h-full overflow-y-auto`}
+          >
+            <h3
+              className={`text-xl font-bold mb-4 text-center border-b pb-3 ${
+                isNewApp ? "border-amber-500" : "border-gray-200"
+              }`}
+            >
+              {isNewApp ? (
+                <span className="text-blue-500">
+                  Create <span> New</span>
+                  Application
+                </span>
+              ) : isEditing ? (
+                "Edit Application"
+              ) : (
+                "Application Details"
+              )}
+            </h3>
+            <form className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Platform
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  App Name
                 </label>
                 <input
-                  className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="Platform"
-                  value={platform}
-                  onChange={(e) => setPlatform(e.target.value)}
-                  disabled={!isEditing && !isNewApp}
+                  className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  placeholder="App Name"
+                  value={appName}
+                  onChange={(e) => setAppName(e.target.value)}
+                  readOnly={!isEditing && !isNewApp}
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Region</label>
-                <input
-                  className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="Region"
-                  value={region}
-                  onChange={(e) => setRegion(e.target.value)}
-                  disabled={!isEditing && !isNewApp}
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  placeholder="Description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  readOnly={!isEditing && !isNewApp}
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">
+                    Platform
+                  </label>
+                  <input
+                    className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Platform"
+                    value={platform}
+                    onChange={(e) => setPlatform(e.target.value)}
+                    readOnly={!isEditing && !isNewApp}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">
+                    Region
+                  </label>
+                  <input
+                    className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Region"
+                    value={region}
+                    onChange={(e) => setRegion(e.target.value)}
+                    readOnly={!isEditing && !isNewApp}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">
+                    Owner Name
+                  </label>
+                  <input
+                    className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Owner Name"
+                    value={ownerName}
+                    onChange={(e) => setOwnerName(e.target.value)}
+                    readOnly={!isEditing && !isNewApp}
+                  />
+                </div>
+                <div>
+                  <label className="bblock text-sm font-medium mb-1 text-gray-700">
+                    Provider / Vendor
+                  </label>
+                  <input
+                    className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Provider Name"
+                    value={providerName}
+                    onChange={(e) => setProviderName(e.target.value)}
+                    readOnly={!isEditing && !isNewApp}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">
+                    Infra Host
+                  </label>
+                  <input
+                    className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Infra Host"
+                    value={infraHost}
+                    onChange={(e) => setInfraHost(e.target.value)}
+                    readOnly={!isEditing && !isNewApp}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">
+                    App Technology
+                  </label>
+                  <input
+                    className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="App Tech"
+                    value={appTech}
+                    onChange={(e) => setAppTech(e.target.value)}
+                    readOnly={!isEditing && !isNewApp}
+                  />
+                </div>
+              </div>
+            </form>
+
+            <div className="flex gap-3 mt-4">
+              {isNewApp && user.role === "admin" && (
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={handleCreateNewAppSubmit}
+                    className="flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+                  >
+                    Create
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateCancel}
+                    className="flex items-center gap-2 px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-700 transition"
+                  >
+                    <span className="flex">
+                      <SquareX /> <span>Cancel</span>
+                    </span>
+                  </button>
+                </div>
+              )}
+              {!isNewApp && user.role === "admin" && (
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md ${
+                    isEditing ? "bg-blue-600" : "bg-orange-600"
+                  } text-white hover:bg-green-700 transition`}
+                >
+                  {isEditing ? (
+                    <span className="flex gap-2 items-center">
+                      Save <Save className="w-4 h-4" />
+                    </span>
+                  ) : (
+                    "Edit"
+                  )}
+                </button>
+              )}
+              {!isNewApp && isEditing && user.role === "admin" && (
+                <button
+                  type="button"
+                  onClick={() => handleCancel()}
+                  className="flex items-center gap-2 px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+              )}
+              {!isNewApp && !isEditing && (
+                <button
+                  onClick={() => handleShowAssesmentClick(currentApp?.appId)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition"
+                >
+                  Show Assessmnents
+                </button>
+              )}
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Owner Name
-                </label>
-                <input
-                  className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="Owner Name"
-                  value={ownerName}
-                  onChange={(e) => setOwnerName(e.target.value)}
-                  disabled={!isEditing && !isNewApp}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Provider / Vendor
-                </label>
-                <input
-                  className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="Provider Name"
-                  value={providerName}
-                  onChange={(e) => setProviderName(e.target.value)}
-                  disabled={!isEditing && !isNewApp}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Infra Host
-                </label>
-                <input
-                  className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="Infra Host"
-                  value={infraHost}
-                  onChange={(e) => setInfraHost(e.target.value)}
-                  disabled={!isEditing && !isNewApp}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  App Technology
-                </label>
-                <input
-                  className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="App Tech"
-                  value={appTech}
-                  onChange={(e) => setAppTech(e.target.value)}
-                  disabled={!isEditing && !isNewApp}
-                />
-              </div>
-            </div>
-          </form>
-
-          <div className="flex gap-3 mt-4">
-            {isNewApp && (
-              <button
-                type="button"
-                onClick={handleCreateNewAppSubmit}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition"
-              >
-                Create
-              </button>
-            )}
-            {!isNewApp && (
-              <button
-                type="button"
-                onClick={handleEdit}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-                  isEditing ? "bg-blue-600" : "bg-orange-600"
-                } text-white hover:bg-green-700 transition`}
-              >
-                {isEditing ? (
-                  <span className="flex gap-2 items-center">
-                    Save <Save className="w-4 h-4" />
-                  </span>
+          </div>
+        </Allotment.Pane>
+        <Allotment.Pane
+          minSize={isVertical ? 400 : 300}
+          preferredSize={isVertical ? 400 : 500}
+          className="px-6 py-4 bg-white border rounded-xl shadow-sm overflow-y-auto"
+        >
+          {/* Right Pane: Checklist Details */}
+          <div className="overflow-y-auto h-full">
+            <h3 className="text-xl font-bold mb-4 text-center border-b pb-2 border-gray-200">
+              Checklists
+            </h3>
+            {allChecklists.length === 0 ? (
+              <>
+                {!selectedAppId ? (
+                  <p className="text-gray-500 text-center mt-6">
+                    Select an Application to see the checklists
+                  </p>
                 ) : (
-                  "Edit"
+                  <p className="text-gray-500">No checklists available.</p>
                 )}
-              </button>
-            )}
-            {!isNewApp && isEditing && (
-              <button
-                type="button"
-                onClick={() => handleCancel()}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition"
-              >
-                <X className="w-4 h-4" />
-                Cancel
-              </button>
-            )}
-            {!isNewApp && !isEditing && (
-              <Link
-                to={`/${currentApp?.appId}/checklists`}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition"
-              >
-                Show Checklist
-              </Link>
+              </>
+            ) : (
+              <ul className="space-y-4">
+                {allChecklists.map((chk) => (
+                  <li
+                    key={chk.checklistId}
+                    className={`p-4 rounded-lg border border-gray-200 shadow-sm transition hover:shadow-md ${
+                      chk.isCompleted ? "bg-green-50" : "bg-white"
+                    }`}
+                  >
+                    <div className="text-lg font-medium cursor-pointer hover:text-blue-600 flex items-center justify-between">
+                      <h4
+                        className="text-lg font-medium cursor-pointer"
+                        onClick={() =>
+                          navigate(
+                            `/${currentApp?.appId}/checklists/${chk.checklistId}`
+                          )
+                        }
+                      >
+                        {chk.checklistType}
+                      </h4>
+                      {chk.isCompleted ? (
+                        <span className="flex">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                          <span className="text-sm">Completed</span>
+                        </span>
+                      ) : (
+                        <span className="flex">
+                          <Clock className="w-5 h-5 text-yellow-500" />
+                          <span className="text-sm">Pending</span>
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Created:{" "}
+                      {new Date(chk.createdAt).toLocaleString("en-IN", {
+                        timeZone: "Asia/Kolkata",
+                      })}
+                    </p>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Updated:{" "}
+                      {new Date(chk.updatedAt).toLocaleString("en-IN", {
+                        timeZone: "Asia/Kolkata",
+                      })}
+                    </p>
+                    <h5 className="text-sm font-semibold mb-1 border-b">
+                      Assigned Users:
+                    </h5>
+                    {chk.assignedUsers && chk.assignedUsers.length > 0 && (
+                      <div>
+                        <ul className="space-y-1">
+                          {chk.assignedUsers.map((user) => (
+                            <li
+                              key={user.id}
+                              className="text-sm text-gray-700 border-b last:border-0 py-1"
+                            >
+                              {user.username} — {user.email}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
-        </div>
-
-        {/* Right Pane: Checklist Details */}
-        <div className="p-6 overflow-y-auto bg-gray-50">
-          <h3 className="text-xl font-semibold mb-4">Checklists</h3>
-          {allChecklists.length === 0 ? (
-            <p className="text-gray-500">No checklists available.</p>
-          ) : (
-            <ul className="space-y-4">
-              {allChecklists.map((chk) => (
-                <li
-                  key={chk.checklistId}
-                  className="p-4 rounded-lg border border-gray-200 bg-white shadow-sm"
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <h4
-                      className="text-lg font-medium cursor-pointer"
-                      onClick={() =>
-                        navigate(
-                          `/${currentApp?.appId}/checklists/${chk.checklistId}`
-                        )
-                      }
-                    >
-                      {chk.checklistType}
-                    </h4>
-                    {chk.isCompleted ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Created: {new Date(chk.createdAt).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Updated: {new Date(chk.updatedAt).toLocaleString()}
-                  </p>
-
-                  {chk.assignedUsers && chk.assignedUsers.length > 0 && (
-                    <div>
-                      <h5 className="text-sm font-semibold mb-1">
-                        Assigned Users:
-                      </h5>
-                      <ul className="space-y-1">
-                        {chk.assignedUsers.map((user) => (
-                          <li
-                            key={user.id}
-                            className="text-sm text-gray-700 border-b last:border-0 py-1"
-                          >
-                            {user.username} — {user.email}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        </Allotment.Pane>
       </Allotment>
     </div>
   );

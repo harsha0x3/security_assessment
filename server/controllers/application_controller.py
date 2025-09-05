@@ -41,8 +41,8 @@ def list_apps(db: Session, user: UserOut) -> list[ApplicationOut]:
             .where(ChecklistAssignment.user_id == user.id)
             .distinct()
         )
-    else:
-        stmt = stmt.where(Application.creator_id == user.id)
+    # else:
+    # stmt = stmt.where(Application.creator_id == user.id)
 
     apps = db.scalars(stmt).all()
     print("Apps in app controller", apps)

@@ -1,14 +1,17 @@
 from typing import Annotated, Any
-from fastapi import HTTPException, status, Response
+
+from fastapi import HTTPException, Response, status
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
-from sqlalchemy import select, or_
+
+from models.schemas.auth_schemas import LoginRequest, RegisterRequest
+from models.users import User
 from services.auth.jwt_handler import (
     create_tokens,
     set_jwt_cookies,
     verify_refresh_token,
 )
-from models.schemas.auth_schemas import LoginRequest, RegisterRequest, Tokens
-from models.users import User
+from services.auth.utils import qr_png_data_url
 
 
 def register_user(
@@ -43,9 +46,11 @@ def register_user(
         if reg_user.enable_mfa:
             recovery_codes = new_user.enable_mfa()
             mfa_uri = new_user.get_mfa_uri()
+            qr_code_url = qr_png_data_url(mfa_uri)
         else:
             recovery_codes = None
             mfa_uri = None
+            qr_code_url = None
 
         db.add(new_user)
         db.commit()
@@ -60,6 +65,7 @@ def register_user(
         return {
             "user": new_user.to_dict_safe(),
             "mfa_uri": mfa_uri,
+            "qr_code": qr_code_url,
             "recovery_codes": recovery_codes,
         }
 

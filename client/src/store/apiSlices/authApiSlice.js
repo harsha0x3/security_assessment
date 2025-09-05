@@ -10,18 +10,14 @@ import {
 export const authApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation({
-      query: ({ username_or_email, password }) => {
-        const formData = new URLSearchParams();
-        formData.append("username", username_or_email);
-        formData.append("password", password);
-
+      query: (credentials) => {
         return {
           url: "/auth/login",
           method: "POST",
-          body: formData,
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json", // send JSON
           },
+          body: credentials,
         };
       },
       invalidatesTags: ["User"],
@@ -32,8 +28,8 @@ export const authApiSlice = apiSlice.injectEndpoints({
           console.log("Dispatching... login");
           dispatch(loginSuccess(data));
         } catch (error) {
-          console.error("Error in login slice", error);
-          dispatch(setError(error));
+          console.log("Error in login slice", error);
+          dispatch(setError(error?.data?.detail || "Error Logging in"));
           dispatch(setIsLoading(false));
         }
       },
@@ -68,7 +64,7 @@ export const authApiSlice = apiSlice.injectEndpoints({
           const { data } = await queryFulfilled;
           dispatch(registerSuccess(data));
         } catch (error) {
-          dispatch(setError(error));
+          dispatch(setError(error?.data?.detail) || "Error in registering");
           dispatch(setIsLoading(false));
 
           console.error("Error in register slice", error);
@@ -87,7 +83,9 @@ export const authApiSlice = apiSlice.injectEndpoints({
           const { data } = await queryFulfilled;
           dispatch(loginSuccess(data));
         } catch (error) {
-          dispatch(setError(error));
+          dispatch(
+            setError(error?.data?.detail) || "Error in refreshing token"
+          );
           console.error("Error in refresh slice", error);
         }
       },
@@ -104,7 +102,7 @@ export const authApiSlice = apiSlice.injectEndpoints({
           const { data } = await queryFulfilled;
           dispatch(userLogout(data));
         } catch (error) {
-          dispatch(setError(error));
+          dispatch(setError(error?.data?.detail || "Error in logging out"));
           console.error("Error in logout slice", error);
         }
       },

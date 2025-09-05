@@ -12,6 +12,7 @@ import {
 } from "./store/appSlices/applicationSlice";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
+import { ToastContainer } from "react-toastify";
 // Import components
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -39,6 +40,20 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-background">
+        <ToastContainer
+          position="top-right"
+          autoClose={2000}
+          hideProgressBar
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+          draggable={false}
+          theme="light"
+          toastClassName={() =>
+            "bg-white shadow-lg rounded-xl text-gray-900 text-sm p-3 flex items-center gap-2"
+          }
+          bodyClassName={() => "flex items-center"}
+        />
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
