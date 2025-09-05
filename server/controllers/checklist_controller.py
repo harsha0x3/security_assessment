@@ -1,18 +1,18 @@
 from fastapi import HTTPException, status
+from sqlalchemy import and_, func, select
+from sqlalchemy.orm import Session
+
 from models.applications import Application
+from models.checklist_assignments import ChecklistAssignment
 from models.checklists import Checklist
+from models.controls import Control
 from models.schemas.crud_schemas import (
     ChecklistCreate,
     ChecklistOut,
-    UserOut,
     ChecklistUpdate,
+    UserOut,
 )
-from models.checklist_assignments import ChecklistAssignment
-from sqlalchemy import select, and_
-from sqlalchemy.orm import Session
-from models.controls import Control
 from models.user_responses import UserResponse
-from sqlalchemy import func
 
 
 def create_checklist(

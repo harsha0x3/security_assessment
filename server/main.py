@@ -1,20 +1,21 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 
+from controllers.user_responses_controller import UPLOAD_DIR
+from db.connection import init_db
+
 # from db.events import checklist_complete_update
-from db.events.app_complete_update import update_application_completion
 from routes import (
-    auth_routes,
     application_routes,
-    checklists_routes,
     assignment_routes,
+    auth_routes,
+    checklists_routes,
     control_routes,
     responses_routes,
 )
-from db.connection import init_db
-from controllers.user_responses_controller import UPLOAD_DIR
 
 
 @asynccontextmanager

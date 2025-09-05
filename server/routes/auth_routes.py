@@ -1,22 +1,22 @@
 from typing import Annotated, Any
 
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from controllers.auth_controller import (
+    clear_jwt_cookies,
     login_user,
     refresh_access_token,
     register_user,
-    clear_jwt_cookies,
 )
 from db.connection import get_db_conn
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from models.schemas.auth_schemas import (
     LoginRequest,
     RegisterRequest,
 )
 from models.users import User
 from services.auth.deps import get_current_user
-from sqlalchemy.orm import Session
-from sqlalchemy import select
-from models.users import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

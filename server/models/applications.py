@@ -1,6 +1,7 @@
-from db.base import Base, BaseMixin
 from sqlalchemy import ForeignKey, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from db.base import Base, BaseMixin
 
 
 class Application(Base, BaseMixin):

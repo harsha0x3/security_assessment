@@ -1,23 +1,21 @@
-from models.controls import Control
 from fastapi import HTTPException, status
+from sqlalchemy import and_, func, select
+from sqlalchemy.orm import Session
 
+from models.checklist_assignments import ChecklistAssignment
+from models.checklists import Checklist
+from models.controls import Control
 from models.schemas.crud_schemas import (
     ControlCreate,
     ControlOut,
     ControlRemove,
     ControlUpdate,
-    UserOut,
     ControlWithResponseOut,
-    TotalsCount,
     ControlWithResponseOutNonList,
+    TotalsCount,
+    UserOut,
 )
-from sqlalchemy import select, and_
-from models.checklists import Checklist
-from sqlalchemy.orm import Session
-from models.checklist_assignments import ChecklistAssignment
 from models.user_responses import UserResponse
-
-from sqlalchemy import func
 
 
 def update_checklist_completion_for_user(checklist_id: str, user: UserOut, db: Session):
@@ -187,7 +185,7 @@ def get_controls(
 
 def get_controls_with_responses(
     checklist_id: str, db: Session, current_user: UserOut
-) -> ControlWithResponseOut:
+) -> ControlWithResponseOut | list:
     try:
         if current_user.role == "admin":
             # Validate checklist exists

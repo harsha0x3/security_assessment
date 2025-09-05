@@ -1,18 +1,18 @@
 import re
 from datetime import datetime
+
 import pyotp
+from sqlalchemy import JSON, Boolean, DateTime, Index, String
+from sqlalchemy.ext.mutable import MutableList
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from db.base import Base, BaseMixin
-from sqlalchemy import JSON, Boolean, DateTime, String, Index
-from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
-from sqlalchemy.ext.mutable import MutableList
-
 from services.auth.utils import (
+    build_otpauth_uri,
     generate_recovery_codes,
     generate_totp_secret,
     hash_password,
     verify_password,
-    build_otpauth_uri,
 )
 
 

@@ -1,6 +1,7 @@
-from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+from pydantic import BaseModel, ConfigDict
 
 
 class ApplicationCreate(BaseModel):

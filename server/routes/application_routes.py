@@ -1,21 +1,22 @@
 from typing import Annotated, Any
 
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
+from sqlalchemy.orm import Session
+
 from controllers.application_controller import (
     create_app,
+    delete_app,
     list_apps,
     update_app,
-    delete_app,
 )
 from db.connection import get_db_conn
-from fastapi import APIRouter, Depends, HTTPException, status, Path, Body
 from models.schemas.crud_schemas import (
     ApplicationCreate,
     ApplicationOut,
-    UserOut,
     ApplicationUpdate,
+    UserOut,
 )
 from services.auth.deps import get_current_user
-from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 

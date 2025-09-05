@@ -1,27 +1,25 @@
-from fastapi import APIRouter, Path, Depends, HTTPException, status
-from models.schemas.crud_schemas import (
-    ControlCreate,
-    ControlOut,
-    ControlUpdate,
-    ControlRemove,
-    ControlWithResponseOut,
-)
 from typing import Annotated
-from models.schemas.crud_schemas import UserOut
-from db.connection import get_db_conn
-from services.auth.deps import get_current_user
+
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
+
 from controllers.controls_controller import (
     add_controls,
     get_controls,
-    update_control,
-    remove_controls,
     get_controls_with_responses,
+    remove_controls,
+    update_control,
 )
-from sqlalchemy import select
-from models.users import User
-from models.checklists import Checklist
-from models.checklist_assignments import ChecklistAssignment
+from db.connection import get_db_conn
+from models.schemas.crud_schemas import (
+    ControlCreate,
+    ControlOut,
+    ControlRemove,
+    ControlUpdate,
+    ControlWithResponseOut,
+    UserOut,
+)
+from services.auth.deps import get_current_user
 
 router = APIRouter(tags=["controls"])
 
@@ -57,7 +55,9 @@ async def fetch_controls_with_responses(
     checklist_id: Annotated[str, Path(title="Checklist Id")],
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
-) -> Annotated[ControlWithResponseOut, "Function to create a control and output it"]:
+) -> Annotated[
+    ControlWithResponseOut | list, "Function to create a control and output it"
+]:
     return get_controls_with_responses(
         checklist_id=checklist_id, db=db, current_user=current_user
     )

@@ -1,46 +1,33 @@
+import os
+from typing import Annotated
+from uuid import uuid4
+
 from fastapi import (
     APIRouter,
-    Path,
     Depends,
-    HTTPException,
-    status,
-    UploadFile,
-    Form,
     File,
+    Form,
+    Path,
+    UploadFile,
 )
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from controllers.user_responses_controller import (
+    UPLOAD_DIR,
+    add_user_response,
+    save_uploaded_file,
+    update_user_response,
+)
+from db.connection import get_db_conn
 from models.schemas.crud_schemas import (
-    ControlCreate,
-    ControlOut,
-    ControlUpdate,
-    ControlRemove,
+    UserOut,
     UserResponseCreate,
     UserResponseOut,
     UserResponseUpdate,
 )
-from typing import Annotated
-from models.schemas.crud_schemas import UserOut
-from db.connection import get_db_conn
-from services.auth.deps import get_current_user
-from sqlalchemy.orm import Session
-from controllers.controls_controller import (
-    add_controls,
-    get_controls,
-    update_control,
-    remove_controls,
-)
-from sqlalchemy import select
-from models.users import User
-from models.checklists import Checklist
-from models.checklist_assignments import ChecklistAssignment
-from controllers.user_responses_controller import (
-    add_user_response,
-    update_user_response,
-    save_uploaded_file,
-    UPLOAD_DIR,
-)
-from uuid import uuid4
 from models.user_responses import UserResponse
-import os
+from services.auth.deps import get_current_user
 
 router = APIRouter(tags=["responses"])
 
@@ -78,6 +65,7 @@ async def edit_user_response(
     control_id = db.scalar(
         select(UserResponse.control_id).where(UserResponse.id == response_id)
     )
+    evidence_path = None
     if not control_id:
         control_id = f"{uuid4().hex}"
     if evidence_file:

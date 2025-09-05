@@ -1,9 +1,10 @@
+import base64
+import io
+import os
+
 import bcrypt
 import pyotp
 import qrcode
-import io
-import base64
-import os
 
 
 class PasswordConfig:
@@ -45,7 +46,7 @@ def build_otpauth_uri(secret: str, email: str, issuer: str) -> str:
 def qr_png_data_url(data: str) -> str:
     img = qrcode.make(data)
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    img.save(buf, format="PNG")  # type:ignore
     b64 = base64.b64encode(buf.getvalue()).decode()
     return f"data:image/png;base64,{b64}"
 

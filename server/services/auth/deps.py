@@ -1,10 +1,12 @@
-from fastapi import Depends, HTTPException, status, Cookie, Request
+from fastapi import Cookie, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+
 from db.connection import get_db_conn
-from models.users import User
-from .jwt_handler import decode_access_token
 from models.schemas.crud_schemas import UserOut
+from models.users import User
+
+from .jwt_handler import decode_access_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -22,7 +24,7 @@ def get_current_user(
         elif request.cookies.get("access_token"):
             access_token = request.cookies.get("access_token")
             print("Sec", access_token)
-            payload = decode_access_token(access_token)
+            payload = decode_access_token(access_token)  # type: ignore
 
         else:
             raise HTTPException(

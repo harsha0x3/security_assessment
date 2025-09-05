@@ -1,6 +1,7 @@
-from db.base import Base, BaseMixin
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from db.base import Base, BaseMixin
 
 
 class Checklist(Base, BaseMixin):

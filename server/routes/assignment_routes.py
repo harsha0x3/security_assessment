@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Path, Depends, HTTPException, status
-from models.schemas.crud_schemas import AssignmentCreate, AssignmentOut
-from controllers.assignment_controller import assign_users
 from typing import Annotated
-from models.schemas.crud_schemas import UserOut
-from db.connection import get_db_conn
-from services.auth.deps import get_current_user
+
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
+
+from controllers.assignment_controller import assign_users
+from db.connection import get_db_conn
+from models.schemas.crud_schemas import AssignmentCreate, AssignmentOut, UserOut
+from services.auth.deps import get_current_user
 
 router = APIRouter(tags=["assignments"])
 

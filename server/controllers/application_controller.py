@@ -1,15 +1,16 @@
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from models.applications import Application
+from models.checklist_assignments import ChecklistAssignment
+from models.checklists import Checklist
 from models.schemas.crud_schemas import (
     ApplicationCreate,
     ApplicationOut,
-    UserOut,
     ApplicationUpdate,
+    UserOut,
 )
-from models.checklists import Checklist
-from models.checklist_assignments import ChecklistAssignment
 
 
 def create_app(

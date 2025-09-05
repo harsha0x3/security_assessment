@@ -1,19 +1,22 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status, Path
+
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
 
 from controllers.checklist_controller import (
+    checklist_submission,
     create_checklist,
     get_checklists_for_app,
-    get_checklists_for_user,
-    update_checklist,
     remove_checklist,
-    checklist_submission,
+    update_checklist,
 )
-from models.schemas.crud_schemas import UserOut
 from db.connection import get_db_conn
-from models.schemas.crud_schemas import ChecklistCreate, ChecklistOut, ChecklistUpdate
-from models.users import User
+from models.schemas.crud_schemas import (
+    ChecklistCreate,
+    ChecklistOut,
+    ChecklistUpdate,
+    UserOut,
+)
 from services.auth.deps import get_current_user
 
 router = APIRouter(tags=["checklists"])
