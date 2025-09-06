@@ -5,6 +5,9 @@ from typing import Any
 from fastapi import HTTPException, Response, status
 from jose import JWTError, jwt
 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class JWTConfig:
     SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key")
@@ -96,8 +99,8 @@ def set_jwt_cookies(response: Response, access_token: str, refresh_token: str):
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=True,
-            samesite="none",
+            secure=False,
+            samesite="lax" if os.getenv("PROD_ENV") else "None",
             path="/",
             expires=int(access_exp.timestamp()),
         )
@@ -105,8 +108,8 @@ def set_jwt_cookies(response: Response, access_token: str, refresh_token: str):
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            secure=True,
-            samesite="none",
+            secure=False,
+            samesite="lax" if os.getenv("PROD_ENV") else "None",
             path="/",
             expires=int(refresh_exp.timestamp()),
         )

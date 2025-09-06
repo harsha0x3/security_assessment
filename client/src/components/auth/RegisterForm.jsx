@@ -18,7 +18,6 @@ import {
   selectError,
   setError,
 } from "../../store/appSlices/authSlice";
-import { set } from "mongoose";
 
 const RegisterForm = ({ onSwitchToLogin, onClose }) => {
   const dispatch = useDispatch();

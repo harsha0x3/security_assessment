@@ -153,13 +153,13 @@ def clear_jwt_cookies(response: Response):
         key="access_token",
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         path="/",
     )
     response.delete_cookie(
         key="refresh_token",
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         path="/",
     )
