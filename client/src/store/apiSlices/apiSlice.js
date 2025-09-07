@@ -1,7 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { userLogout, loginSuccess } from "../appSlices/authSlice";
+const isProd = import.meta.env.VITE_PROD_ENV === "true";
 
-const apiBaseUrl = "http://10.160.14.76:8060";
+const apiBaseUrl = isProd
+  ? "http://10.160.14.76:8060"
+  : "http://127.0.0.1:8000";
 
 const baseQueryWithAuth = fetchBaseQuery({
   baseUrl: apiBaseUrl,

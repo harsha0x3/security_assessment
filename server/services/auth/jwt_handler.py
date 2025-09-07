@@ -8,6 +8,8 @@ from jose import JWTError, jwt
 from dotenv import load_dotenv
 
 load_dotenv()
+is_prod = os.getenv("PROD_ENV", "false").lower() == "true"
+
 
 class JWTConfig:
     SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key")
@@ -36,6 +38,7 @@ def create_tokens(user_id: str, role: str, mfa_verified: bool) -> tuple[str, str
         "exp": now + timedelta(days=JWTConfig.REFRESH_TOKEN_EXPIRE_DAYS),
     }
 
+    print("SECRETE KEY FOR ENCODING: ", JWTConfig.SECRET_KEY)
     access_token = jwt.encode(
         access_payload, JWTConfig.SECRET_KEY, algorithm=JWTConfig.ALGORITHM
     )
@@ -54,11 +57,14 @@ def create_challenge_token(user_id: str) -> str:
         "iat": now,
         "exp": now + timedelta(minutes=10),
     }
+    print("SECRETE KEY FOR ENCODING: ", JWTConfig.SECRET_KEY)
     return jwt.encode(payload, JWTConfig.SECRET_KEY, algorithm=JWTConfig.ALGORITHM)
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
-    return jwt.decode(token, JWTConfig.SECRET_KEY, algorithms=JWTConfig.ALGORITHM)
+    print("SECRETE KEY FOR DECODING: ", JWTConfig.SECRET_KEY)
+    print("RECIEVED EDCODE TOKEN: ", token)
+    return jwt.decode(token, JWTConfig.SECRET_KEY, algorithms=[JWTConfig.ALGORITHM])
 
 
 def verify_refresh_token(token: str) -> dict[str, Any] | None:
@@ -99,8 +105,8 @@ def set_jwt_cookies(response: Response, access_token: str, refresh_token: str):
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,
-            samesite="lax" if os.getenv("PROD_ENV") else "None",
+            secure=not is_prod,
+            samesite="lax" if is_prod else "none",
             path="/",
             expires=int(access_exp.timestamp()),
         )
@@ -108,8 +114,8 @@ def set_jwt_cookies(response: Response, access_token: str, refresh_token: str):
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            secure=False,
-            samesite="lax" if os.getenv("PROD_ENV") else "None",
+            secure=not is_prod,
+            samesite="lax" if is_prod else "none",
             path="/",
             expires=int(refresh_exp.timestamp()),
         )

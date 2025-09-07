@@ -326,7 +326,7 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
           <label>Enable MFA</label>
         </div>
 
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-text mb-2">
             Role *
           </label>
@@ -340,7 +340,7 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
-        </div>
+        </div> */}
         {/* Terms and Conditions */}
         {/* <div className="flex items-start space-x-3">
           <input
@@ -407,7 +407,7 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
           <button
             type="button"
             onClick={onSwitchToLogin}
-            className="text-accent hover:text-accent/80 font-medium transition-colors"
+            className="text-blue-600 hover:text-blue-800/80 font-medium transition-colors"
           >
             Sign in
           </button>

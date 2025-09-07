@@ -26,6 +26,7 @@ import Applications from "./pages/Applications";
 import Checklists from "./pages/Checklists";
 import Controls from "./components/core/Controls";
 import ChecklistsLayout from "./layouts/ChecklistsLayout";
+import AddUsers from "./pages/AddUsers";
 
 function App() {
   const { data, isSuccess } = useGetApplicationsQuery();
@@ -68,6 +69,7 @@ function App() {
               <Route path=":appId/checklists" element={<ChecklistsLayout />}>
                 <Route path=":checklistId" element={<Controls />} />
               </Route>
+              <Route path="addUsers" element={<AddUsers />} />
               <Route path="profile" element={<Profile />} />
             </Route>
           </Route>

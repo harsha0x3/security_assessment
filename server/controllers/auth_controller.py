@@ -12,6 +12,12 @@ from services.auth.jwt_handler import (
     verify_refresh_token,
 )
 from services.auth.utils import qr_png_data_url
+from dotenv import load_dotenv
+import os
+
+is_prod = os.getenv("PROD_ENV", "false").lower() == "true"
+
+load_dotenv()
 
 
 def register_user(
@@ -152,14 +158,14 @@ def clear_jwt_cookies(response: Response):
     response.delete_cookie(
         key="access_token",
         httponly=True,
-        secure=True,
-        samesite="lax",
+        secure=not is_prod,
+        samesite="lax" if is_prod else "none",
         path="/",
     )
     response.delete_cookie(
         key="refresh_token",
         httponly=True,
-        secure=True,
-        samesite="lax",
+        secure=not is_prod,
+        samesite="lax" if is_prod else "none",
         path="/",
     )

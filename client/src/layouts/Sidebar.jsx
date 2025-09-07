@@ -2,6 +2,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectCurrentApp } from "../store/appSlices/applicationSlice";
+import { selectAuth } from "../store/appSlices/authSlice";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -10,11 +11,13 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
+  Users2,
 } from "lucide-react";
 
 const Sidebar = ({ isCollapsed, onToggle }) => {
   const location = useLocation();
   const currentApp = useSelector(selectCurrentApp);
+  const userInfo = useSelector(selectAuth);
 
   const navigationItems = [
     {
@@ -22,15 +25,16 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       path: "/applications",
       icon: FolderOpen,
     },
-    ...(currentApp && currentApp.appId
-      ? [
-          {
-            name: "Checklists",
-            path: `/${currentApp.appId}/checklists`,
-            icon: CheckSquare,
-          },
-        ]
+
+    {
+      name: "Checklists",
+      path: `/${currentApp.appId}/checklists`,
+      icon: CheckSquare,
+    },
+    ...(userInfo && userInfo.role === "admin"
+      ? [{ name: "Add Users", path: "/addUsers", icon: Users }]
       : []),
+
     {
       name: "Profile",
       path: "/profile",

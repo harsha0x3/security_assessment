@@ -22,15 +22,15 @@ const Button = ({
 
   const variants = {
     primary:
-      "bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg focus:ring-primary/30",
+      "bg-primary hover:bg-primary/90 dark:text-green-500 text-black shadow-md hover:shadow-lg focus:ring-primary/30",
     accent:
-      "bg-accent hover:bg-accent/90 text-white shadow-md hover:shadow-lg focus:ring-accent/30",
+      "bg-accent hover:bg-accent/90 dark:text-green-500 text-black shadow-md hover:shadow-lg focus:ring-accent/30",
     secondary:
       "bg-secondary hover:bg-accent text-text border border-border hover:border-borderHover focus:ring-accent/30",
     ghost:
       "bg-transparent hover:bg-secondary text-textSecondary hover:text-text focus:ring-accent/30",
     outline:
-      "bg-transparent border-2 border-accent text-accent hover:bg-accent hover:text-white focus:ring-accent/30",
+      "bg-transparent border-2 border-accent text-accent hover:bg-accent hover:dark:text-green-500 text-black focus:ring-accent/30",
   };
 
   const sizes = {
