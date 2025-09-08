@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { useGetApplicationsQuery } from "./store/apiSlices/applicationApiSlice";
+import { useGetCurrentUserQuery } from "./store/apiSlices/authApiSlice";
 import {
   loadApps,
   setCurrentApplication,
@@ -16,14 +17,11 @@ import { ToastContainer } from "react-toastify";
 // Import components
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import Dashboard from "./pages/Dashboard";
-import Assessments from "./pages/Assessments";
 import Profile from "./pages/Profile";
 import RootLayout from "./layouts/RootLayout";
 import ProtectedLayout from "./layouts/ProtectedLayout";
 
 import Applications from "./pages/Applications";
-import Checklists from "./pages/Checklists";
 import Controls from "./components/core/Controls";
 import ChecklistsLayout from "./layouts/ChecklistsLayout";
 import AddUsers from "./pages/AddUsers";
@@ -37,6 +35,9 @@ function App() {
       dispatch(setCurrentApplication({ appId: data[0]?.id }));
     }
   }, [data, isSuccess, dispatch]);
+
+  const { data: userData, isSuccess: isUserLoggedIn } =
+    useGetCurrentUserQuery();
 
   return (
     <Router>

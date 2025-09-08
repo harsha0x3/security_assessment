@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
+  id: null,
   username: null,
   email: null,
   firstName: null,
@@ -17,9 +18,11 @@ const authSlice = createSlice({
   reducers: {
     loginSuccess: (state, action) => {
       console.log("Inside login dispatch");
-      const { username, role, first_name, last_name, email } = action.payload;
+      const { username, role, first_name, last_name, email, id } =
+        action.payload;
 
       state.username = username;
+      state.id = id;
       state.role = role;
       state.lastName = last_name;
       state.firstName = first_name;
@@ -29,16 +32,27 @@ const authSlice = createSlice({
       state.error = null;
     },
     registerSuccess: (state, action) => {
-      const { username, role, first_name, last_name, email } = action.payload;
+      const { username, role, first_name, last_name, email, id } =
+        action.payload;
 
       state.username = username;
       state.role = role;
+      state.id = id;
       state.lastName = last_name;
       state.firstName = first_name;
       state.email = email;
       state.isAuthenticated = true;
       state.isLoading = false;
       state.error = null;
+    },
+
+    updateUser: (state, action) => {
+      const { username, role, first_name, last_name, email } = action.payload;
+      state.username = username;
+      state.role = role;
+      state.lastName = last_name;
+      state.firstName = first_name;
+      state.email = email;
     },
     // eslint-disable-next-line no-unused-vars
     userLogout: (state) => {

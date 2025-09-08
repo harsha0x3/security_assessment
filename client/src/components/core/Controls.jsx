@@ -15,7 +15,16 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { selectCurrentChecklist } from "../../store/appSlices/checklistsSlice";
-import { Save, Edit3, X, Plus, Settings, Shredder, Upload } from "lucide-react";
+import {
+  Save,
+  Edit3,
+  X,
+  Plus,
+  Settings,
+  Shredder,
+  Upload,
+  Info,
+} from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import { useForm } from "react-hook-form";
 
@@ -163,7 +172,7 @@ const Controls = () => {
         accessorKey: "control_area",
         header: "Control Area",
         minSize: 70, // minimum width
-        maxSize: 400,
+        maxSize: 120,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
@@ -179,6 +188,8 @@ const Controls = () => {
       {
         accessorKey: "severity",
         header: "Severity",
+        minSize: 70, // minimum width
+        maxSize: 120,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
@@ -212,6 +223,9 @@ const Controls = () => {
       {
         accessorKey: "control_text",
         header: "Control Text",
+        minSize: 300,
+        maxSize: 600,
+
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
@@ -232,6 +246,8 @@ const Controls = () => {
       {
         accessorKey: "current_setting",
         header: "Current Setting",
+        minSize: 300,
+        maxSize: 600,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingRowId === controlId ? (
@@ -252,6 +268,8 @@ const Controls = () => {
       {
         accessorKey: "review_comment",
         header: "Review Comment",
+        minSize: 300,
+        maxSize: 600,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingRowId === controlId ? (
@@ -272,6 +290,8 @@ const Controls = () => {
       {
         accessorKey: "evidence_path",
         header: "Evidence",
+        minSize: 70,
+        maxSize: 120,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           const evidencePath = row.original.evidence_path;
@@ -345,11 +365,31 @@ const Controls = () => {
       {
         id: "actions",
         header: "Actions",
+        minSize: 70,
+        maxSize: 120,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           const editingResponse = editingRowId === controlId;
           const editingControl = editingControlId === controlId;
-
+          console.log("DATE", row.original.control_created_at);
+          const tooltipContent = `
+      Control Created: ${new Date(
+        row.original.control_created_at + "Z"
+      ).toLocaleString()}
+      Control Updated: ${new Date(
+        row.original.control_updated_at + "Z"
+      ).toLocaleString()}
+      Response Created: ${
+        row.original.response_created_at + "Z"
+          ? new Date(row.original.response_created_at + "Z").toLocaleString()
+          : "N/A"
+      }
+      Response Updated: ${
+        row.original.response_updated_at
+          ? new Date(row.original.response_updated_at + "Z").toLocaleString()
+          : "N/A"
+      }
+    `;
           return (
             <div className="flex gap-2 items-center">
               {/* Response editing actions */}
@@ -439,6 +479,17 @@ const Controls = () => {
                   content="Edit Control"
                 />
               )}
+              {/* Info icon with tooltip */}
+              <Info
+                className="w-5 h-5 text-gray-500 cursor-pointer hover:text-gray-700"
+                data-tooltip-id={`info-tooltip-${controlId}`}
+              />
+              <Tooltip
+                id={`info-tooltip-${controlId}`}
+                place="top"
+                className="max-w-xs whitespace-pre-wrap text-xs bg-gray-800 text-white p-2 rounded-md shadow"
+                content={tooltipContent}
+              />
             </div>
           );
         },

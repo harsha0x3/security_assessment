@@ -9,6 +9,7 @@ class RoleEnum(str, Enum):
 
 
 class RegisterRequest(BaseModel):
+    id: str
     username: str
     email: EmailStr
     password: str
@@ -16,6 +17,16 @@ class RegisterRequest(BaseModel):
     last_name: str | None
     role: RoleEnum = RoleEnum.user
     enable_mfa: bool = False
+
+
+class UserUpdateRequest(BaseModel):
+    username: str | None = None
+    email: EmailStr | None = None
+    password: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    role: RoleEnum | None = RoleEnum.user
+    enable_mfa: bool = True
 
 
 class LoginRequest(BaseModel):

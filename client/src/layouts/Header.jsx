@@ -2,7 +2,15 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { User, Settings, LogOut, Bell, Menu, ChevronDown } from "lucide-react";
+import {
+  User,
+  Settings,
+  LogOut,
+  Bell,
+  PanelLeftOpen,
+  PanelLeftClose,
+  ChevronDown,
+} from "lucide-react";
 
 const Header = ({ onToggleSidebar, isSidebarCollapsed }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -39,7 +47,11 @@ const Header = ({ onToggleSidebar, isSidebarCollapsed }) => {
             onClick={onToggleSidebar}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
-            <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen className="w-7 h-7 text-gray-600 dark:text-gray-300" />
+            ) : (
+              <PanelLeftClose className="w-7 h-7 text-gray-600 dark:text-gray-300" />
+            )}
           </button>
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -53,15 +65,14 @@ const Header = ({ onToggleSidebar, isSidebarCollapsed }) => {
 
         {/* Right Section - Notifications + Profile */}
         <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <button className="relative p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
+          {/* <button className="relative p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
             <Bell className="w-5 h-5" />
             {notifications > 0 && (
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                 {notifications}
               </span>
             )}
-          </button>
+          </button> */}
 
           {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
@@ -87,7 +98,7 @@ const Header = ({ onToggleSidebar, isSidebarCollapsed }) => {
               <ChevronDown className="w-4 h-4 text-gray-400" />
             </button>
 
-            {/* Dropdown Menu */}
+            {/* Dropdown PanelLeftOpen */}
             {isProfileOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
                 <div className="py-1">

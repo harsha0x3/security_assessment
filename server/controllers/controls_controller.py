@@ -220,6 +220,10 @@ def get_controls_with_responses(
                     current_setting=response.current_setting if response else None,
                     review_comment=response.review_comment if response else None,
                     evidence_path=response.evidence_path if response else None,
+                    response_created_at=response.created_at if response else None,
+                    response_updated_at=response.updated_at if response else None,
+                    control_created_at=control.created_at if control else None,
+                    control_updated_at=control.updated_at if control else None,
                 )
                 for control, response in results
             ]
@@ -267,6 +271,7 @@ def get_controls_with_responses(
             total_responses=total_responses,
             total_controls=total_controls,
         )
+
         # Validate with Pydantic
         controls_with_responses_non = [
             ControlWithResponseOutNonList(

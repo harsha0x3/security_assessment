@@ -9,12 +9,10 @@ from controllers.auth_controller import (
     login_user,
     refresh_access_token,
     register_user,
+    update_user_profile,
 )
 from db.connection import get_db_conn
-from models.schemas.auth_schemas import (
-    LoginRequest,
-    RegisterRequest,
-)
+from models.schemas.auth_schemas import LoginRequest, RegisterRequest, UserUpdateRequest
 from models.users import User
 from services.auth.deps import get_current_user
 
@@ -88,6 +86,18 @@ def get_me(
     ],
 ):
     return current_user
+
+
+@router.patch("/profile/{editing_user_id}")
+def update_profile(
+    editing_user_id: str,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db_conn)],
+    request: UserUpdateRequest,
+):
+    return update_user_profile(
+        current_user_id=current_user.id, user_id=editing_user_id, db=db, payload=request
+    )
 
 
 @router.post("/logout")

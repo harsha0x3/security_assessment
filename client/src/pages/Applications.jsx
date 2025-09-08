@@ -137,8 +137,13 @@ const Applications = () => {
   useEffect(() => {
     if (isSuccess && data) {
       dispatch(loadApps(data));
+      dispatch(setCurrentApplication(data[0].id));
     }
   }, [data, dispatch, isSuccess]);
+
+  if (currentApp && currentApp?.id && !selectedAppId) {
+    setSelectedAppId(currentApp?.id);
+  }
 
   // ---------------- Handlers ----------------
   const resetForm = () => {
@@ -553,16 +558,10 @@ const Applications = () => {
                       )}
                     </div>
                     <p className="text-sm text-gray-600">
-                      Created:{" "}
-                      {new Date(chk.createdAt).toLocaleString("en-IN", {
-                        timeZone: "Asia/Kolkata",
-                      })}
+                      Created: {new Date(chk.createdAt + "Z").toLocaleString()}
                     </p>
                     <p className="text-sm text-gray-600 mb-2">
-                      Updated:{" "}
-                      {new Date(chk.updatedAt).toLocaleString("en-IN", {
-                        timeZone: "Asia/Kolkata",
-                      })}
+                      Updated: {new Date(chk.updatedAt + "Z").toLocaleString()}
                     </p>
                     <h5 className="text-sm font-semibold mb-1 border-b">
                       Assigned Users:

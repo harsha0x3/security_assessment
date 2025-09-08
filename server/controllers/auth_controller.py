@@ -4,13 +4,14 @@ from fastapi import HTTPException, Response, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from models.schemas.auth_schemas import LoginRequest, RegisterRequest
+from models.schemas.auth_schemas import LoginRequest, RegisterRequest, UserUpdateRequest
 from models.users import User
 from services.auth.jwt_handler import (
     create_tokens,
     set_jwt_cookies,
     verify_refresh_token,
 )
+from models.schemas.crud_schemas import UserOut
 from services.auth.utils import qr_png_data_url
 from dotenv import load_dotenv
 import os
@@ -169,3 +170,41 @@ def clear_jwt_cookies(response: Response):
         samesite="lax" if is_prod else "none",
         path="/",
     )
+
+
+def update_user_profile(
+    current_user_id: str, user_id: str, db: Session, payload: UserUpdateRequest
+) -> UserOut:
+    try:
+        if current_user_id != user_id:
+            user_role = db.scalar(select(User.role).where(User.id == current_user_id))
+            if user_role != "admin":
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"You are not authorised. {user_id}",
+                )
+
+        editing_user = db.scalar(select(User).where(User.id == user_id))
+        if not editing_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User Not Found"
+            )
+
+        for key, val in payload.model_dump(
+            exclude_none=True, exclude_unset=True
+        ).items():
+            setattr(editing_user, key, val)
+
+        if payload.password:
+            editing_user.set_password(payload.password)
+
+        db.commit()
+        db.refresh(editing_user)
+        return UserOut.model_validate(editing_user)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update user. {e}",
+        )

@@ -111,6 +111,30 @@ export const authApiSlice = apiSlice.injectEndpoints({
       query: () => "/auth/all",
       providesTags: ["AllUsers"],
     }),
+
+    getCurrentUser: builder.query({
+      query: () => "/auth/me",
+
+      providesTags: ["User"],
+      onQueryStarted: async (arg, { dispatch, queryFulfilled }) => {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(loginSuccess(data));
+        } catch (error) {
+          dispatch(userLogout());
+          console.error(error);
+        }
+      },
+    }),
+
+    updateUserProfile: builder.mutation({
+      query: ({ payload, editingUserId }) => ({
+        url: `/auth/profile/${editingUserId}`,
+        method: "PATCH",
+        body: payload,
+      }),
+      invalidatesTags: ["AllUsers", "User"],
+    }),
   }),
 });
 
@@ -120,4 +144,6 @@ export const {
   useRefreshTokenMutation,
   useLogoutMutation,
   useGetAllUsersQuery,
+  useGetCurrentUserQuery,
+  useUpdateUserProfileMutation,
 } = authApiSlice;
