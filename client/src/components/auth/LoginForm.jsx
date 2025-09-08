@@ -148,7 +148,7 @@ const LoginForm = ({ onSwitchToRegister, onClose }) => {
       </form>
 
       {/* Switch to Register */}
-      <div className="text-center mt-6">
+      {/* <div className="text-center mt-6">
         <p className="text-textMuted">
           Don't have an account?{" "}
           <button
@@ -159,7 +159,7 @@ const LoginForm = ({ onSwitchToRegister, onClose }) => {
             Sign up
           </button>
         </p>
-      </div>
+      </div> */}
     </Card>
   );
 };

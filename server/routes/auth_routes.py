@@ -71,8 +71,14 @@ async def get_all_users(
     ],
     db: Annotated[Session, Depends(get_db_conn)],
 ):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You are not authorised to access this. {current_user.username}",
+        )
+
     all_users = db.scalars(select(User)).all()
-    return all_users
+    return [user.to_dict_admin() for user in all_users]
 
 
 @router.get("/me")

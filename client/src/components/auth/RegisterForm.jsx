@@ -33,6 +33,14 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [registrationResult, setRegistrationResult] = useState(null);
+  const [isEmailValid, setIsEmailValid] = useState(true);
+
+  // Validate email format whenever it changes
+  useEffect(() => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setIsEmailValid(emailRegex.test(formData.email));
+  }, [formData.email]);
+
   //   const [acceptTerms, setAcceptTerms] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState({
     length: false,
@@ -81,7 +89,8 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
       formData.password &&
       formData.confirmPassword &&
       formData.password === formData.confirmPassword &&
-      Object.values(passwordValidation).every(Boolean)
+      Object.values(passwordValidation).every(Boolean) &&
+      isEmailValid
     );
   };
 
@@ -326,7 +335,7 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
           <label>Enable MFA</label>
         </div>
 
-        {/* <div>
+        <div>
           <label className="block text-sm font-medium text-text mb-2">
             Role *
           </label>
@@ -340,7 +349,7 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
-        </div> */}
+        </div>
         {/* Terms and Conditions */}
         {/* <div className="flex items-start space-x-3">
           <input
@@ -401,18 +410,18 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
       )}
 
       {/* Switch to Login */}
-      <div className="text-center mt-6">
+      {/* <div className="text-center mt-6">
         <p className="text-textMuted">
           Already have an account?{" "}
           <button
             type="button"
             onClick={onSwitchToLogin}
-            className="text-blue-600 hover:text-blue-800/80 font-medium transition-colors"
+            className="text-accent hover:text-accent/80 font-medium transition-colors"
           >
             Sign in
           </button>
         </p>
-      </div>
+      </div> */}
     </Card>
   );
 };

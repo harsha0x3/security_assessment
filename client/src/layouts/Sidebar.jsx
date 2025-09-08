@@ -54,7 +54,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       {/* Sidebar */}
       <div
         className={`fixed left-0 top-12 h-[calc(100vh-3rem)] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 z-40 ${
-          isCollapsed ? "w-16" : "w-64"
+          isCollapsed ? "w-16" : "w-56"
         }`}
       >
         {/* Navigation Items */}

@@ -168,7 +168,7 @@ const Controls = () => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
             <input
-              className="border rounded px-2 py-1 text-sm w-full"
+              className="border rounded p-1 text-sm w-full"
               {...registerEditControl("control_area")}
             />
           ) : (
@@ -183,7 +183,7 @@ const Controls = () => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
             <select
-              className="border rounded px-2 py-1 text-sm w-full"
+              className="border rounded p-1 text-sm max-w-2"
               {...registerEditControl("severity")}
             >
               <option value="">Select Severity</option>
@@ -194,7 +194,7 @@ const Controls = () => {
             </select>
           ) : (
             <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
+              className={`px-2 py-1 rounded-full text-xs max-w-2 font-medium ${
                 row.original.severity === "Critical"
                   ? "bg-red-100 text-red-800"
                   : row.original.severity === "High"
@@ -216,7 +216,7 @@ const Controls = () => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
             <textarea
-              className="border rounded px-2 py-1 text-sm w-full min-h-[60px] resize-y"
+              className="border rounded p-1 text-sm w-full min-h-[60px] resize-y"
               {...registerEditControl("control_text")}
             />
           ) : (
@@ -236,7 +236,7 @@ const Controls = () => {
           const controlId = row.original.control_id;
           return editingRowId === controlId ? (
             <textarea
-              className="border rounded px-2 py-1 text-sm w-full min-h-[60px] resize-y"
+              className="border rounded p-1 text-sm w-full min-h-[60px] resize-y"
               {...register("current_setting")}
             />
           ) : (
@@ -256,7 +256,7 @@ const Controls = () => {
           const controlId = row.original.control_id;
           return editingRowId === controlId ? (
             <textarea
-              className="border rounded px-2 py-1 text-sm w-full min-h-[60px] resize-y"
+              className="border rounded p-1 text-sm w-full min-h-[60px] resize-y"
               {...register("review_comment")}
             />
           ) : (
@@ -291,7 +291,7 @@ const Controls = () => {
                         Current File
                       </a>
                       <button
-                        className="text-red-600 text-xs underline"
+                        className="text-red-600 text-xs underline flex"
                         disabled={!evidencePath}
                         onClick={() => {
                           reset((prev) => ({
@@ -301,7 +301,7 @@ const Controls = () => {
                           }));
                         }}
                       >
-                        Remove{" "}
+                        <span>Remove</span>
                         <span>
                           <Shredder className="text-red-600" />
                         </span>
@@ -570,7 +570,7 @@ const Controls = () => {
                 {hg.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="relative text-left px-4 py-3 border-b font-medium text-sm text-gray-700"
+                    className="relative text-left px-1 py-3 border-b font-medium text-sm text-gray-700"
                     style={{
                       width: header.getSize(), // dynamic width
                       minWidth: header.column.columnDef.minSize,
@@ -605,7 +605,7 @@ const Controls = () => {
                 className="border-b hover:bg-gray-50"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3 text-sm">
+                  <td key={cell.id} className="p-2 text-sm">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

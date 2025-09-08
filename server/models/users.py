@@ -123,5 +123,17 @@ class User(Base, BaseMixin):
             "updated_at": self.updated_at.isoformat(),
         }
 
+    def to_dict_admin(self):
+        """Return user data with MFA info for admin view."""
+        base = self.to_dict_safe()
+        base.update(
+            **{
+                "mfa_enabled": self.mfa_enabled,
+                "mfa_secret": self.mfa_secret if self.mfa_enabled else None,
+                "mfa_uri": self.get_mfa_uri() if self.mfa_enabled else None,
+            }
+        )
+        return base
+
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"

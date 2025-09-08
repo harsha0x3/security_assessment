@@ -66,7 +66,7 @@ def register_user(
             new_user.id, role=new_user.role, mfa_verified=False
         )
 
-        set_jwt_cookies(response=response, access_token=access, refresh_token=refresh)
+        # set_jwt_cookies(response=response, access_token=access, refresh_token=refresh)
 
         return {
             "user": new_user.to_dict_safe(),

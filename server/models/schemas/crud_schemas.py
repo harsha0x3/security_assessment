@@ -4,6 +4,15 @@ from zoneinfo import ZoneInfo
 from pydantic import BaseModel, ConfigDict
 
 
+class AllUsersOut(BaseModel):
+    username: str
+    first_name: str | None
+    last_name: str | None
+    role: str
+    mfa_secret: str | None
+    mfa_recovery_codes: str | None
+
+
 class ApplicationCreate(BaseModel):
     name: str
     description: str

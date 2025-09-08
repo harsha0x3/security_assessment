@@ -57,7 +57,7 @@ export const authApiSlice = apiSlice.injectEndpoints({
           enable_mfa,
         },
       }),
-      invalidatesTags: ["User"],
+      invalidatesTags: ["AllUsers"],
       onQueryStarted: async (arg, { dispatch, queryFulfilled }) => {
         try {
           dispatch(setIsLoading(true));
@@ -109,6 +109,7 @@ export const authApiSlice = apiSlice.injectEndpoints({
     }),
     getAllUsers: builder.query({
       query: () => "/auth/all",
+      providesTags: ["AllUsers"],
     }),
   }),
 });

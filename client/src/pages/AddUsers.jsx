@@ -1,37 +1,52 @@
-import { useSelector } from "react-redux";
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
+import Button from "../components/ui/Button";
+import Modal from "../components/ui/Modal";
 import { useGetAllUsersQuery } from "../store/apiSlices/authApiSlice";
-import { useAuth } from "../hooks/useAuth";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table";
+import RegisterForm from "../components/auth/RegisterForm";
 
 const AddUsers = () => {
-  const { register } = useAuth();
-  const { data: allUsers, isError, error, isLoading } = useGetAllUsersQuery();
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const {
+    data: allUsers,
+    isError,
+    error,
+    isLoading,
+    refetch,
+  } = useGetAllUsersQuery();
 
   const columns = useMemo(
     () => [
       {
         accessorKey: "username",
         header: "Username",
-        cell: ({ row }) => {
-          const userName = row.original.username;
-          return <input type="text" value={userName} />;
-        },
+        cell: ({ row }) => row.original.username,
       },
       {
         accessorKey: "role",
         header: "Role",
-        cell: ({ row }) => {
-          const role = row.original.role;
-          return <input type="text" value={role} />;
-        },
+        cell: ({ row }) => row.original.role,
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <Button
+            variant="outline"
+            onClick={() => setSelectedUser(row.original)}
+            disabled={!row.original.mfa_enabled}
+          >
+            View MFA
+          </Button>
+        ),
       },
     ],
-    [allUsers]
+    []
   );
 
   const table = useReactTable({
@@ -39,9 +54,16 @@ const AddUsers = () => {
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+
   return (
-    <div className="overflow-x-auto border rounded-lg shadow bg-white">
-      <table className="w-full border-collapse">
+    <div className="overflow-x-auto border rounded-lg shadow bg-white p-4">
+      {/* Button to open register modal */}
+      <Button variant="primary" onClick={() => setIsRegisterModalOpen(true)}>
+        Add Users
+      </Button>
+
+      {/* Users table */}
+      <table className="w-full border-collapse mt-4">
         <thead className="bg-gray-50">
           {table.getHeaderGroups().map((hg) => (
             <tr key={hg.id}>
@@ -49,11 +71,6 @@ const AddUsers = () => {
                 <th
                   key={header.id}
                   className="relative text-left px-4 py-3 border-b font-medium text-sm text-gray-700"
-                  style={{
-                    width: header.getSize(), // dynamic width
-                    minWidth: header.column.columnDef.minSize,
-                    maxWidth: header.column.columnDef.maxSize,
-                  }}
                 >
                   {header.isPlaceholder
                     ? null
@@ -78,6 +95,43 @@ const AddUsers = () => {
           ))}
         </tbody>
       </table>
+
+      {/* Modal for registration form */}
+      <Modal
+        open={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        title="Register User"
+      >
+        <RegisterForm
+          onClose={() => {
+            refetch();
+            setIsRegisterModalOpen(false);
+          }}
+        />
+      </Modal>
+
+      {/* Modal to show MFA QR */}
+      <Modal
+        open={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+        title={`MFA for ${selectedUser?.username}`}
+      >
+        {selectedUser?.mfa_enabled ? (
+          <div className="flex flex-col items-center">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                selectedUser.mfa_uri
+              )}`}
+              alt="MFA QR"
+            />
+            <p className="text-sm text-gray-600 mt-2 break-all">
+              {selectedUser.mfa_uri}
+            </p>
+          </div>
+        ) : (
+          <p>This user does not have MFA enabled.</p>
+        )}
+      </Modal>
     </div>
   );
 };
