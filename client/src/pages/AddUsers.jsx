@@ -8,10 +8,12 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import RegisterForm from "../components/auth/RegisterForm";
+import Profile from "./Profile";
 
 const AddUsers = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
   const {
     data: allUsers,
     isError,
@@ -36,13 +38,24 @@ const AddUsers = () => {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
-          <Button
-            variant="outline"
-            onClick={() => setSelectedUser(row.original)}
-            disabled={!row.original.mfa_enabled}
-          >
-            View MFA
-          </Button>
+          <div>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedUser(row.original)}
+              disabled={!row.original.mfa_enabled}
+            >
+              View MFA
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSelectedUser(row.original);
+                setShowEditProfile(true);
+              }}
+            >
+              Edit User Profile
+            </Button>
+          </div>
         ),
       },
     ],
@@ -112,7 +125,7 @@ const AddUsers = () => {
 
       {/* Modal to show MFA QR */}
       <Modal
-        open={!!selectedUser}
+        open={!!selectedUser && !showEditProfile}
         onClose={() => setSelectedUser(null)}
         title={`MFA for ${selectedUser?.username}`}
       >
@@ -131,6 +144,17 @@ const AddUsers = () => {
         ) : (
           <p>This user does not have MFA enabled.</p>
         )}
+      </Modal>
+
+      <Modal
+        open={!!selectedUser && showEditProfile}
+        onClose={() => {
+          setSelectedUser(null);
+          setShowEditProfile(false);
+        }}
+        title={`MFA for ${selectedUser?.username}`}
+      >
+        <Profile userDetails={selectedUser} />
       </Modal>
     </div>
   );

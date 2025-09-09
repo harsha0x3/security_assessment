@@ -4,12 +4,15 @@ import { selectAuth } from "../store/appSlices/authSlice";
 import { useUpdateUserProfileMutation } from "../store/apiSlices/authApiSlice";
 import { User, Mail, Pencil, Check, X, Lock, Shield } from "lucide-react";
 
-const Profile = () => {
-  const currentUser = useSelector(selectAuth);
+const Profile = ({ userDetails = null }) => {
+  console.log("userDetails", userDetails);
+  const currentUserStore = useSelector(selectAuth);
+  const currentUser = userDetails || currentUserStore;
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({
-    first_name: currentUser.firstName || "",
-    last_name: currentUser.lastName || "",
+    username: currentUser.username || "",
+    first_name: currentUser.firstName || currentUser.first_name || "",
+    last_name: currentUser.lastName || currentUser.last_name || "",
     email: currentUser.email || "",
     password: "",
     confirm_password: "",
@@ -31,9 +34,16 @@ const Profile = () => {
     }
 
     try {
-      const payload = { ...form };
-      if (!payload.password) delete payload.password;
-      delete payload.confirm_password; // not needed in backend
+      const payload = {
+        username: currentUser.username !== form.username ? form.username : null,
+        first_name:
+          currentUser.firstName !== form.first_name ? form.first_name : null,
+        last_name:
+          currentUser.lastName !== form.last_name ? form.last_name : null,
+        email: currentUser.email !== form.email ? form.email : null,
+        password: currentUser.password !== form.password ? form.password : null,
+        role: currentUser.role !== form.role ? form.role : null,
+      };
 
       await updateUserProfile({
         payload,
@@ -100,7 +110,17 @@ const Profile = () => {
         {/* Username */}
         <div>
           <label className="text-gray-500 text-sm">Username</label>
-          <div className="text-lg font-medium">{currentUser.username}</div>
+          {editMode ? (
+            <input
+              type="text"
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+            />
+          ) : (
+            <div className="text-lg font-medium">{currentUser.username}</div>
+          )}
         </div>
 
         {/* Editable Fields */}
@@ -115,7 +135,9 @@ const Profile = () => {
               className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
             />
           ) : (
-            <div className="text-lg font-medium">{currentUser.firstName}</div>
+            <div className="text-lg font-medium">
+              {currentUser?.firstName || currentUser.first_name}
+            </div>
           )}
         </div>
 
@@ -130,7 +152,9 @@ const Profile = () => {
               className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
             />
           ) : (
-            <div className="text-lg font-medium">{currentUser.lastName}</div>
+            <div className="text-lg font-medium">
+              {currentUser?.lastName || currentUser?.last_name}
+            </div>
           )}
         </div>
 
@@ -144,6 +168,7 @@ const Profile = () => {
               name="email"
               value={form.email}
               onChange={handleChange}
+              readOnly
               className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
             />
           ) : (
