@@ -195,6 +195,7 @@ const Applications = () => {
         infra_host: infraHost,
         app_tech: appTech,
       };
+      console.log("PAYLOAD", payload);
       setIsEditing(false);
 
       try {

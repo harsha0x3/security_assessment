@@ -49,6 +49,8 @@ class ApplicationUpdate(BaseModel):
     region: str | None = None
     owner_name: str | None = None
     provider_name: str | None = None
+    infra_host: str | None = None
+    app_tech: str | None = None
 
 
 class ChecklistCreate(BaseModel):
