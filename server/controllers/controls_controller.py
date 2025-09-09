@@ -330,3 +330,51 @@ def update_control(payload: ControlUpdate, control_id: str, db: Session):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update the control: {str(e)}",
         )
+
+
+def import_controls(target_checklist_id: str, source_checklist_id: str, db: Session):
+    try:
+        target_checklist = db.scalar(
+            select(Checklist).where(Checklist.id == target_checklist_id)
+        )
+        if not target_checklist:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "msg": "Target Checklist Not found",
+                    "data": f"Target Checklist Not found for checklist id {target_checklist_id}",
+                },
+            )
+        source_checklist = db.scalar(
+            select(Checklist).where(Checklist.id == source_checklist_id)
+        )
+        if not source_checklist:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "msg": "Source Checklist Not found",
+                    "data": f"Source Checklist Not found for checklist id {source_checklist_id}",
+                },
+            )
+        new_controls = [
+            Control(
+                checklist_id=target_checklist.id,
+                control_area=control.control_area,
+                severity=control.severity,
+                control_text=control.control_text,
+            )
+            for control in source_checklist.controls
+        ]
+        db.add_all(new_controls)
+        db.commit()
+
+        return {"msg": f"Succesfully added {len(new_controls)} Controls."}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to import controls {str(e)}",
+        )

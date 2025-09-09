@@ -8,7 +8,7 @@ class Checklist(Base, BaseMixin):
     __tablename__ = "checklists"
 
     app_id: Mapped[str] = mapped_column(String(40), ForeignKey("applications.id"))
-    checklist_type: Mapped[str] = mapped_column(String(25), nullable=False)
+    checklist_type: Mapped[str] = mapped_column(String(512), nullable=False)
     creator_id: Mapped[str] = mapped_column(String(40), ForeignKey("users.id"))
     is_completed: Mapped[bool] = mapped_column(default=False)
 

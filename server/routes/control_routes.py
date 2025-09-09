@@ -9,6 +9,7 @@ from controllers.controls_controller import (
     get_controls_with_responses,
     remove_controls,
     update_control,
+    import_controls,
 )
 from db.connection import get_db_conn
 from models.schemas.crud_schemas import (
@@ -18,8 +19,10 @@ from models.schemas.crud_schemas import (
     ControlUpdate,
     ControlWithResponseOut,
     UserOut,
+    ImportControlsRequest,
 )
 from services.auth.deps import get_current_user
+
 
 router = APIRouter(tags=["controls"])
 
@@ -91,3 +94,21 @@ async def delete_control(
         )
     payload = ControlRemove(control_id=control_id)
     return remove_controls(payload, db)
+
+
+@router.post("/controls/import")
+async def importing_controls(
+    request: Annotated[ImportControlsRequest, ""],
+    db: Annotated[Session, Depends(get_db_conn), ""],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You don't have the permission. {current_user.username}",
+        )
+    return import_controls(
+        target_checklist_id=request.target_checklist_id,
+        source_checklist_id=request.source_checklist_id,
+        db=db,
+    )

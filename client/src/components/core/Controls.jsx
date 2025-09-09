@@ -23,12 +23,18 @@ import {
   Settings,
   Shredder,
   Upload,
+  CheckSquare,
   Info,
+  ImportIcon,
 } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import { useForm } from "react-hook-form";
+import Modal from "../ui/Modal";
+import ImportControls from "./ImportControls";
 
 const Controls = () => {
+  console.log("Controls rendered at", new Date().toISOString());
+
   const user = useSelector(selectAuth);
   const { checklistId } = useParams();
   const { data: allControls, isLoading: isFetchingControls } =
@@ -40,6 +46,7 @@ const Controls = () => {
   const [updateControl] = useUpdateControlsMutation();
 
   const [editingRowId, setEditingRowId] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [editingControlId, setEditingControlId] = useState(null);
   const [adding, setAdding] = useState(false);
   const currentChecklist = useSelector(selectCurrentChecklist);
@@ -586,15 +593,45 @@ const Controls = () => {
                 </div>
               </form>
             ) : (
-              <button
-                onClick={() => setAdding(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="w-5 h-5" /> Add First Control
-              </button>
+              <div>
+                <div className="flex gap-3 items-center">
+                  <button
+                    onClick={() => setAdding(true)}
+                    className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  >
+                    <Plus className="w-5 h-5" /> Add First Control
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowImportModal(true);
+                      console.log(showImportModal);
+                    }}
+                    className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  >
+                    <ImportIcon className="w-5 h-5" /> Import Controls
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}
+        <div>
+          {showImportModal && (
+            <div>
+              <Modal
+                className="w-full max-w-4xl mx-auto p-6"
+                open={showImportModal}
+                onClose={() => {
+                  setShowImportModal(false);
+                  console.log("first", showImportModal);
+                }}
+                title={"Import controls"}
+              >
+                <ImportControls targetChecklistId={checklistId} />
+              </Modal>
+            </div>
+          )}
+        </div>
       </div>
     );
 

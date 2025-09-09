@@ -33,9 +33,8 @@ const Checklists = () => {
     paramAppId || currentApp?.appId
   );
   const { checklistId: paramChecklistId } = useParams();
-  const [selectedChecklistId, setSelectedChecklistId] = useState(
-    paramChecklistId || currentChecklist?.checklistId
-  );
+  const [selectedChecklistId, setSelectedChecklistId] =
+    useState(paramChecklistId);
 
   // Modal state
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -59,6 +58,7 @@ const Checklists = () => {
   const handleSelectApp = (app) => {
     setSelectedAppId(app.appId);
     dispatch(setCurrentApplication({ appId: app.appId }));
+    setSelectedChecklistId(null);
     navigate(`/${app.appId}/checklists`);
   };
 

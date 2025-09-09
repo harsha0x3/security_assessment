@@ -45,6 +45,17 @@ const controlsApiSlice = apiSlice.injectEndpoints({
         { type: "Controls", id: "LIST" },
       ],
     }),
+
+    importControls: builder.mutation({
+      query: ({ payload }) => {
+        return {
+          url: `/controls/import`,
+          method: "POST",
+          body: payload,
+        };
+      },
+      invalidatesTags: [{ type: "Controls", id: "LIST" }],
+    }),
   }),
 });
 
@@ -53,4 +64,5 @@ export const {
   useGetAllControlsQuery,
   useGetAllControlsWithResponsesQuery,
   useUpdateControlsMutation,
+  useImportControlsMutation,
 } = controlsApiSlice;

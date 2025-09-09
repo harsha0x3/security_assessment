@@ -201,3 +201,8 @@ class ControlWithResponseOut(BaseModel):
 
 class ControlsWithChecklist(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
+
+class ImportControlsRequest(BaseModel):
+    target_checklist_id: str
+    source_checklist_id: str

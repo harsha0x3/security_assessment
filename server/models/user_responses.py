@@ -1,4 +1,5 @@
-from sqlalchemy import ForeignKey, Index, String, Text
+from sqlalchemy import ForeignKey, Index, String
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base, BaseMixin
@@ -9,9 +10,9 @@ class UserResponse(Base, BaseMixin):
 
     control_id: Mapped[str] = mapped_column(String(40), ForeignKey("controls.id"))
     user_id: Mapped[str] = mapped_column(String(40), ForeignKey("users.id"))
-    current_setting: Mapped[str] = mapped_column(Text, nullable=True)
-    review_comment: Mapped[str] = mapped_column(Text, nullable=True)
-    evidence_path: Mapped[str] = mapped_column(Text, nullable=True)
+    current_setting: Mapped[str] = mapped_column(MEDIUMTEXT, nullable=True)
+    review_comment: Mapped[str] = mapped_column(MEDIUMTEXT, nullable=True)
+    evidence_path: Mapped[str] = mapped_column(MEDIUMTEXT, nullable=True)
 
     control = relationship("Control", back_populates="responses")
     user = relationship("User", back_populates="responses")

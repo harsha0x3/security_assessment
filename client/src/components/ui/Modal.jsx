@@ -1,6 +1,3 @@
-// SimpleModal.jsx (better version)
-import React from "react";
-
 const Modal = ({ open, onClose, title, children }) => {
   if (!open) return null;
 
