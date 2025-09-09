@@ -9,7 +9,6 @@ class RoleEnum(str, Enum):
 
 
 class RegisterRequest(BaseModel):
-    id: str
     username: str
     email: EmailStr
     password: str
