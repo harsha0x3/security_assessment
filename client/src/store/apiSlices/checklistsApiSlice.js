@@ -56,6 +56,13 @@ export const checklistsApiSlice = apiSlice.injectEndpoints({
         { type: "Checklists", id: "LIST" },
       ],
     }),
+    deleteChecklist: builder.mutation({
+      query: (checklistId) => ({
+        url: `/checklists/${checklistId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [{ type: "Checklists", id: "LIST" }],
+    }),
   }),
 });
 
@@ -64,4 +71,5 @@ export const {
   useGetAllChecklistsQuery,
   useLazyGetAllChecklistsQuery,
   useSubmitChecklistMutation,
+  useDeleteChecklistMutation,
 } = checklistsApiSlice;

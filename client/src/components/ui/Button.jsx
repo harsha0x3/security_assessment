@@ -31,6 +31,8 @@ const Button = ({
       "bg-transparent hover:bg-secondary text-textSecondary hover:text-text focus:ring-accent/30",
     outline:
       "bg-transparent border-2 border-accent text-accent hover:bg-accent hover:dark:text-green-500 text-black focus:ring-accent/30",
+    delete:
+      "bg-black border-2 border-accent text-accent dark:bg-gray-400 hover:bg-gray-900 hover:dark:bg-gray-500 hover:dark:text-red-700 text-red-600 focus:ring-accent/30",
   };
 
   const sizes = {

@@ -14,7 +14,7 @@ class UserResponse(Base, BaseMixin):
     review_comment: Mapped[str] = mapped_column(MEDIUMTEXT, nullable=True)
     evidence_path: Mapped[str] = mapped_column(MEDIUMTEXT, nullable=True)
 
-    control = relationship("Control", back_populates="responses")
+    control = relationship("Control", back_populates="responses", uselist=False)
     user = relationship("User", back_populates="responses")
 
     __table_args__ = (

@@ -6,3 +6,5 @@ uploads/
 *.sql
 *.bat
 logs/
+*.txt
+*.json

@@ -16,6 +16,7 @@ from models.schemas.crud_schemas import (
     UserOut,
 )
 from models.user_responses import UserResponse
+from .checklist_controller import update_checklist_status
 
 
 def update_checklist_completion_for_user(checklist_id: str, user: UserOut, db: Session):
@@ -233,9 +234,7 @@ def get_controls_with_responses(
                 total_counts=total_counts,
             )
 
-            update_checklist_completion_for_user(
-                checklist_id=checklist_id, user=current_user, db=db
-            )
+            update_checklist_status(checklist_id=checklist_id, user=current_user, db=db)
             return controls_with_responses
 
         # Check assignment
@@ -296,9 +295,7 @@ def get_controls_with_responses(
             list_controls=controls_with_responses_non,
             total_counts=total_counts,
         )
-        update_checklist_completion_for_user(
-            checklist_id=checklist_id, user=current_user, db=db
-        )
+        update_checklist_status(checklist_id=checklist_id, user=current_user, db=db)
 
         return controls_with_responses
 
@@ -378,3 +375,6 @@ def import_controls(target_checklist_id: str, source_checklist_id: str, db: Sess
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to import controls {str(e)}",
         )
+
+
+# def delete_control

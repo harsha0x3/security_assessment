@@ -32,7 +32,7 @@ def create_app(
 
 
 def list_apps(db: Session, user: UserOut) -> list[ApplicationOut]:
-    stmt = select(Application)
+    stmt = select(Application).where(Application.is_active)
 
     if user.role != "admin":
         # join checklists and assignments to filter by user_id
@@ -46,7 +46,7 @@ def list_apps(db: Session, user: UserOut) -> list[ApplicationOut]:
     # stmt = stmt.where(Application.creator_id == user.id)
 
     apps = db.scalars(stmt).all()
-    print("Apps in app controller", apps)
+    # print("Apps in app controller", apps)
     return [ApplicationOut.model_validate(app) for app in apps]
 
 
@@ -63,6 +63,11 @@ def update_app(
         if not app:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"App not found {app_id}"
+            )
+        if not app.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"App is in trash {app_id}",
             )
 
         for key, val in payload.model_dump(exclude_unset=True).items():
@@ -87,22 +92,92 @@ def delete_app(app_id: str, db: Session, current_user: UserOut):
         if current_user.role != "admin":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"You don't have to update the application {current_user.username}",
+                detail=f"You are not authorised to deleted {current_user.username}",
             )
         app = db.scalar(select(Application).where(Application.id == app_id))
         if not app:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"App not found {app_id}"
             )
-        db.delete(app)
+        if not app.is_active:
+            db.delete(app)
+            db.commit()
+            del_app = ApplicationOut.model_validate(app).model_dump()
+            del_app["msg"] = "Successfully deleted app"
+            return del_app
+
+        setattr(app, "is_active", False)
+        checklists = app.checklists
+
+        for checklist in checklists:
+            if checklist.is_active:
+                setattr(checklist, "is_active", False)
+
+                for control in checklist.controls:
+                    if control.is_active:
+                        control.is_active = False
+                    if control.responses:
+                        if control.responses.is_active:
+                            control.responses.is_active = False
+
         db.commit()
+        db.refresh(app)
         del_app = ApplicationOut.model_validate(app).model_dump()
-        del_app["msg"] = "Successfully deleted app"
+        del_app["msg"] = "Successfully trashed app"
         return del_app
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete the app {str(e)}",
+        )
+
+
+def update_app_completion(app_id: str, db: Session):
+    try:
+        print("Inside app status func")
+        result = db.execute(select(Application).where(Application.id == app_id))
+        app = result.scalar_one_or_none()
+
+        if not app:
+            print("No app")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="App not found"
+            )
+
+        checklists = app.checklists
+        if not checklists:
+            print("No checklist")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No checklists found for this app",
+            )
+
+        app_status = all(c.is_completed for c in checklists)
+
+        if app_status != app.is_completed:
+            print(
+                f"Status change found app_status: {app_status} - app.is_completed: {app.is_completed}"
+            )
+            app.is_completed = app_status
+            db.commit()
+            db.refresh(app)
+
+        status_str = "complete" if app.is_completed else "incomplete"
+
+        with open("app_log.txt", "a", encoding="utf-8") as f:
+            f.write(f"App {app.name} marked {status_str}")
+        print(f"App {app.name} marked {status_str}")
+
+        return {"msg": f"App {app.name} marked {status_str}"}
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update application status for {app_id}: {str(e)}",
         )

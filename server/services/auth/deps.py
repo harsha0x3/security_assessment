@@ -17,7 +17,7 @@ def get_current_user(
     db: Session = Depends(get_db_conn),
 ) -> UserOut:
     try:
-        print("Begin", access_token)
+        # print("Begin", access_token)
         if access_token:
             payload = decode_access_token(access_token)
 

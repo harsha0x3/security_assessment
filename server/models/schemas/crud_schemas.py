@@ -34,6 +34,7 @@ class ApplicationOut(BaseModel):
     provider_name: str
     infra_host: str | None = None
     app_tech: str | None = None
+    is_completed: bool
     created_at: datetime | None = None
     updated_at: datetime | None = None
 

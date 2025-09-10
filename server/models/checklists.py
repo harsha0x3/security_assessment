@@ -17,7 +17,9 @@ class Checklist(Base, BaseMixin):
     controls = relationship(
         "Control", back_populates="checklist", cascade="all, delete-orphan"
     )
-    assignments = relationship("ChecklistAssignment", back_populates="checklist")
+    assignments = relationship(
+        "ChecklistAssignment", back_populates="checklist", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<checklist_id={self.id}, checklist_type={self.checklist_type}>"

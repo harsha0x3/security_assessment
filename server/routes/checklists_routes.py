@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
 
 from controllers.checklist_controller import (
-    checklist_submission,
+    update_checklist_status,
     create_checklist,
     get_checklists_for_app,
     remove_checklist,
@@ -69,7 +69,7 @@ async def patch_checklist(
     return update_checklist(payload, checklist_id, db)
 
 
-@router.delete("/checklists/{checklist_id}", response_model=ChecklistOut)
+@router.delete("/checklists/{checklist_id}")
 async def delete_checklist(
     checklist_id: Annotated[str, Path(title="Checklist id to be updated")],
     db: Annotated[Session, Depends(get_db_conn)],
@@ -92,4 +92,4 @@ async def submit_checklist(
     """
     Endpoint to submit a checklist.
     """
-    return checklist_submission(checklist_id, current_user, db)
+    return update_checklist_status(checklist_id, current_user, db)

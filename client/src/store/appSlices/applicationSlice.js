@@ -11,6 +11,7 @@ const initialState = {
     providerName: "",
     infraHost: "",
     appTech: "",
+    isCompleted: false,
   },
   apps: [],
 };
@@ -29,6 +30,7 @@ const applicationSlice = createSlice({
         provider_name,
         infra_host,
         app_tech,
+        is_completed,
       } = action.payload;
       state.apps.push({
         appId: id,
@@ -40,6 +42,7 @@ const applicationSlice = createSlice({
         providerName: provider_name,
         infraHost: infra_host,
         appTech: app_tech,
+        isCompleted: is_completed,
       });
     },
 
@@ -59,6 +62,7 @@ const applicationSlice = createSlice({
         provider_name,
         infra_host,
         app_tech,
+        is_completed,
       } = action.payload;
       const updatedData = {
         appId: id,
@@ -70,6 +74,7 @@ const applicationSlice = createSlice({
         providerName: provider_name,
         infraHost: infra_host,
         appTech: app_tech,
+        isCompleted: is_completed,
       };
       const index = state.apps.findIndex((app) => app.appId === id);
       if (index !== -1) {
@@ -90,6 +95,7 @@ const applicationSlice = createSlice({
           provider_name,
           infra_host,
           app_tech,
+          is_completed,
         } = app;
         const formattedData = {
           appId: id,
@@ -101,6 +107,7 @@ const applicationSlice = createSlice({
           providerName: provider_name,
           infraHost: infra_host,
           appTech: app_tech,
+          isCompleted: is_completed,
         };
         state.apps.push(formattedData);
       });

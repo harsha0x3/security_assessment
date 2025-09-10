@@ -39,7 +39,7 @@ async def get_applications(
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
 ):
-    print("Current user in app all route", current_user)
+    # print("Current user in app all route", current_user)
     return list_apps(db=db, user=current_user)
 
 

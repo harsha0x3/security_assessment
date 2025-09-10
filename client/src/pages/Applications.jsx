@@ -9,6 +9,7 @@ import {
   Clock,
   PackagePlus,
   SquareX,
+  Trash2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useGetAllChecklistsQuery } from "../store/apiSlices/checklistsApiSlice";
@@ -29,7 +30,11 @@ import {
   useAddApplicationMutation,
   useGetApplicationsQuery,
   useUpdateApplicationMutation,
+  useDeleteAppMutation,
 } from "../store/apiSlices/applicationApiSlice";
+import Modal from "../components/ui/Modal";
+import { Card } from "../components/ui/Card";
+import Button from "../components/ui/Button";
 
 const Applications = () => {
   const dispatch = useDispatch();
@@ -64,6 +69,8 @@ const Applications = () => {
   const [isNewApp, setIsNewApp] = useState(false);
   const [selectedAppId, setSelectedAppId] = useState(currentApp?.appId || null);
   const [isVertical, setIsVertical] = useState(window.innerWidth < 750);
+  const [showDeleteModal, setSetShowDeleteModal] = useState(false);
+  const [appName4Del, setAppName4Del] = useState("");
   const {
     data: appChecklists,
     isSuccess: checklistsSuccess,
@@ -71,6 +78,7 @@ const Applications = () => {
     error: checklistFetchError,
   } = useGetAllChecklistsQuery(selectedAppId);
   const currentChecklist = useSelector(selectCurrentChecklist);
+  const [deleteApp, { isLoading: deletingApp }] = useDeleteAppMutation();
 
   useEffect(() => {
     if (user.isAuthenticated && isAppFetchError) {
@@ -262,6 +270,23 @@ const Applications = () => {
     "450",
   ];
 
+  const handleDeleteApp = async () => {
+    if (currentApp?.name !== appName4Del) {
+      console.log(`${currentApp?.name} || ${appName4Del}`);
+      toast.error("Opps! app name doesn't match.");
+      setAppName4Del("");
+      return;
+    }
+    try {
+      const result = await deleteApp({ appId: selectedAppId }).unwrap();
+      toast.success(result?.msg || "Deleted");
+      setAppName4Del("");
+      setSetShowDeleteModal(false);
+    } catch (error) {
+      toast.error(error?.data?.detail || "Error deleting app.");
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-4rem)] overflow-hidden">
       <Allotment
@@ -302,9 +327,24 @@ const Applications = () => {
             isSelected
               ? "bg-blue-100 border-blue-500"
               : "border-gray-300 hover:bg-blue-50"
-          }`}
+          } ${
+                      app.isCompleted ? "ring-2 ring-green-500" : ""
+                    } flex justify-between`}
                   >
-                    {app.name}
+                    <span>{app.name}</span>
+                    <span>
+                      {app.isCompleted ? (
+                        <span className="flex">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                          <span className="text-sm">Completed</span>
+                        </span>
+                      ) : (
+                        <span className="flex">
+                          <Clock className="w-5 h-5 text-yellow-500" />
+                          <span className="text-sm">Pending</span>
+                        </span>
+                      )}
+                    </span>
                   </li>
                 );
               })}
@@ -469,21 +509,65 @@ const Applications = () => {
                 </div>
               )}
               {!isNewApp && user.role === "admin" && (
-                <button
-                  type="button"
-                  onClick={handleEdit}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-                    isEditing ? "bg-blue-600" : "bg-orange-600"
-                  } text-white hover:bg-green-700 transition`}
-                >
-                  {isEditing ? (
-                    <span className="flex gap-2 items-center">
-                      Save <Save className="w-4 h-4" />
+                <div className="flex">
+                  <button
+                    type="button"
+                    onClick={handleEdit}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md ${
+                      isEditing ? "bg-blue-600" : "bg-orange-600"
+                    } text-white hover:bg-green-700 transition`}
+                  >
+                    {isEditing ? (
+                      <span className="flex gap-2 items-center">
+                        Save <Save className="w-4 h-4" />
+                      </span>
+                    ) : (
+                      "Edit"
+                    )}
+                  </button>
+                  <Button
+                    variant={"delete"}
+                    onClick={() => setSetShowDeleteModal(true)}
+                  >
+                    <span className="flex">
+                      <Trash2 className="w-5 h-5" />
+                      <span>Delete</span>
                     </span>
-                  ) : (
-                    "Edit"
-                  )}
-                </button>
+                  </Button>
+                  <div>
+                    {showDeleteModal && (
+                      <Modal
+                        open={showDeleteModal}
+                        onClose={() => {
+                          setSetShowDeleteModal(false);
+                          setAppName4Del("");
+                        }}
+                        title={"Delete Application"}
+                      >
+                        <Card>
+                          <div className="flex flex-col gap-7">
+                            <h2>Enter the app name you want to delete</h2>
+                            <div className="flex gap-2">
+                              <label>App Name:</label>
+                              <input
+                                placeholder={`App name: ${currentApp?.name}`}
+                                value={appName4Del}
+                                onChange={(e) => setAppName4Del(e.target.value)}
+                                className="focus:ring-2 ring-red-500"
+                              />
+                            </div>
+                            <Button variant="delete" onClick={handleDeleteApp}>
+                              <span className="flex">
+                                <Trash2 className="w-5 h-5" />
+                                <span>Confirm Delete</span>
+                              </span>
+                            </Button>
+                          </div>
+                        </Card>
+                      </Modal>
+                    )}
+                  </div>
+                </div>
               )}
               {!isNewApp && isEditing && user.role === "admin" && (
                 <button

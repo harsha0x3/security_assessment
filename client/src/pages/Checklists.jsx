@@ -17,9 +17,17 @@ import {
 import {
   useGetAllChecklistsQuery,
   useAddChecklistMutation,
+  useDeleteChecklistMutation,
 } from "../store/apiSlices/checklistsApiSlice";
 import AssignUsersModal from "../components/core/AssignUsersModal";
-import { Plus, Users, CheckSquare, CheckCircle2 } from "lucide-react";
+import {
+  Plus,
+  Users,
+  CheckSquare,
+  CheckCircle2,
+  EllipsisVertical,
+} from "lucide-react";
+import { toast } from "react-toastify";
 
 const Checklists = () => {
   const { appId: paramAppId } = useParams();
@@ -35,12 +43,15 @@ const Checklists = () => {
   const { checklistId: paramChecklistId } = useParams();
   const [selectedChecklistId, setSelectedChecklistId] =
     useState(paramChecklistId);
+  const [deleteChecklist, { isLoading: isDeleting, error: deleteError }] =
+    useDeleteChecklistMutation();
 
   // Modal state
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [checklistType, setChecklistType] = useState("");
   const [customChecklist, setCustomChecklist] = useState("");
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   // API hooks
   const { data, isSuccess } = useGetAllChecklistsQuery(selectedAppId);
@@ -53,6 +64,10 @@ const Checklists = () => {
       dispatch(loadChecklists(data));
     }
   }, [data, dispatch, isSuccess]);
+
+  const toggleMenu = (id) => {
+    setOpenMenuId(openMenuId === id ? null : id);
+  };
 
   // Handle app tab click
   const handleSelectApp = (app) => {
@@ -67,6 +82,16 @@ const Checklists = () => {
     dispatch(setCurrentChecklist({ checklistId: chk.checklistId }));
     setSelectedChecklistId(chk.checklistId);
     navigate(`/${selectedAppId}/checklists/${chk.checklistId}`);
+  };
+
+  const handleDeleteChecklist = async (checklistId) => {
+    setOpenMenuId(null);
+    try {
+      await deleteChecklist(checklistId).unwrap();
+      toast.success("Checklist deleted successfully");
+    } catch (err) {
+      console.error("Failed to delete checklist:", err);
+    }
   };
 
   const handleAddChecklist = async (e) => {
@@ -130,18 +155,58 @@ const Checklists = () => {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex space-x-1 overflow-x-auto">
               {checklists.map((chk) => (
-                <button
-                  key={chk.checklistId}
-                  onClick={() => handleSelectChecklist(chk)}
-                  className={`flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                <div
+                  className={`flex items-center whitespace-nowrap rounded-lg transition-colors ${
                     selectedChecklistId === chk.checklistId
                       ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
+                      : "hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
-                  <span>{chk.checklistType}</span>
-                  {chk.isCompleted && <CheckCircle2 className="inline-block" />}
-                </button>
+                  <button
+                    key={chk.checklistId}
+                    onClick={() => handleSelectChecklist(chk)}
+                    className={`flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      selectedChecklistId === chk.checklistId
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    <span>{chk.checklistType}</span>
+                    {chk.isCompleted && (
+                      <CheckCircle2 className="inline-block" />
+                    )}
+                  </button>
+                  <div>
+                    {user.role === "admin" && (
+                      <button
+                        onClick={() => toggleMenu(chk.checklistId)}
+                        className="p-2 text-gray-500 hover:text-gray-700"
+                      >
+                        <EllipsisVertical />
+                      </button>
+                    )}
+                    {openMenuId === chk.checklistId && (
+                      <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
+                        {/* <button
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            // open your edit modal here
+                            console.log("Edit checklist:", chk.checklistId);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        >
+                          Edit
+                        </button> */}
+                        <button
+                          onClick={() => handleDeleteChecklist(chk.checklistId)}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-600 dark:hover:text-white"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
 

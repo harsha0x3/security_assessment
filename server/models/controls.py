@@ -16,7 +16,10 @@ class Control(Base, BaseMixin):
     # ----------------Relationships--------------------
     checklist = relationship("Checklist", back_populates="controls")
     responses = relationship(
-        "UserResponse", back_populates="control", cascade="all, delete-orphan"
+        "UserResponse",
+        back_populates="control",
+        cascade="all, delete-orphan",
+        uselist=False,
     )
 
     __table_args__ = (Index("ix_controls_checklist_id", "checklist_id"),)
