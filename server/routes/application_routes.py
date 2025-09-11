@@ -7,7 +7,9 @@ from controllers.application_controller import (
     create_app,
     delete_app,
     list_apps,
+    restore_app,
     update_app,
+    get_trashed_apps,
 )
 from db.connection import get_db_conn
 from models.schemas.crud_schemas import (
@@ -59,4 +61,37 @@ async def delete_application(
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
 ) -> dict[str, Any]:
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You are not authorised {current_user.username}",
+        )
     return delete_app(app_id, db, current_user)
+
+
+@router.patch("/restore/{app_id}")
+async def restore_app_from_trash(
+    app_id: Annotated[str, Path(title="App Id of the app to be updated")],
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+):
+    # return {"msg": "Hello"}
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You are not authorised {current_user.username}",
+        )
+    return restore_app(app_id=app_id, db=db)
+
+
+@router.get("/trash", response_model=list[ApplicationOut])
+async def get_apps_in_trash(
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You are not authorised {current_user.username}",
+        )
+    return get_trashed_apps(db=db)

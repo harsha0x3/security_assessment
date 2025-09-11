@@ -40,13 +40,6 @@ const Applications = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const {
-    data,
-    isSuccess,
-    isError: isAppFetchError,
-    error: appFetchError,
-  } = useGetApplicationsQuery();
-
   const [addAppMutation, { error: appAddError }] = useAddApplicationMutation();
   const [updateAppMutation, { error: updateAppError }] =
     useUpdateApplicationMutation();
@@ -55,6 +48,13 @@ const Applications = () => {
   const currentApp = useSelector(selectCurrentApp);
   const allApps = useSelector(loadAllApps);
   const user = useSelector(selectAuth);
+
+  const {
+    data,
+    isSuccess,
+    isError: isAppFetchError,
+    error: appFetchError,
+  } = useGetApplicationsQuery(undefined, { skip: !user.isAuthenticated });
 
   // ---------------- Form State ----------------
   const [appName, setAppName] = useState("");
@@ -76,15 +76,15 @@ const Applications = () => {
     isSuccess: checklistsSuccess,
     isError: isChecklistFetchError,
     error: checklistFetchError,
-  } = useGetAllChecklistsQuery(selectedAppId);
+  } = useGetAllChecklistsQuery(selectedAppId, { skip: !selectedAppId });
   const currentChecklist = useSelector(selectCurrentChecklist);
   const [deleteApp, { isLoading: deletingApp }] = useDeleteAppMutation();
 
   useEffect(() => {
-    if (user.isAuthenticated && isAppFetchError) {
+    if (user.isAuthenticated && isAppFetchError && !data) {
       toast.error(appFetchError?.data?.detail || "Error loading applications");
     }
-  }, [isAppFetchError, appFetchError, user]);
+  }, [isAppFetchError, appFetchError, user, data]);
 
   useEffect(() => {
     if (appAddError) {
@@ -298,11 +298,11 @@ const Applications = () => {
       >
         {/* Left Pane: Applications List */}
         <Allotment.Pane
-          minSize={isVertical ? 150 : 200}
-          preferredSize={isVertical ? 200 : 300}
+          minSize={isVertical ? 150 : 250}
+          preferredSize={isVertical ? 200 : 370}
           className="bg-white border rounded-xl shadow-sm"
         >
-          <div className="p-4 h-full overflow-y-auto ">
+          <div className="p-4 h-full flex flex-col">
             <h3 className="text-lg font-semibold mb-4 text-center border-b pb-2 border-gray-200">
               Applications
             </h3>
@@ -315,7 +315,7 @@ const Applications = () => {
                 New App
               </button>
             )}
-            <ul className="space-y-2">
+            <ul className="space-y-2 overflow-y-auto flex-1 pr-1">
               {allApps.map((app) => {
                 const isSelected = app.appId === selectedAppId;
                 return (
@@ -355,7 +355,7 @@ const Applications = () => {
         {/* Middle Pane: Create/Edit Form */}
         <Allotment.Pane
           minSize={isVertical ? 400 : 450}
-          preferredSize={isVertical ? 500 : 600}
+          preferredSize={isVertical ? 500 : 620}
         >
           <div
             className={` rounded-xl shadow-sm px-6 py-3 h-full overflow-y-auto`}
@@ -592,11 +592,11 @@ const Applications = () => {
         </Allotment.Pane>
         <Allotment.Pane
           minSize={isVertical ? 400 : 300}
-          preferredSize={isVertical ? 400 : 500}
+          preferredSize={isVertical ? 400 : 400}
           className="px-6 py-4 bg-white border rounded-xl shadow-sm overflow-y-auto"
         >
           {/* Right Pane: Checklist Details */}
-          <div className="overflow-y-auto h-full">
+          <div className="p-4 h-full flex flex-col">
             <h3 className="text-xl font-bold mb-4 text-center border-b pb-2 border-gray-200">
               Checklists
             </h3>
@@ -611,7 +611,7 @@ const Applications = () => {
                 )}
               </>
             ) : (
-              <ul className="space-y-4">
+              <ul className="space-y-2 overflow-y-auto flex-1 pr-1">
                 {allChecklists.map((chk) => (
                   <li
                     key={chk.checklistId}

@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 import lineClamp from "@tailwindcss/line-clamp";
-
+import scrollbar from "tailwind-scrollbar";
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
@@ -64,5 +64,5 @@ export default {
       },
     },
   },
-  plugins: [lineClamp],
+  plugins: [lineClamp, scrollbar({ nocompatible: true })],
 };

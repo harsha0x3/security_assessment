@@ -11,7 +11,7 @@ import {
   loadApps,
   setCurrentApplication,
 } from "./store/appSlices/applicationSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 // Import components
@@ -25,9 +25,14 @@ import Applications from "./pages/Applications";
 import Controls from "./components/core/Controls";
 import ChecklistsLayout from "./layouts/ChecklistsLayout";
 import AddUsers from "./pages/AddUsers";
+import { setError, selectAuth } from "./store/appSlices/authSlice";
 
 function App() {
-  const { data, isSuccess } = useGetApplicationsQuery();
+  const user = useSelector(selectAuth);
+
+  const { data, isSuccess } = useGetApplicationsQuery(undefined, {
+    skip: !user.isAuthenticated,
+  });
   const dispatch = useDispatch();
   useEffect(() => {
     if (data && isSuccess) {
@@ -38,6 +43,13 @@ function App() {
 
   const { data: userData, isSuccess: isUserLoggedIn } =
     useGetCurrentUserQuery();
+  const isAuthenticated = user.isAuthenticated;
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(setError(null));
+    }
+  }, [isAuthenticated, dispatch]);
 
   return (
     <Router>

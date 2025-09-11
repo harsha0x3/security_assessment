@@ -1,7 +1,6 @@
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, and_, not_
 from sqlalchemy.orm import Session
-
 from models.applications import Application
 from models.checklist_assignments import ChecklistAssignment
 from models.checklists import Checklist
@@ -113,6 +112,10 @@ def delete_app(app_id: str, db: Session, current_user: UserOut):
             if checklist.is_active:
                 setattr(checklist, "is_active", False)
 
+            if checklist.assignments:
+                for ass in checklist.assignments:
+                    ass.is_active = False
+
                 for control in checklist.controls:
                     if control.is_active:
                         control.is_active = False
@@ -180,4 +183,66 @@ def update_app_completion(app_id: str, db: Session):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update application status for {app_id}: {str(e)}",
+        )
+
+
+def restore_app(app_id: str, db: Session):
+    try:
+        app = db.scalar(
+            select(Application).where(
+                and_(Application.id == app_id, not_(Application.is_active))
+            )
+        )
+
+        if not app:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Application not found id recieved: {app_id}",
+            )
+
+        app.is_active = True
+        if app.checklists:
+            for checklist in app.checklists:
+                checklist.is_active = True
+                if checklist.assignments:
+                    for ass in checklist.assignments:
+                        ass.is_active = False
+                if checklist.controls:
+                    for control in checklist.controls:
+                        control.is_active = True
+                        if control.responses:
+                            control.responses.is_active = True
+
+        db.commit()
+        db.refresh(app)
+        return {"msg": "App restored successfully"}
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error restoring application {str(e)}",
+        )
+
+
+def get_trashed_apps(db: Session):
+    try:
+        trashed_apps = db.scalars(
+            select(Application).where(not_(Application.is_active))
+        ).all()
+        if not trashed_apps:
+            raise HTTPException(
+                status_code=status.HTTP_204_NO_CONTENT, detail="No apps in trash"
+            )
+        return [
+            ApplicationOut.model_validate(trashed_app) for trashed_app in trashed_apps
+        ]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching trashed apps {str(e)}",
         )

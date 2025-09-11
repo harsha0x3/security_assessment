@@ -1,7 +1,6 @@
 from fastapi import HTTPException, status
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, select, not_
 from sqlalchemy.orm import Session
-import json
 from models.applications import Application
 from models.checklist_assignments import ChecklistAssignment
 from models.checklists import Checklist
@@ -302,3 +301,35 @@ def remove_checklist(
 
     except HTTPException:
         raise
+
+
+def restore_checklits(checklist_id: str, db: Session):
+    try:
+        checklist = db.scalar(
+            select(Checklist).where(
+                and_(Checklist.id == checklist_id, not_(Checklist.is_active))
+            )
+        )
+        if not checklist:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"no checklist found: {checklist_id}",
+            )
+        checklist.is_active = True
+
+        if checklist.assignments:
+            for ass in checklist.assignments:
+                ass.is_active = False
+        if checklist.controls:
+            for control in checklist.controls:
+                control.is_active = True
+                if control.responses:
+                    control.responses.is_active = True
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error restoring checklist {str(e)}",
+        )
