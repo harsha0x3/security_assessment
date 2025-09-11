@@ -9,6 +9,10 @@ import {
 } from "../store/appSlices/applicationSlice";
 import { selectAuth } from "../store/appSlices/authSlice";
 import {
+  selectFilterdApps,
+  selectFilteredChecklists,
+} from "../store/appSlices/filtersSelector";
+import {
   setCurrentChecklist,
   loadChecklists,
   selectAllChecklists,
@@ -33,9 +37,9 @@ const Checklists = () => {
   const { appId: paramAppId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const apps = useSelector(loadAllApps);
+  const apps = useSelector(selectFilterdApps);
   const currentApp = useSelector(selectCurrentApp);
-  const checklists = useSelector(selectAllChecklists);
+  const checklists = useSelector(selectFilteredChecklists);
   const currentChecklist = useSelector(selectCurrentChecklist);
   const [selectedAppId, setSelectedAppId] = useState(
     paramAppId || currentApp?.appId

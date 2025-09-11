@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import select, and_, not_
+from sqlalchemy import select, and_, not_, desc, asc
 from sqlalchemy.orm import Session
 from models.applications import Application
 from models.checklist_assignments import ChecklistAssignment
@@ -10,6 +10,7 @@ from models.schemas.crud_schemas import (
     ApplicationUpdate,
     UserOut,
 )
+from models.schemas.params import AppQueryParams
 
 
 def create_app(
@@ -30,7 +31,9 @@ def create_app(
         )
 
 
-def list_apps(db: Session, user: UserOut) -> list[ApplicationOut]:
+def list_apps(
+    db: Session, user: UserOut, params: AppQueryParams
+) -> list[ApplicationOut]:
     stmt = select(Application).where(Application.is_active)
 
     if user.role != "admin":
@@ -39,12 +42,15 @@ def list_apps(db: Session, user: UserOut) -> list[ApplicationOut]:
             stmt.join(Application.checklists)
             .join(Checklist.assignments)
             .where(ChecklistAssignment.user_id == user.id)
-            .distinct()
         )
     # else:
     # stmt = stmt.where(Application.creator_id == user.id)
-
-    apps = db.scalars(stmt).all()
+    sort_column = getattr(Application, params.sort_by)
+    if params.sort_order == "desc":
+        sort_column = desc(sort_column)
+    else:
+        sort_column = asc(sort_column)
+    apps = db.scalars(stmt.order_by(sort_column)).all()
     # print("Apps in app controller", apps)
     return [ApplicationOut.model_validate(app) for app in apps]
 

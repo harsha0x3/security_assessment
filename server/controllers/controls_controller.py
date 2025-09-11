@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, select, desc, asc
 from sqlalchemy.orm import Session
 
 from models.checklist_assignments import ChecklistAssignment
@@ -162,7 +162,9 @@ def get_controls(
                 )
             ]
         controls = db.scalars(
-            select(Control).where(Control.checklist_id == checklist_id)
+            select(Control)
+            .where(Control.checklist_id == checklist_id)
+            .order_by(desc(Control.created_at))
         ).all()
         if not controls:
             return [
@@ -188,6 +190,17 @@ def get_controls_with_responses(
     checklist_id: str, db: Session, current_user: UserOut
 ) -> ControlWithResponseOut | list:
     try:
+        sort_order = "asc"
+        filter_table = "controls"
+        if filter_table == "controls":
+            sort_column = getattr(Control, "created_at")
+        else:
+            sort_column = getattr(UserResponse, "created_at")
+
+        if sort_order == "asc":
+            sort_column_by = asc(sort_column)
+        else:
+            sort_column_by = desc(sort_column)
         if current_user.role == "admin":
             # Validate checklist exists
             checklist = db.scalar(select(Checklist).where(Checklist.id == checklist_id))
@@ -198,6 +211,7 @@ def get_controls_with_responses(
                 select(Control, UserResponse)
                 .outerjoin(UserResponse, and_(UserResponse.control_id == Control.id))
                 .where(Control.checklist_id == checklist_id)
+                .order_by(desc(sort_column_by))
             )
 
             results = db.execute(stmt).all()

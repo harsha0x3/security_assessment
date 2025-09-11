@@ -2,21 +2,35 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  selectAppSearchTerm,
+  selectChecklistSearchTerm,
+  setAppSearchTerm,
+  setChecklistSearchTerm,
+} from "../store/appSlices/filtersSlice";
+import { selectCurrentApp } from "../store/appSlices/applicationSlice";
 import {
   User,
   Settings,
   LogOut,
-  Bell,
+  FolderSearch,
+  TextSearch,
   PanelLeftOpen,
   PanelLeftClose,
   ChevronDown,
 } from "lucide-react";
 
 const Header = ({ onToggleSidebar, isSidebarCollapsed }) => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const appSearchTearm = useSelector(selectAppSearchTerm);
+  const checklistSearchTearm = useSelector(selectChecklistSearchTerm);
+  const currentApp = useSelector(selectCurrentApp);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState(3);
   const dropdownRef = useRef(null);
-  const navigate = useNavigate();
   const { logout, selectUser } = useAuth();
 
   const user = selectUser();
@@ -60,6 +74,34 @@ const Header = ({ onToggleSidebar, isSidebarCollapsed }) => {
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
               Assessment Portal
             </h1>
+          </div>
+        </div>
+        {/* Mid Section - Search bars */}
+
+        <div className="flex-1 mx-6">
+          <div className="flex gap-2 w-5/6 ">
+            <div className="flex gap-2 px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
+              <FolderSearch />
+              <input
+                type="text"
+                value={appSearchTearm}
+                onChange={(e) => dispatch(setAppSearchTerm(e.target.value))}
+                placeholder="Search Apps"
+                className="focus:ring-2 focus:ring-blue-500 w-full rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+              />
+            </div>
+            <div className="flex gap-2 px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
+              <TextSearch />
+              <input
+                type="text"
+                value={checklistSearchTearm}
+                onChange={(e) =>
+                  dispatch(setChecklistSearchTerm(e.target.value))
+                }
+                placeholder={`Checklists for ${currentApp?.name}`}
+                className="focus:ring-2 focus:ring-blue-500 w-full rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+              />
+            </div>
           </div>
         </div>
 

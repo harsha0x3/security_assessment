@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import and_, func, select, not_
+from sqlalchemy import and_, func, select, not_, asc, desc
 from sqlalchemy.orm import Session
 from models.applications import Application
 from models.checklist_assignments import ChecklistAssignment
@@ -13,6 +13,7 @@ from models.schemas.crud_schemas import (
 )
 from models.user_responses import UserResponse
 from .application_controller import update_app_completion
+from models.schemas.params import ChecklistQueryParams
 
 
 def create_checklist(
@@ -49,7 +50,7 @@ def create_checklist(
 
 
 def get_checklists_for_app(
-    app_id: str, db: Session, user: UserOut
+    app_id: str, db: Session, user: UserOut, params: ChecklistQueryParams
 ) -> list[ChecklistOut]:
     try:
         app = db.scalar(select(Application).where(Application.id == app_id))
@@ -60,13 +61,19 @@ def get_checklists_for_app(
                 detail=f"Application not found. {app_id}",
             )
 
+        sort_column = getattr(Checklist, params.sort_by)
+        if params.sort_order == "asc":
+            sort_column = asc(sort_column)
+        else:
+            sort_column = desc(sort_column)
+
         results: list[ChecklistOut] = []
         if user.role == "admin":
             print("admin")
             checklists = db.scalars(
-                select(Checklist).where(
-                    and_(Checklist.app_id == app.id, Checklist.is_active)
-                )
+                select(Checklist)
+                .where(and_(Checklist.app_id == app.id, Checklist.is_active))
+                .order_by(sort_column)
             ).all()
             print(
                 "Checklist is complete",
@@ -100,6 +107,7 @@ def get_checklists_for_app(
                         Checklist.is_active,
                     )
                 )
+                .order_by(sort_column)
             ).all()
 
             for checklist in checklists:

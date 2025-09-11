@@ -27,6 +27,10 @@ import {
   selectCurrentChecklist,
 } from "../store/appSlices/checklistsSlice";
 import {
+  selectFilterdApps,
+  selectFilteredChecklists,
+} from "../store/appSlices/filtersSelector";
+import {
   useAddApplicationMutation,
   useGetApplicationsQuery,
   useUpdateApplicationMutation,
@@ -44,17 +48,23 @@ const Applications = () => {
   const [updateAppMutation, { error: updateAppError }] =
     useUpdateApplicationMutation();
 
-  const allChecklists = useSelector(selectAllChecklists);
+  const allChecklists = useSelector(selectFilteredChecklists);
   const currentApp = useSelector(selectCurrentApp);
-  const allApps = useSelector(loadAllApps);
+  const allApps = useSelector(selectFilterdApps);
   const user = useSelector(selectAuth);
-
   const {
     data,
     isSuccess,
     isError: isAppFetchError,
     error: appFetchError,
   } = useGetApplicationsQuery(undefined, { skip: !user.isAuthenticated });
+
+  useEffect(() => {
+    if (isSuccess && data) {
+      dispatch(loadApps(data));
+      dispatch(setCurrentApplication(data[0].id));
+    }
+  }, [data, dispatch, isSuccess]);
 
   // ---------------- Form State ----------------
   const [appName, setAppName] = useState("");
@@ -143,15 +153,10 @@ const Applications = () => {
   }, [appChecklists, dispatch, checklistsSuccess]);
 
   useEffect(() => {
-    if (isSuccess && data) {
-      dispatch(loadApps(data));
-      dispatch(setCurrentApplication(data[0].id));
+    if (currentApp?.appId) {
+      setSelectedAppId(currentApp.appId);
     }
-  }, [data, dispatch, isSuccess]);
-
-  if (currentApp && currentApp?.id && !selectedAppId) {
-    setSelectedAppId(currentApp?.id);
-  }
+  }, [currentApp]);
 
   // ---------------- Handlers ----------------
   const resetForm = () => {

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status, Query
 from sqlalchemy.orm import Session
 
 from controllers.checklist_controller import (
@@ -18,6 +18,7 @@ from models.schemas.crud_schemas import (
     UserOut,
 )
 from services.auth.deps import get_current_user
+from models.schemas.params import ChecklistQueryParams
 
 router = APIRouter(tags=["checklists"])
 
@@ -37,8 +38,11 @@ async def get_app_checklists(
     app_id: str,
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
+    params: Annotated[ChecklistQueryParams, Query()],
 ):
-    return get_checklists_for_app(app_id=app_id, db=db, user=current_user)
+    return get_checklists_for_app(
+        app_id=app_id, db=db, user=current_user, params=params
+    )
 
 
 @router.get("/checklists/my-checklists", response_model=list[ChecklistOut])

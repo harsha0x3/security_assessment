@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, status, Query
 from sqlalchemy.orm import Session
 
 from controllers.application_controller import (
@@ -19,6 +19,7 @@ from models.schemas.crud_schemas import (
     UserOut,
 )
 from services.auth.deps import get_current_user
+from models.schemas.params import AppQueryParams
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -40,9 +41,10 @@ async def create_application(
 async def get_applications(
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
+    params: Annotated[AppQueryParams, Query()],
 ):
     # print("Current user in app all route", current_user)
-    return list_apps(db=db, user=current_user)
+    return list_apps(db=db, user=current_user, params=params)
 
 
 @router.patch("/{app_id}", response_model=ApplicationOut)
