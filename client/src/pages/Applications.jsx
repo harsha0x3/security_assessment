@@ -10,6 +10,7 @@ import {
   PackagePlus,
   SquareX,
   Trash2,
+  Star,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useGetAllChecklistsQuery } from "../store/apiSlices/checklistsApiSlice";
@@ -43,6 +44,9 @@ import Button from "../components/ui/Button";
 const Applications = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [appSortBy, setAppSortBy] = useState("created_at");
+  const [appSortOrder, setAppSortOrder] = useState("desc");
+  const [showAppFilters, setShowAppFilters] = useState(false);
 
   const [addAppMutation, { error: appAddError }] = useAddApplicationMutation();
   const [updateAppMutation, { error: updateAppError }] =
@@ -57,7 +61,10 @@ const Applications = () => {
     isSuccess,
     isError: isAppFetchError,
     error: appFetchError,
-  } = useGetApplicationsQuery(undefined, { skip: !user.isAuthenticated });
+  } = useGetApplicationsQuery(
+    { sort_by: appSortBy || "created_at", sort_order: appSortOrder || "desc" },
+    { skip: !user.isAuthenticated || !appSortBy || !appSortOrder }
+  );
 
   useEffect(() => {
     if (isSuccess && data) {
@@ -78,6 +85,8 @@ const Applications = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isNewApp, setIsNewApp] = useState(false);
   const [selectedAppId, setSelectedAppId] = useState(currentApp?.appId || null);
+  const [appPriority, setAppPriority] = useState(2);
+  const [department, setDepartment] = useState("");
   const [isVertical, setIsVertical] = useState(window.innerWidth < 750);
   const [showDeleteModal, setSetShowDeleteModal] = useState(false);
   const [appName4Del, setAppName4Del] = useState("");
@@ -86,7 +95,10 @@ const Applications = () => {
     isSuccess: checklistsSuccess,
     isError: isChecklistFetchError,
     error: checklistFetchError,
-  } = useGetAllChecklistsQuery(selectedAppId, { skip: !selectedAppId });
+  } = useGetAllChecklistsQuery(
+    { appId: selectedAppId },
+    { skip: !selectedAppId }
+  );
   const currentChecklist = useSelector(selectCurrentChecklist);
   const [deleteApp, { isLoading: deletingApp }] = useDeleteAppMutation();
 
@@ -129,6 +141,8 @@ const Applications = () => {
       setProviderName(currentApp.providerName || "");
       setInfraHost(currentApp.infraHost || "");
       setAppTech(currentApp.appTech || "");
+      setAppPriority(currentApp.priority || 2);
+      setDepartment(currentApp.department || "");
     }
   }, [currentApp, isNewApp]);
 
@@ -168,6 +182,8 @@ const Applications = () => {
     setProviderName("");
     setInfraHost("");
     setAppTech("");
+    setDepartment("");
+    setAppPriority(2);
   };
 
   const handleSelect = (appId) => {
@@ -207,6 +223,8 @@ const Applications = () => {
         provider_name: providerName,
         infra_host: infraHost,
         app_tech: appTech,
+        priority: appPriority,
+        department,
       };
       console.log("PAYLOAD", payload);
       setIsEditing(false);
@@ -239,6 +257,8 @@ const Applications = () => {
       provider_name: providerName,
       infra_host: infraHost,
       app_tech: appTech,
+      priority: appPriority,
+      department,
     };
     const firstEmptyField = Object.entries(payload).find(
       ([key, value]) => !value || value === ""
@@ -259,6 +279,8 @@ const Applications = () => {
       console.error("Submit error:", err);
     }
   };
+
+  const priorityMap = { High: 3, Medium: 2, Low: 1 };
 
   const handleShowAssesmentClick = (appId) => {
     if (currentChecklist && currentChecklist?.checklistId) {
@@ -293,7 +315,7 @@ const Applications = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="h-[calc(100vh-4rem)] overflow-visible">
       <Allotment
         vertical={isVertical}
         // defaultSizes={savedSizes}
@@ -311,15 +333,70 @@ const Applications = () => {
             <h3 className="text-lg font-semibold mb-4 text-center border-b pb-2 border-gray-200">
               Applications
             </h3>
-            {user.role === "admin" && (
-              <button
-                onClick={handleCreateNewApp}
-                className="w-full mb-4 px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition flex items-center justify-center gap-2"
-              >
-                <PackagePlus />
-                New App
-              </button>
-            )}
+            <div className="flex gap-2">
+              {user.role === "admin" && (
+                <button
+                  onClick={handleCreateNewApp}
+                  className="w-1/2 mb-4 px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                >
+                  <PackagePlus />
+                  New App
+                </button>
+              )}
+              <div className="relative inline-block text-left">
+                <button
+                  className="px-3 py-2 border rounded-md bg-white shadow-sm"
+                  onClick={() => setShowAppFilters((prev) => !prev)}
+                >
+                  Filters ⚙️
+                </button>
+                {showAppFilters && (
+                  <div className="absolute mt-2 w-56 rounded-md shadow-lg bg-white border z-[9999]">
+                    <div className="p-2">
+                      <label className="block text-sm font-medium">
+                        Sort By
+                      </label>
+                      <select
+                        value={appSortBy}
+                        onChange={(e) => setAppSortBy(e.target.value)}
+                        className="w-full mt-1 px-2 py-1 border rounded-md text-sm"
+                      >
+                        <option value="created_at">Created At</option>
+                        <option value="name">Name</option>
+                        <option value="updated_at">Last Updated</option>
+                        <option value="priority">Priority</option>
+                      </select>
+                    </div>
+                    <div className="p-2">
+                      <label className="block text-sm font-medium">
+                        Sort Order
+                      </label>
+                      <select
+                        value={appSortOrder}
+                        onChange={(e) => setAppSortOrder(e.target.value)}
+                        className="w-full mt-1 px-2 py-1 border rounded-md text-sm"
+                      >
+                        <option value="asc">Low - High</option>
+                        <option value="desc">High - Low</option>
+                      </select>
+                    </div>
+                    {/* <div className="p-2">
+                    <label className="block text-sm font-medium">Status</label>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full mt-1 px-2 py-1 border rounded-md text-sm"
+                    >
+                      <option value="all">All</option>
+                      <option value="completed">Completed</option>
+                      <option value="pending">Pending</option>
+                    </select>
+                  </div> */}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <ul className="space-y-2 overflow-y-auto flex-1 pr-1">
               {allApps.map((app) => {
                 const isSelected = app.appId === selectedAppId;
@@ -332,24 +409,31 @@ const Applications = () => {
             isSelected
               ? "bg-blue-100 border-blue-500"
               : "border-gray-300 hover:bg-blue-50"
-          } ${
-                      app.isCompleted ? "ring-2 ring-green-500" : ""
-                    } flex justify-between`}
+          } ${app.isCompleted ? "ring-2 ring-green-500" : ""} flex flex-col`}
                   >
-                    <span>{app.name}</span>
-                    <span>
-                      {app.isCompleted ? (
-                        <span className="flex">
-                          <CheckCircle className="w-5 h-5 text-green-600" />
-                          <span className="text-sm">Completed</span>
+                    <div className="flex justify-between">
+                      <span>{app.name}</span>
+                      <span>
+                        {app.isCompleted ? (
+                          <span className="flex">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <span className="text-sm">Completed</span>
+                          </span>
+                        ) : (
+                          <span className="flex">
+                            <Clock className="w-5 h-5 text-yellow-500" />
+                            <span className="text-sm">Pending</span>
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 text-yellow-500">
+                      {Array.from({ length: app.priority }, (_, i) => (
+                        <span key={i}>
+                          <Star className="w-4 h-4" />
                         </span>
-                      ) : (
-                        <span className="flex">
-                          <Clock className="w-5 h-5 text-yellow-500" />
-                          <span className="text-sm">Pending</span>
-                        </span>
-                      )}
-                    </span>
+                      ))}
+                    </div>
                   </li>
                 );
               })}
@@ -488,6 +572,45 @@ const Applications = () => {
                     onChange={(e) => setAppTech(e.target.value)}
                     readOnly={!isEditing && !isNewApp}
                   />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">
+                    Department
+                  </label>
+                  <input
+                    className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Department"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    readOnly={!isEditing && !isNewApp}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">
+                    Priority
+                  </label>
+
+                  {isEditing || isNewApp ? (
+                    <select
+                      value={appPriority}
+                      onChange={(e) => setAppPriority(Number(e.target.value))}
+                      className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    >
+                      {Object.entries(priorityMap).map(([label, value]) => (
+                        <option key={label} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="px-3 py-2 border rounded-md bg-gray-50 text-gray-700">
+                      {Object.keys(priorityMap).find(
+                        (key) => priorityMap[key] === appPriority
+                      ) || "Unknown"}
+                    </p>
+                  )}
                 </div>
               </div>
             </form>

@@ -11,6 +11,8 @@ const initialState = {
     providerName: "",
     infraHost: "",
     appTech: "",
+    priority: null,
+    department: "",
     isCompleted: false,
     isActive: null,
   },
@@ -33,6 +35,8 @@ const applicationSlice = createSlice({
         app_tech,
         is_completed,
         is_active,
+        priority,
+        department,
       } = action.payload;
       state.apps.push({
         appId: id,
@@ -46,6 +50,8 @@ const applicationSlice = createSlice({
         appTech: app_tech,
         isCompleted: is_completed,
         isActive: is_active,
+        priority,
+        department,
       });
     },
 
@@ -67,6 +73,8 @@ const applicationSlice = createSlice({
         app_tech,
         is_completed,
         is_active,
+        priority,
+        department,
       } = action.payload;
       const updatedData = {
         appId: id,
@@ -74,6 +82,8 @@ const applicationSlice = createSlice({
         description,
         platform,
         region,
+        priority,
+        department,
         ownerName: owner_name,
         providerName: provider_name,
         infraHost: infra_host,
@@ -102,6 +112,8 @@ const applicationSlice = createSlice({
           app_tech,
           is_completed,
           is_active,
+          priority,
+          department,
         } = app;
         const formattedData = {
           appId: id,
@@ -115,6 +127,8 @@ const applicationSlice = createSlice({
           appTech: app_tech,
           isCompleted: is_completed,
           isActive: is_active,
+          priority,
+          department,
         };
         state.apps.push(formattedData);
       });

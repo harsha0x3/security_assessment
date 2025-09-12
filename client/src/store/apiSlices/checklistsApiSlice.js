@@ -3,6 +3,7 @@ import {
   createChecklist,
   setCurrentChecklist,
   loadChecklists,
+  updateChecklist,
 } from "../appSlices/checklistsSlice";
 
 export const checklistsApiSlice = apiSlice.injectEndpoints({
@@ -27,8 +28,36 @@ export const checklistsApiSlice = apiSlice.injectEndpoints({
       },
     }),
 
+    patchChecklist: builder.mutation({
+      query: ({ checklistId, payload }) => {
+        return {
+          url: `/checklists/${checklistId}`,
+          method: "PATCH",
+          body: payload,
+        };
+      },
+      invalidatesTags: (result) =>
+        result
+          ? [{ type: "Checklists", id: result.id }]
+          : [{ type: "Checklists", id: "LIST" }],
+      onQueryStarted: async (args, { dispatch, queryFulfilled }) => {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(updateChecklist(data));
+        } catch (error) {
+          console.error("Error in patch checklist", error);
+        }
+      },
+    }),
+
     getAllChecklists: builder.query({
-      query: (appId) => `applications/${appId}/checklists`,
+      query: ({ appId, sort_order = "desc", sort_by = "created_at" }) => {
+        const params = new URLSearchParams({
+          sort_order,
+          sort_by,
+        });
+        return `applications/${appId}/checklists/?${params.toString()}`;
+      },
       providesTags: (result) =>
         result
           ? [
@@ -63,6 +92,11 @@ export const checklistsApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: [{ type: "Checklists", id: "LIST" }],
     }),
+
+    getTrashedChecklists: builder.query({
+      query: ({ appId }) => `/applications/${appId}/checklists/trash`,
+      providesTags: ["TrashedChecklists"],
+    }),
   }),
 });
 
@@ -72,4 +106,6 @@ export const {
   useLazyGetAllChecklistsQuery,
   useSubmitChecklistMutation,
   useDeleteChecklistMutation,
+  useGetTrashedChecklistsQuery,
+  usePatchChecklistMutation,
 } = checklistsApiSlice;

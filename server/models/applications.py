@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import ForeignKey, String, Text, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base, BaseMixin
@@ -16,6 +16,8 @@ class Application(Base, BaseMixin):
     provider_name: Mapped[str] = mapped_column(String(666), nullable=False)
     infra_host: Mapped[str] = mapped_column(String(512), nullable=True)
     app_tech: Mapped[str] = mapped_column(Text, nullable=True)
+    priority: Mapped[int] = mapped_column(Integer, default=2)
+    department: Mapped[str] = mapped_column(String(128), nullable=True)
     is_completed: Mapped[bool] = mapped_column(default=False)
 
     creator = relationship("User", back_populates="applications")

@@ -9,7 +9,7 @@ class AppQueryParams(BaseModel):
     @field_validator("sort_by")
     @classmethod
     def validate_sort_by(cls, v: str) -> str:
-        valid_fields = {"updated_at", "name", "created_at"}
+        valid_fields = {"updated_at", "name", "created_at", "priority"}
         if v not in valid_fields:
             raise ValueError(f"sort_by must be one of {valid_fields}")
         return v
@@ -22,7 +22,7 @@ class ChecklistQueryParams(BaseModel):
     @field_validator("sort_by")
     @classmethod
     def validate_sort_by(cls, v: str) -> str:
-        valid_fields = {"updated_at", "name", "created_at"}
+        valid_fields = {"updated_at", "checklist_type", "created_at", "priority"}
         if v not in valid_fields:
             raise ValueError(f"sort_by must be one of {valid_fields}")
         return v

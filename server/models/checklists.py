@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base, BaseMixin
@@ -10,6 +10,7 @@ class Checklist(Base, BaseMixin):
     app_id: Mapped[str] = mapped_column(String(40), ForeignKey("applications.id"))
     checklist_type: Mapped[str] = mapped_column(String(512), nullable=False)
     creator_id: Mapped[str] = mapped_column(String(40), ForeignKey("users.id"))
+    priority: Mapped[int] = mapped_column(Integer, default=2)
     is_completed: Mapped[bool] = mapped_column(default=False)
 
     # ----------------Relationships------------

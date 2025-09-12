@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status, Query
 from sqlalchemy.orm import Session
@@ -9,6 +9,7 @@ from controllers.checklist_controller import (
     get_checklists_for_app,
     remove_checklist,
     update_checklist,
+    get_trash_checklists,
 )
 from db.connection import get_db_conn
 from models.schemas.crud_schemas import (
@@ -38,8 +39,10 @@ async def get_app_checklists(
     app_id: str,
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
-    params: Annotated[ChecklistQueryParams, Query()],
+    sort_by: Annotated[str, Query()] = "created_at",
+    sort_order: Annotated[Literal["asc", "desc"], Query()] = "desc",
 ):
+    params = ChecklistQueryParams(sort_by=sort_by, sort_order=sort_order)
     return get_checklists_for_app(
         app_id=app_id, db=db, user=current_user, params=params
     )
@@ -97,3 +100,16 @@ async def submit_checklist(
     Endpoint to submit a checklist.
     """
     return update_checklist_status(checklist_id, current_user, db)
+
+
+@router.get("/applications/{app_id}/checklists/trash")
+async def get_trahed_app_checklists(
+    app_id: str,
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+    params: Annotated[ChecklistQueryParams, Query()],
+):
+    return get_trash_checklists(app_id=app_id, db=db, user=current_user, params=params)
+
+
+# @router.patch("/checklists/{checklists_id}/restore")

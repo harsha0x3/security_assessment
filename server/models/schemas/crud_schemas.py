@@ -22,6 +22,8 @@ class ApplicationCreate(BaseModel):
     provider_name: str
     infra_host: str | None = None
     app_tech: str | None = None
+    priority: int = 2
+    department: str | None = None
 
 
 class ApplicationOut(BaseModel):
@@ -34,6 +36,8 @@ class ApplicationOut(BaseModel):
     provider_name: str
     infra_host: str | None = None
     app_tech: str | None = None
+    priority: int = 2
+    department: str | None = None
     is_active: bool
     is_completed: bool
     created_at: datetime | None = None
@@ -53,10 +57,13 @@ class ApplicationUpdate(BaseModel):
     provider_name: str | None = None
     infra_host: str | None = None
     app_tech: str | None = None
+    priority: int | None = None
+    department: str | None = None
 
 
 class ChecklistCreate(BaseModel):
     checklist_type: str
+    priority: int = 2
 
 
 class UserOut(BaseModel):
@@ -81,6 +88,7 @@ class ChecklistOut(BaseModel):
     checklist_type: str
     assigned_users: list[dict] | None = None
     is_completed: bool
+    priority: int
 
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -90,6 +98,7 @@ class ChecklistOut(BaseModel):
 
 class ChecklistUpdate(BaseModel):
     checklist_type: str
+    priority: int
 
 
 class ControlCreate(BaseModel):

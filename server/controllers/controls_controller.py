@@ -211,7 +211,7 @@ def get_controls_with_responses(
                 select(Control, UserResponse)
                 .outerjoin(UserResponse, and_(UserResponse.control_id == Control.id))
                 .where(Control.checklist_id == checklist_id)
-                .order_by(desc(sort_column_by))
+                .order_by(sort_column_by)
             )
 
             results = db.execute(stmt).all()

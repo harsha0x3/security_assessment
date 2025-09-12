@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, status, Query
 from sqlalchemy.orm import Session
@@ -41,9 +41,10 @@ async def create_application(
 async def get_applications(
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
-    params: Annotated[AppQueryParams, Query()],
+    sort_by: Annotated[str, Query()] = "created_at",
+    sort_order: Annotated[Literal["asc", "desc"], Query()] = "desc",
 ):
-    # print("Current user in app all route", current_user)
+    params = AppQueryParams(sort_by=sort_by, sort_order=sort_order)
     return list_apps(db=db, user=current_user, params=params)
 
 

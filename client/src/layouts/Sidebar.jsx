@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectCurrentApp } from "../store/appSlices/applicationSlice";
 import { selectAuth } from "../store/appSlices/authSlice";
-import { LayoutGrid, CheckSquare, Users, User } from "lucide-react";
+import { LayoutGrid, CheckSquare, Users, User, Trash } from "lucide-react";
 
 const Sidebar = ({ isCollapsed, onToggle }) => {
   const location = useLocation();
@@ -30,6 +30,11 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       name: "Profile",
       path: "/profile",
       icon: User,
+    },
+    {
+      name: "Trash",
+      path: "/trash",
+      icon: Trash,
     },
   ];
 

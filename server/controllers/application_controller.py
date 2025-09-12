@@ -51,7 +51,7 @@ def list_apps(
     else:
         sort_column = asc(sort_column)
     apps = db.scalars(stmt.order_by(sort_column)).all()
-    # print("Apps in app controller", apps)
+
     return [ApplicationOut.model_validate(app) for app in apps]
 
 

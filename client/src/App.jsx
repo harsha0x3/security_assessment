@@ -26,6 +26,7 @@ import Controls from "./components/core/Controls";
 import ChecklistsLayout from "./layouts/ChecklistsLayout";
 import AddUsers from "./pages/AddUsers";
 import { setError, selectAuth } from "./store/appSlices/authSlice";
+import TrashPage from "./pages/TrashPage";
 
 function App() {
   const user = useSelector(selectAuth);
@@ -84,6 +85,7 @@ function App() {
               </Route>
               <Route path="addUsers" element={<AddUsers />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="trash" element={<TrashPage />} />
             </Route>
           </Route>
 

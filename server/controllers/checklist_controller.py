@@ -90,6 +90,7 @@ def get_checklists_for_app(
                             for assignment in checklist.assignments
                         ],
                         is_completed=checklist.is_completed,
+                        priority=checklist.priority,
                         created_at=checklist.created_at,
                         updated_at=checklist.updated_at,
                     )
@@ -119,6 +120,7 @@ def get_checklists_for_app(
                         is_completed=checklist.is_completed,
                         created_at=checklist.created_at,
                         updated_at=checklist.updated_at,
+                        priority=checklist.priority,
                     )
                 )
 
@@ -162,16 +164,28 @@ def update_checklist(payload: ChecklistUpdate, checklist_id: str, db: Session):
                 detail=f"no checklist found: {checklist_id}",
             )
 
-        for key, val in payload.model_dump(exclude_unset=True, exclude_none=True):
+        for key, val in payload.model_dump(
+            exclude_unset=True, exclude_none=True
+        ).items():
             setattr(checklist, key, val)
 
         db.commit()
         db.refresh(checklist)
-        return ChecklistOut.model_validate(checklist)
+        return ChecklistOut(
+            id=checklist.id,
+            app_name=checklist.app.name,
+            checklist_type=checklist.checklist_type,
+            is_completed=checklist.is_completed,
+            created_at=checklist.created_at,
+            updated_at=checklist.updated_at,
+            priority=checklist.priority,
+        )
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
+        print("ERROR:::")
+        print(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update checklists {str(e)}",
@@ -340,4 +354,58 @@ def restore_checklits(checklist_id: str, db: Session):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error restoring checklist {str(e)}",
+        )
+
+
+def get_trash_checklists(
+    app_id: str, db: Session, user: UserOut, params: ChecklistQueryParams
+) -> list[ChecklistOut]:
+    try:
+        app = db.scalar(
+            select(Application).where(
+                and_(Application.id == app_id, not_(Application.is_active))
+            )
+        )
+
+        if not app:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Application not found. {app_id}",
+            )
+
+        results = []
+
+        checklists = db.scalars(
+            select(Checklist)
+            .where(and_(Checklist.app_id == app.id, not_(Checklist.is_active)))
+            .order_by(desc(Checklist.updated_at))
+        ).all()
+        print(
+            "Checklist is complete",
+            [checklist.is_completed for checklist in checklists],
+        )
+        for checklist in checklists:
+            results.append(
+                ChecklistOut(
+                    id=checklist.id,
+                    app_name=app.name,
+                    checklist_type=checklist.checklist_type,
+                    assigned_users=[
+                        assignment.user.to_dict_safe()
+                        for assignment in checklist.assignments
+                    ],
+                    is_completed=checklist.is_completed,
+                    created_at=checklist.created_at,
+                    updated_at=checklist.updated_at,
+                    priority=checklist.priority,
+                )
+            )
+
+        return results
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching trash checklists {str(e)}",
         )

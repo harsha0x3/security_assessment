@@ -46,7 +46,13 @@ export const applicationApiSlice = apiSlice.injectEndpoints({
     }),
 
     getApplications: builder.query({
-      query: () => "/applications",
+      query: ({ sort_by, sort_order }) => {
+        const params = new URLSearchParams({
+          sort_order,
+          sort_by,
+        });
+        return `/applications/?${params.toString()}`;
+      },
       providesTags: ["Apps"],
       // onQueryStarted: async (args, { dispatch, queryFulfilled }) => {
       //   try {
@@ -66,6 +72,19 @@ export const applicationApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Apps"],
     }),
+
+    getTrashedApps: builder.query({
+      query: () => "/applications/trash",
+      providesTags: ["TrashedApps"],
+    }),
+
+    restoreTrashedApps: builder.mutation({
+      query: (appId) => ({
+        url: `applications/restore/${appId}`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["TrashedApps"],
+    }),
   }),
 });
 
@@ -75,4 +94,6 @@ export const {
   useUpdateApplicationMutation,
   useLazyGetApplicationsQuery,
   useDeleteAppMutation,
+  useGetTrashedAppsQuery,
+  useRestoreTrashedAppsMutation,
 } = applicationApiSlice;
