@@ -19,7 +19,21 @@ const controlsApiSlice = apiSlice.injectEndpoints({
     }),
 
     getAllControlsWithResponses: builder.query({
-      query: (checklistId) => `/checklists/${checklistId}/controls-responses`,
+      query: ({
+        checklistId,
+        sort_order = "desc",
+        sort_by = "created_at",
+        page = 1,
+        page_size = 10,
+      }) => {
+        const params = new URLSearchParams({
+          sort_order,
+          sort_by,
+          page,
+          page_size,
+        });
+        return `/checklists/${checklistId}/controls-responses?${params.toString()}`;
+      },
       providesTags: (result) =>
         result
           ? [
@@ -56,6 +70,32 @@ const controlsApiSlice = apiSlice.injectEndpoints({
       },
       invalidatesTags: [{ type: "Controls", id: "LIST" }],
     }),
+
+    uploadControls: builder.mutation({
+      query: ({ input_file, checklistId }) => {
+        const formData = new FormData();
+        formData.append("input_file", input_file);
+        return {
+          url: `/checklists/${checklistId}/controls/upload`,
+          method: "POST",
+          body: formData,
+        };
+      },
+      invalidatesTags: [{ type: "Controls", id: "LIST" }],
+    }),
+
+    exportControlsCsv: builder.query({
+      async queryFn(checklistId, _api, _extraOptions, fetchWithBQ) {
+        const result = await fetchWithBQ({
+          url: `/checklists/${checklistId}/export?file_type=csv`,
+          method: "GET",
+          responseHandler: (response) => response.blob(),
+        });
+
+        if (result.error) return { error: result.error };
+        return { data: result.data };
+      },
+    }),
   }),
 });
 
@@ -65,4 +105,6 @@ export const {
   useGetAllControlsWithResponsesQuery,
   useUpdateControlsMutation,
   useImportControlsMutation,
+  useUploadControlsMutation,
+  useExportControlsCsvQuery,
 } = controlsApiSlice;

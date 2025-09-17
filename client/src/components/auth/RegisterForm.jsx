@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useSelector, useDispatch } from "react-redux";
-import Button from "../ui/Button";
+import { Button } from "@/components/ui/button";
 import { Card } from "../ui/Card";
 import {
   Eye,

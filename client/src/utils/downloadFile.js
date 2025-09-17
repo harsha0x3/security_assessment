@@ -1,0 +1,26 @@
+export async function downloadFile(url, filename) {
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to download file");
+    }
+
+    const blob = await response.blob();
+    const href = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(href);
+  } catch (error) {
+    console.error("Download failed:", error);
+  }
+}

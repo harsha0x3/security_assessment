@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   currentChecklist: {},
   allChecklists: [],
+  totalCount: null,
 };
 
 const checklistsSlice = createSlice({
@@ -26,11 +27,12 @@ const checklistsSlice = createSlice({
 
       state.allChecklists.push(newChecklist);
       state.currentChecklist = { ...newChecklist };
+      state.totalCount += 1;
     },
     loadChecklists: (state, action) => {
       state.allChecklists = [];
-      const allChecklists = action.payload;
-      allChecklists.map((chk) => {
+      const data = action.payload;
+      data?.checklists.map((chk) => {
         const checklist = {
           checklistId: chk.id,
           appName: chk.app_name,
@@ -49,6 +51,7 @@ const checklistsSlice = createSlice({
       if (state.allChecklists.length === 0) {
         state.currentChecklist = { ...initialState.currentChecklist };
       }
+      state.totalCount = data.total_count;
     },
     updateChecklist: (state, action) => {
       const updated = action.payload;
@@ -101,6 +104,8 @@ const checklistsSlice = createSlice({
 export const selectCurrentChecklist = (state) =>
   state.checklists.currentChecklist;
 export const selectAllChecklists = (state) => state.checklists.allChecklists;
+export const selectTotalChecklists = (state) => state.checklists.totalCount;
+
 export const {
   createChecklist,
   loadChecklists,

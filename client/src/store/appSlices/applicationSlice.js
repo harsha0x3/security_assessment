@@ -16,6 +16,7 @@ const initialState = {
     isCompleted: false,
     isActive: null,
   },
+  totalCount: null,
   apps: [],
 };
 const applicationSlice = createSlice({
@@ -53,10 +54,12 @@ const applicationSlice = createSlice({
         priority,
         department,
       });
+      state.totalCount += 1;
     },
 
     removeApp: (state, action) => {
       const { id } = action.payload;
+      state.totalCount -= 1;
       return state.apps.filter((app) => app.appId !== id);
     },
 
@@ -99,7 +102,8 @@ const applicationSlice = createSlice({
     loadApps: (state, action) => {
       state.apps = [];
       const data = action.payload;
-      data.map((app) => {
+      state.totalCount = data.total_count;
+      data?.apps.map((app) => {
         const {
           id,
           name,

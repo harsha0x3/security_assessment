@@ -15,7 +15,20 @@ export const responsesApiSlice = apiSlice.injectEndpoints({
         { type: "Controls", id: "LIST" },
       ],
     }),
+    importResposes: builder.mutation({
+      query: ({ checklistId, inputFile }) => {
+        const formData = new FormData();
+        formData.append("input_file", inputFile);
+        return {
+          url: `/checklists/${checklistId}/responses/upload`,
+          method: "POST",
+          body: formData,
+        };
+      },
+      invalidatesTags: [{ type: "Controls", id: "LIST" }],
+    }),
   }),
 });
 
-export const { useSaveResponseMutation } = responsesApiSlice;
+export const { useSaveResponseMutation, useImportResposesMutation } =
+  responsesApiSlice;

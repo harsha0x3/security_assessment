@@ -15,63 +15,54 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useGetAllChecklistsQuery } from "../store/apiSlices/checklistsApiSlice";
 import { toast } from "react-toastify";
+import { selectChecklistSearchTerm } from "../store/appSlices/filtersSlice";
 import { selectAuth } from "../store/appSlices/authSlice";
 import {
-  selectCurrentApp,
   setCurrentApplication,
   loadAllApps,
-  loadApps,
 } from "../store/appSlices/applicationSlice";
+import { useApplications } from "@/hooks/useApplications";
 import {
-  selectAllChecklists,
   loadChecklists,
+  selectAllChecklists,
   selectCurrentChecklist,
 } from "../store/appSlices/checklistsSlice";
-import {
-  selectFilterdApps,
-  selectFilteredChecklists,
-} from "../store/appSlices/filtersSelector";
+import { selectFilteredChecklists } from "../store/appSlices/filtersSelector";
 import {
   useAddApplicationMutation,
-  useGetApplicationsQuery,
   useUpdateApplicationMutation,
   useDeleteAppMutation,
 } from "../store/apiSlices/applicationApiSlice";
 import Modal from "../components/ui/Modal";
 import { Card } from "../components/ui/Card";
-import Button from "../components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { useChecklists } from "@/hooks/useChecklists";
 
 const Applications = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [appSortBy, setAppSortBy] = useState("created_at");
-  const [appSortOrder, setAppSortOrder] = useState("desc");
+  const {
+    currentApp,
+    appPage,
+    appPageSize,
+    appSortBy,
+    appSortOrder,
+    appSearch,
+    goToPage,
+    updateSearchParams,
+    data,
+  } = useApplications();
+
   const [showAppFilters, setShowAppFilters] = useState(false);
 
   const [addAppMutation, { error: appAddError }] = useAddApplicationMutation();
   const [updateAppMutation, { error: updateAppError }] =
     useUpdateApplicationMutation();
 
-  const allChecklists = useSelector(selectFilteredChecklists);
-  const currentApp = useSelector(selectCurrentApp);
-  const allApps = useSelector(selectFilterdApps);
+  const allChecklists = useSelector(selectAllChecklists);
+  const allApps = useSelector(loadAllApps);
   const user = useSelector(selectAuth);
-  const {
-    data,
-    isSuccess,
-    isError: isAppFetchError,
-    error: appFetchError,
-  } = useGetApplicationsQuery(
-    { sort_by: appSortBy || "created_at", sort_order: appSortOrder || "desc" },
-    { skip: !user.isAuthenticated || !appSortBy || !appSortOrder }
-  );
-
-  useEffect(() => {
-    if (isSuccess && data) {
-      dispatch(loadApps(data));
-      dispatch(setCurrentApplication(data[0].id));
-    }
-  }, [data, dispatch, isSuccess]);
+  const totalApps = useSelector((state) => state.applications.totalCount);
 
   // ---------------- Form State ----------------
   const [appName, setAppName] = useState("");
@@ -90,23 +81,10 @@ const Applications = () => {
   const [isVertical, setIsVertical] = useState(window.innerWidth < 750);
   const [showDeleteModal, setSetShowDeleteModal] = useState(false);
   const [appName4Del, setAppName4Del] = useState("");
-  const {
-    data: appChecklists,
-    isSuccess: checklistsSuccess,
-    isError: isChecklistFetchError,
-    error: checklistFetchError,
-  } = useGetAllChecklistsQuery(
-    { appId: selectedAppId },
-    { skip: !selectedAppId }
-  );
+  const { data: appChecklists } = useChecklists();
+
   const currentChecklist = useSelector(selectCurrentChecklist);
   const [deleteApp, { isLoading: deletingApp }] = useDeleteAppMutation();
-
-  useEffect(() => {
-    if (user.isAuthenticated && isAppFetchError && !data) {
-      toast.error(appFetchError?.data?.detail || "Error loading applications");
-    }
-  }, [isAppFetchError, appFetchError, user, data]);
 
   useEffect(() => {
     if (appAddError) {
@@ -145,26 +123,6 @@ const Applications = () => {
       setDepartment(currentApp.department || "");
     }
   }, [currentApp, isNewApp]);
-
-  useEffect(() => {
-    if (isChecklistFetchError && allChecklists.length < 1) {
-      let errText =
-        checklistFetchError?.data?.detail || "Error loading checklists";
-      if (selectedAppId === null) {
-        errText =
-          errText + "\nPlease select an application to view its checklists.";
-      }
-      toast.error(errText || "Error loading checklists for this app", {
-        autoClose: 4000,
-      });
-    }
-  }, [isChecklistFetchError, checklistFetchError, appChecklists]);
-
-  useEffect(() => {
-    if (appChecklists && checklistsSuccess) {
-      dispatch(loadChecklists(appChecklists));
-    }
-  }, [appChecklists, dispatch, checklistsSuccess]);
 
   useEffect(() => {
     if (currentApp?.appId) {
@@ -358,7 +316,9 @@ const Applications = () => {
                       </label>
                       <select
                         value={appSortBy}
-                        onChange={(e) => setAppSortBy(e.target.value)}
+                        onChange={(e) =>
+                          updateSearchParams({ appSortBy: e.target.value })
+                        }
                         className="w-full mt-1 px-2 py-1 border rounded-md text-sm"
                       >
                         <option value="created_at">Created At</option>
@@ -373,7 +333,9 @@ const Applications = () => {
                       </label>
                       <select
                         value={appSortOrder}
-                        onChange={(e) => setAppSortOrder(e.target.value)}
+                        onChange={(e) =>
+                          updateSearchParams({ appSortOrder: e.target.value })
+                        }
                         className="w-full mt-1 px-2 py-1 border rounded-md text-sm"
                       >
                         <option value="asc">Low - High</option>
@@ -438,6 +400,29 @@ const Applications = () => {
                 );
               })}
             </ul>
+            <div className="flex gap-3">
+              <button
+                className="border border-black bg-green-50"
+                onClick={() => goToPage(appPage - 1)}
+                disabled={appPage <= 1}
+              >
+                prev
+              </button>
+              <button
+                className="border border-black bg-green-50"
+                // disabled={totalApps - appPage * appPageSize <= 0}
+                onClick={() => {
+                  goToPage(appPage + 1);
+                  console.log("TOAL _ SOL", {
+                    totalApps,
+                    appPage,
+                    appPageSize,
+                  });
+                }}
+              >
+                next
+              </button>
+            </div>
           </div>
         </Allotment.Pane>
 
@@ -709,7 +694,9 @@ const Applications = () => {
               )}
               {!isNewApp && !isEditing && (
                 <button
-                  onClick={() => handleShowAssesmentClick(currentApp?.appId)}
+                  onClick={() =>
+                    handleShowAssesmentClick(currentApp?.appId || selectedAppId)
+                  }
                   className="flex items-center gap-2 px-4 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition"
                 >
                   Show Assessmnents

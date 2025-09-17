@@ -3,23 +3,23 @@ import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  selectCurrentApp,
   setCurrentApplication,
   loadAllApps,
 } from "../store/appSlices/applicationSlice";
 import { selectAuth } from "../store/appSlices/authSlice";
-import {
-  selectFilterdApps,
-  selectFilteredChecklists,
-} from "../store/appSlices/filtersSelector";
+import { AppsCombobox } from "@/components/core/ui/applicationCombobox";
+import { ChecklistCombobox } from "@/components/core/ui/ChecklistCombobox";
+
 import {
   setCurrentChecklist,
-  loadChecklists,
   selectAllChecklists,
-  selectCurrentChecklist,
 } from "../store/appSlices/checklistsSlice";
+import { useApplications } from "@/hooks/useApplications";
 import {
-  useGetAllChecklistsQuery,
+  selectAppSearchTerm,
+  setAppSearchTerm,
+} from "@/store/appSlices/filtersSlice";
+import {
   useAddChecklistMutation,
   useDeleteChecklistMutation,
   usePatchChecklistMutation,
@@ -35,14 +35,36 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 
+import {
+  setChecklistSearchTerm,
+  selectChecklistSearchTerm,
+} from "@/store/appSlices/filtersSlice";
+import { useChecklists } from "@/hooks/useChecklists";
+import { Button } from "@/components/ui/Button";
+
 const Checklists = () => {
+  const { currentApp } = useApplications();
+
+  const {
+    currentChecklist,
+    updateSearchParams: updateCListSearchParams,
+    cListPage,
+    cListPageSize,
+    cListSortBy,
+    cListSortOrder,
+    cListSearchBy,
+    cListSearch,
+    isError,
+    error,
+    goToPage,
+    data: allChecklists,
+  } = useChecklists();
+
   const { appId: paramAppId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const apps = useSelector(selectFilterdApps);
-  const currentApp = useSelector(selectCurrentApp);
-  const checklists = useSelector(selectFilteredChecklists);
-  const currentChecklist = useSelector(selectCurrentChecklist);
+  const apps = useSelector(loadAllApps);
+  const filteredChecklists = useSelector(selectAllChecklists);
   const [selectedAppId, setSelectedAppId] = useState(
     paramAppId || currentApp?.appId
   );
@@ -58,8 +80,6 @@ const Checklists = () => {
   const [checklistType, setChecklistType] = useState("");
   const [customChecklist, setCustomChecklist] = useState("");
   const [openMenuId, setOpenMenuId] = useState(null);
-  const [checklistSortBy, setChecklistSortBy] = useState("created_at");
-  const [checklistSortOrder, SetChecklistSortOrder] = useState("desc");
   const [showChecklistsFilters, setShowChecklistsFilter] = useState(false);
   const [newPriority, setNewPriority] = useState("Medium");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -68,28 +88,13 @@ const Checklists = () => {
     checklistType: "",
     priority: "",
   });
+  const checklistSearchTerm = useSelector(selectChecklistSearchTerm);
 
   const priorityMap = { High: 3, Medium: 2, Low: 1 };
 
-  // API hooks
-  const { data, isSuccess } = useGetAllChecklistsQuery(
-    {
-      appId: selectedAppId,
-      sort_order: checklistSortOrder,
-      sort_by: checklistSortBy,
-    },
-    { skip: !selectedAppId }
-  );
   const [addChecklist, { isLoading: isAdding }] = useAddChecklistMutation();
   const user = useSelector(selectAuth);
   const [updateChecklist] = usePatchChecklistMutation();
-
-  // Load checklists when app changes
-  useEffect(() => {
-    if (data && isSuccess) {
-      dispatch(loadChecklists(data));
-    }
-  }, [data, dispatch, isSuccess]);
 
   const toggleMenu = (id) => {
     setOpenMenuId(openMenuId === id ? null : id);
@@ -105,9 +110,9 @@ const Checklists = () => {
 
   // Handle checklist click
   const handleSelectChecklist = (chk) => {
-    dispatch(setCurrentChecklist({ checklistId: chk.checklistId }));
-    setSelectedChecklistId(chk.checklistId);
-    navigate(`/${selectedAppId}/checklists/${chk.checklistId}`);
+    dispatch(setCurrentChecklist({ checklistId: chk.id }));
+    setSelectedChecklistId(chk.id);
+    navigate(`/${selectedAppId}/checklists/${chk.id}`);
   };
 
   const handleDeleteChecklist = async (checklistId) => {
@@ -120,11 +125,16 @@ const Checklists = () => {
     }
   };
 
+  const handleAssignUsersFromCombobox = (checklistId) => {
+    setSelectedChecklistId(checklistId);
+    setIsAssignModalOpen(true);
+  };
+
   const handleEditChecklist = (chk) => {
     setOpenMenuId(null);
     setEditChecklistData({
-      checklistId: chk.checklistId,
-      checklistType: chk.checklistType,
+      checklistId: chk.id,
+      checklistType: chk.checklist_type,
       priority: chk.priority || "", // default if not set
     });
     setIsEditModalOpen(true);
@@ -166,7 +176,7 @@ const Checklists = () => {
             </span>
           )}
         </h1>
-        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+        {/* <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-4 text-sm text-gray-800 dark:text-gray-700">
             <p className="font-semibold">Priorities: </p>
             <div className="flex items-center gap-1">
@@ -182,21 +192,25 @@ const Checklists = () => {
               <span>High</span>
             </div>
           </div>
-        </div>
-        <div className="relative inline-block text-left">
-          <button
+        </div> */}
+
+        <div className="relative gap-3 text-left flex">
+          <Button
+            variant={"outline"}
             className="px-3 py-2 border rounded-md bg-white shadow-sm"
             onClick={() => setShowChecklistsFilter((prev) => !prev)}
           >
-            Filters ⚙️
-          </button>
+            Filters
+          </Button>
           {showChecklistsFilters && (
             <div className="absolute mt-2 w-56 rounded-md shadow-lg bg-white border z-[9999]">
               <div className="p-2">
                 <label className="block text-sm font-medium">Sort By</label>
                 <select
-                  value={checklistSortBy}
-                  onChange={(e) => setChecklistSortBy(e.target.value)}
+                  value={cListSortBy}
+                  onChange={(e) =>
+                    updateCListSearchParams({ cListSortBy: e.target.value })
+                  }
                   className="w-full mt-1 px-2 py-1 border rounded-md text-sm"
                 >
                   <option value="created_at">Created At</option>
@@ -208,8 +222,10 @@ const Checklists = () => {
               <div className="p-2">
                 <label className="block text-sm font-medium">Sort Order</label>
                 <select
-                  value={checklistSortOrder}
-                  onChange={(e) => SetChecklistSortOrder(e.target.value)}
+                  value={cListSortOrder}
+                  onChange={(e) =>
+                    updateCListSearchParams({ cListSortOrder: e.target.value })
+                  }
                   className="w-full mt-1 px-2 py-1 border rounded-md text-sm"
                 >
                   <option value="asc">Low - High</option>
@@ -230,125 +246,55 @@ const Checklists = () => {
                   </div> */}
             </div>
           )}
+          {user.role === "admin" && (
+            <div className="">
+              <Button
+                variant={"outline"}
+                onClick={() => setShowModal(true)}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Checklist
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* App Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex space-x-8 overflow-x-auto scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar-thin scrollbar-thumb-slate-700 dark:scrollbar-thumb-slate-200 dark:scrollbar-track-white scrollbar-track-white">
-          {apps.map((app) => (
-            <button
-              key={app.appId}
-              onClick={() => handleSelectApp(app)}
-              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                selectedAppId === app.appId
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200"
-              }`}
-            >
-              {app.name}
-            </button>
-          ))}
-        </nav>
+      <div className="flex gap-3 w-full items-center py-2 border-y-2">
+        <div className="flex-col w-1/5 flex items-center">
+          <h3>Select application</h3>
+          <AppsCombobox
+            items={apps.map((app) => ({ value: app.appId, label: app.name }))}
+            selectedValue={selectedAppId}
+            onSelect={(value) => {
+              const app = apps.find((a) => a.appId === value);
+              if (app) handleSelectApp(app);
+            }}
+            placeHolder="Select an App"
+            searchValue={useSelector(selectAppSearchTerm)}
+            onSearchValueChange={(val) => dispatch(setAppSearchTerm(val))}
+          />
+        </div>
+        <div className="flex-col w-1/5 flex items-center">
+          <h3>Select Checklist</h3>
+          <ChecklistCombobox
+            checklists={allChecklists?.checklists}
+            selectedChecklistId={selectedChecklistId}
+            onSelect={handleSelectChecklist}
+            onEdit={handleEditChecklist}
+            onDelete={handleDeleteChecklist}
+            onAssignUsers={handleAssignUsersFromCombobox}
+            placeHolder="Select a checklist..."
+            searchValue={checklistSearchTerm}
+            onSearchValueChange={(val) => dispatch(setChecklistSearchTerm(val))}
+            isAdmin={user.role === "admin"}
+          />
+        </div>
       </div>
 
       {/* Checklist Management */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-        {/* Checklist Header */}
-        <div className="pl-4 py-1  dark:border-gray-700">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex space-x-1 overflow-x-auto flex-1 rounded-md scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar-thin scrollbar-thumb-slate-700 dark:scrollbar-thumb-slate-500 dark:scrollbar-track-gray-800 scrollbar-track-white">
-              {checklists.map((chk) => (
-                <div
-                  key={chk.checklistId}
-                  className={`flex items-center gap-2 whitespace-nowrap pl-4 pr-2 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    selectedChecklistId === chk.checklistId
-                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                      : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  <button
-                    onClick={() => handleSelectChecklist(chk)}
-                    className="w-full flex"
-                  >
-                    <span>{chk.checklistType}</span>
-                    <Star
-                      className={`w-4 h-4 pt-1 pl-1 ${
-                        chk.priority === 1
-                          ? "text-green-600"
-                          : chk.priority === 2
-                          ? "text-blue-600"
-                          : "text-red-600"
-                      }`}
-                      fill="currentColor"
-                    >
-                      <title>
-                        {chk.priority === 1
-                          ? "Low Priority"
-                          : chk.priority === 2
-                          ? "Medium Priority"
-                          : "High Priority"}
-                      </title>
-                    </Star>
-
-                    {chk.isCompleted && (
-                      <CheckCircle2 className="inline-block pt-1" />
-                    )}
-                  </button>
-                  <div className="relative">
-                    {user.role === "admin" && (
-                      <button
-                        onClick={() => toggleMenu(chk.checklistId)}
-                        className="text-gray-500 hover:text-white"
-                      >
-                        <EllipsisVertical className="pt-1" />
-                      </button>
-                    )}
-                    {openMenuId === chk.checklistId && (
-                      <div className="fixed z-50 mt-2 w-36 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg">
-                        <button
-                          onClick={() => handleEditChecklist(chk)}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteChecklist(chk.checklistId)}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-600 dark:hover:text-white"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {user.role === "admin" && (
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Checklist
-                </button>
-
-                {selectedChecklistId && (
-                  <button
-                    onClick={() => setIsAssignModalOpen(true)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    <Users className="w-4 h-4 mr-2" />
-                    Assign Users
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Checklist Content */}
 
         {!selectedChecklistId && (

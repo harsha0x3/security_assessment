@@ -51,29 +51,43 @@ export const checklistsApiSlice = apiSlice.injectEndpoints({
     }),
 
     getAllChecklists: builder.query({
-      query: ({ appId, sort_order = "desc", sort_by = "created_at" }) => {
+      query: ({
+        appId,
+        sort_order = "desc",
+        sort_by = "created_at",
+        search = "",
+        search_by = "checklist_type",
+        page = 1,
+        page_size = 10,
+      }) => {
         const params = new URLSearchParams({
           sort_order,
           sort_by,
+          search,
+          search_by,
+          page,
+          page_size,
         });
         return `applications/${appId}/checklists/?${params.toString()}`;
       },
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.map((chk) => ({ type: "Checklists", id: chk.id })), // each checklist
-              { type: "Checklists", id: "LIST" }, // the list itself
-            ]
-          : [{ type: "Checklists", id: "LIST" }],
+      providesTags: (result) => {
+        const checklists = result?.checklists ?? []; // fallback to empty array
+        return [
+          ...checklists.map((chk) => ({ type: "Checklists", id: chk.id })),
+          { type: "Checklists", id: "LIST" },
+        ];
+      },
+
+      onQueryStarted: async (args, { dispatch, queryFulfilled }) => {
+        try {
+          const { data } = await queryFulfilled;
+          console.log("DATA IN C LIST API", data);
+          dispatch(loadChecklists(data));
+        } catch (error) {
+          console.error(error);
+        }
+      },
     }),
-    onQueryStarted: async (args, { dispatch, queryFulfilled }) => {
-      try {
-        const { data } = await queryFulfilled;
-        dispatch(loadChecklists(data));
-      } catch (error) {
-        console.error(error);
-      }
-    },
 
     submitChecklist: builder.mutation({
       query: (checklistId) => ({

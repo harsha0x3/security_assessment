@@ -18,6 +18,9 @@ class Checklist(Base, BaseMixin):
     controls = relationship(
         "Control", back_populates="checklist", cascade="all, delete-orphan"
     )
+    responses = relationship(
+        "UserResponse", back_populates="checklist", cascade="all, delete-orphan"
+    )
     assignments = relationship(
         "ChecklistAssignment", back_populates="checklist", cascade="all, delete-orphan"
     )

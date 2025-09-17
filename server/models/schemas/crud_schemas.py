@@ -105,6 +105,7 @@ class ControlCreate(BaseModel):
     control_area: str
     severity: str
     control_text: str
+    description: str | None = None
 
 
 class ControlRemove(BaseModel):
@@ -115,6 +116,7 @@ class ControlUpdate(BaseModel):
     control_area: str | None = None
     severity: str | None = None
     control_text: str | None = None
+    description: str | None = None
 
 
 class ControlOut(BaseModel):
@@ -123,6 +125,7 @@ class ControlOut(BaseModel):
     control_area: str
     severity: str
     control_text: str
+    description: str | None = None
 
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -188,6 +191,7 @@ class ControlWithResponseOutNonList(BaseModel):
     control_area: str
     severity: str
     control_text: str
+    description: str | None = None
     current_setting: str | None = None
     review_comment: str | None = None
     evidence_path: str | None = None

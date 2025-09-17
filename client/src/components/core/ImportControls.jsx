@@ -10,7 +10,7 @@ import { useGetAllChecklistsQuery } from "../../store/apiSlices/checklistsApiSli
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Card } from "../ui/Card";
-import Button from "../ui/Button";
+import { Button } from "@/components/ui/button";
 import { useImportControlsMutation } from "../../store/apiSlices/controlsApiSlice";
 
 const ImportControls = ({ targetChecklistId }) => {
@@ -30,7 +30,7 @@ const ImportControls = ({ targetChecklistId }) => {
     isSuccess: checklistsSuccess,
     isError: isChecklistFetchError,
     error: checklistFetchError,
-  } = useGetAllChecklistsQuery(selectedAppId);
+  } = useGetAllChecklistsQuery({ appId: selectedAppId });
 
   const currentChecklist = useSelector(selectCurrentChecklist);
 

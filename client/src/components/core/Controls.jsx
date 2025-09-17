@@ -5,14 +5,20 @@ import {
   useUpdateControlsMutation,
 } from "../../store/apiSlices/controlsApiSlice";
 import { useSubmitChecklistMutation } from "../../store/apiSlices/checklistsApiSlice";
-import { useSaveResponseMutation } from "../../store/apiSlices/responsesApiSlice";
-import { useState, useMemo } from "react";
+import {
+  useSaveResponseMutation,
+  useImportResposesMutation,
+} from "../../store/apiSlices/responsesApiSlice";
+import { useState, useMemo, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { selectAuth } from "../../store/appSlices/authSlice";
+import { downloadFile } from "@/utils/downloadFile";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
+  getPaginationRowModel,
+  getSortedRowModel,
 } from "@tanstack/react-table";
 import { selectCurrentChecklist } from "../../store/appSlices/checklistsSlice";
 import {
@@ -26,19 +32,48 @@ import {
   CheckSquare,
   Info,
   ImportIcon,
+  Ellipsis,
 } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import { useForm } from "react-hook-form";
 import Modal from "../ui/Modal";
 import ImportControls from "./ImportControls";
+import UploadControls from "./UploadControls";
+import ImportResponsesDialog from "./ui/ImportResponses";
+import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+import { useControlsNResponses } from "@/hooks/useControlsNResponses";
 
 const Controls = () => {
-  console.log("Controls rendered at", new Date().toISOString());
+  const isProd = import.meta.env.VITE_PROD_ENV === "true";
+
+  const apiBaseUrl = isProd
+    ? "http://10.160.14.76:8060"
+    : "http://127.0.0.1:8000";
 
   const user = useSelector(selectAuth);
   const { checklistId } = useParams();
-  const { data: allControls, isLoading: isFetchingControls } =
-    useGetAllControlsWithResponsesQuery(checklistId, { skip: !checklistId });
+  const {
+    controlsPage,
+    controlsPageSize,
+    controlsSortBy,
+    controlsSortOrder,
+    isError,
+    error,
+    goToPage: goToControlsPage,
+    updateSearchParams,
+    data: allControls,
+  } = useControlsNResponses(checklistId);
+  const [sorting, setSorting] = useState([]);
+
   const [submitChecklistMutation] = useSubmitChecklistMutation();
 
   const [saveResponse] = useSaveResponseMutation();
@@ -47,11 +82,12 @@ const Controls = () => {
 
   const [editingRowId, setEditingRowId] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showImportResponsesModal, setShowImportResponsesModal] =
+    useState(false);
   const [editingControlId, setEditingControlId] = useState(null);
   const [adding, setAdding] = useState(false);
   const currentChecklist = useSelector(selectCurrentChecklist);
-  console.log("All Controls Len", allControls?.total_counts?.total_controls);
-  console.log("All Responses LKen", allControls?.total_counts?.total_responses);
 
   // react-hook-form for editing responses
   const { register, handleSubmit, reset } = useForm({
@@ -72,6 +108,7 @@ const Controls = () => {
       control_area: "",
       severity: "",
       control_text: "",
+      description: "",
     },
   });
 
@@ -85,6 +122,7 @@ const Controls = () => {
       control_area: "",
       severity: "",
       control_text: "",
+      description: "",
     },
   });
 
@@ -105,6 +143,7 @@ const Controls = () => {
       control_area: rowData.control_area || "",
       severity: rowData.severity || "",
       control_text: rowData.control_text || "",
+      description: "",
     });
   };
 
@@ -116,6 +155,37 @@ const Controls = () => {
   const handleCancelEditControl = () => {
     setEditingControlId(null);
     resetEditControl();
+  };
+
+  const getVisiblePageNumbers = (current, total) => {
+    const delta = 1; // show ±2 pages around current
+    const range = [];
+    const rangeWithDots = [];
+    let lastPage;
+
+    for (let i = 1; i <= total; i++) {
+      if (
+        i === 1 ||
+        i === total ||
+        (i >= current - delta && i <= current + delta)
+      ) {
+        range.push(i);
+      }
+    }
+
+    for (let page of range) {
+      if (lastPage) {
+        if (page - lastPage === 2) {
+          rangeWithDots.push(lastPage + 1);
+        } else if (page - lastPage > 2) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(page);
+      lastPage = page;
+    }
+
+    return rangeWithDots;
   };
 
   const onSubmitResponse = async (formData, controlId) => {
@@ -150,6 +220,7 @@ const Controls = () => {
       control_area: formData.control_area,
       severity: formData.severity,
       control_text: formData.control_text,
+      description: formData.description,
     };
 
     try {
@@ -159,6 +230,13 @@ const Controls = () => {
     } catch (err) {
       console.error("Failed to update control:", err);
     }
+  };
+
+  const handleExport = () => {
+    downloadFile(
+      `${apiBaseUrl}/checklists/${checklistId}/controls-responses/export`,
+      `controls-${checklistId}.csv`
+    );
   };
 
   // Add new control
@@ -178,8 +256,9 @@ const Controls = () => {
       {
         accessorKey: "control_area",
         header: "Control Area",
-        minSize: 70, // minimum width
-        maxSize: 120,
+        minSize: 100, // minimum width
+        maxSize: 150,
+        // enableSorting: true,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
@@ -197,6 +276,7 @@ const Controls = () => {
         header: "Severity",
         minSize: 70, // minimum width
         maxSize: 120,
+        // enableSorting: false,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
@@ -246,6 +326,28 @@ const Controls = () => {
               title={row.original.control_text}
             >
               {row.original.control_text || "-"}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "description",
+        header: "Description",
+        minSize: 300,
+        maxSize: 600,
+        cell: ({ row }) => {
+          const controlId = row.original.control_id;
+          return editingRowId === controlId ? (
+            <textarea
+              className="border rounded p-1 text-sm w-full min-h-[60px] resize-y"
+              {...register("description")}
+            />
+          ) : (
+            <div
+              className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1"
+              title={row.original.description}
+            >
+              {row.original.description || "-"}
             </div>
           );
         },
@@ -357,16 +459,6 @@ const Controls = () => {
           ) : (
             "-"
           );
-          // return editingRowId === controlId ? (
-          //   <input
-          //     type="file"
-          //     className="border rounded px-2 py-1 text-sm w-full"
-          //     {...register("evidence_file")}
-          //   />
-          // ) : (
-
-          //   row.original.evidence_path || "-"
-          // );
         },
       },
       {
@@ -502,157 +594,220 @@ const Controls = () => {
         },
       },
     ],
-    [
-      editingRowId,
-      editingControlId,
-      register,
-      registerEditControl,
-      handleSubmit,
-      handleEditControlSubmit,
-      user.role,
-    ]
+    [editingRowId, editingControlId, user.role]
   );
+
+  const handleSortingChange = (newSorting) => {
+    console.log("GOT NEW SORTING", newSorting);
+    console.log("GOT NEW SORTING Len", newSorting.length);
+    console.log(
+      "GOT NEW SORTING stringified",
+      JSON.stringify(newSorting, null, 2)
+    );
+
+    setSorting(newSorting);
+    if (newSorting.length > 0 && newSorting[0]) {
+      console.log("GOT NEW SORTING 0000", newSorting[0]);
+
+      const sort = newSorting[0];
+      updateSearchParams({
+        controlsSortBy: sort.id ?? sort.columnId,
+        controlsSortOrder: sort.desc ? "desc" : "asc",
+        controlsPage: 1, // Reset to first page when sorting changes
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (sorting.length >= 1) {
+      console.log("SORTING", sorting);
+      const controlsSortBy = sorting[0].id;
+      const controlsSortOrder = sorting[0].desc ? "desc" : "asc";
+      updateSearchParams({ controlsSortBy, controlsSortOrder });
+    }
+  }, [sorting]);
 
   const table = useReactTable({
     data: allControls?.list_controls || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     columnResizeMode: "onChange",
-  });
 
-  if (isFetchingControls)
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Loading controls...</span>
-      </div>
-    );
+    manualSorting: true,
+
+    state: {
+      sorting,
+    },
+
+    onSortingChange: setSorting,
+  });
 
   if (!allControls?.list_controls?.length)
     return (
-      <div className="p-6 text-center">
-        <div className="mb-6">
-          <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-lg text-gray-600 mb-2">
-            No controls found for this checklist
-          </p>
-          <p className="text-sm text-gray-400">
-            Add your first control to get started
-          </p>
-        </div>
-        {/* Add Control Section (admins only) */}
-        {user.role === "admin" && (
-          <div className="max-w-2xl mx-auto">
-            {adding ? (
-              <form
-                onSubmit={handleAddSubmit(onSubmitAddControl)}
-                className="bg-gray-50 p-4 rounded-lg space-y-4"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Control Area"
-                    className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    {...registerAdd("control_area", { required: true })}
-                  />
-                  <select
-                    className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    {...registerAdd("severity", { required: true })}
+      <div className="h-1/2 flex flex-col overflow-hidden">
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center">
+            <div className="mb-6">
+              <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-lg text-gray-600 mb-2">
+                No controls found for this checklist
+              </p>
+              <p className="text-sm text-gray-400">
+                Add your first control to get started
+              </p>
+            </div>
+            {/* Add Control Section (admins only) */}
+            {user.role === "admin" && (
+              <div className="max-w-2xl mx-auto">
+                {adding ? (
+                  <form
+                    onSubmit={handleAddSubmit(onSubmitAddControl)}
+                    className="bg-gray-50 p-4 rounded-lg space-y-4"
                   >
-                    <option value="">Select Severity</option>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                    <option value="Critical">Critical</option>
-                  </select>
-                  <div className="md:col-span-1">
-                    <textarea
-                      placeholder="Control Text"
-                      className="border rounded px-3 py-2 text-sm w-full h-20 resize-y focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      {...registerAdd("control_text", { required: true })}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <input
+                        type="text"
+                        placeholder="Control Area"
+                        className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        {...registerAdd("control_area", { required: true })}
+                      />
+                      <select
+                        className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        {...registerAdd("severity", { required: true })}
+                      >
+                        <option value="">Select Severity</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                      </select>
+                      <div className="md:col-span-1">
+                        <textarea
+                          placeholder="Control Text"
+                          className="border rounded px-3 py-2 text-sm w-full h-20 resize-y focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          {...registerAdd("control_text", { required: true })}
+                        />
+                      </div>
+                      <div className="md:col-span-1">
+                        <textarea
+                          placeholder="Description"
+                          className="border rounded px-3 py-2 text-sm focus:ring-2 w-full focus:ring-blue-500 focus:border-transparent"
+                          {...registerAdd("description", { required: true })}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-center gap-3">
+                      <button
+                        type="submit"
+                        className="px-6 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+                      >
+                        Save Control
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdding(false);
+                          resetAdd();
+                        }}
+                        className="px-6 py-2 text-sm rounded-lg bg-gray-300 text-gray-700 hover:bg-gray-400 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div>
+                    <div className="flex gap-3 items-center justify-center">
+                      <button
+                        onClick={() => setAdding(true)}
+                        className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                      >
+                        <Plus className="w-5 h-5" /> Add First Control
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowImportModal(true);
+                          console.log(showImportModal);
+                        }}
+                        className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                      >
+                        <ImportIcon className="w-5 h-5" /> Import Controls
+                      </button>
+                      <button
+                        onClick={() => setShowUploadModal(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+                      >
+                        <Upload className="w-5 h-5" /> Upload Controls
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="flex justify-center gap-3">
-                  <button
-                    type="submit"
-                    className="px-6 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-                  >
-                    Save Control
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAdding(false);
-                      resetAdd();
-                    }}
-                    className="px-6 py-2 text-sm rounded-lg bg-gray-300 text-gray-700 hover:bg-gray-400 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div>
-                <div className="flex gap-3 items-center">
-                  <button
-                    onClick={() => setAdding(true)}
-                    className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                  >
-                    <Plus className="w-5 h-5" /> Add First Control
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowImportModal(true);
-                      console.log(showImportModal);
-                    }}
-                    className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                  >
-                    <ImportIcon className="w-5 h-5" /> Import Controls
-                  </button>
-                </div>
+                )}
               </div>
             )}
           </div>
-        )}
-        <div>
-          {showImportModal && (
-            <div>
-              <Modal
-                className="w-full max-w-4xl mx-auto p-6"
-                open={showImportModal}
-                onClose={() => {
-                  setShowImportModal(false);
-                  console.log("first", showImportModal);
-                }}
-                title={"Import controls"}
-              >
-                <ImportControls targetChecklistId={checklistId} />
-              </Modal>
-            </div>
-          )}
         </div>
+        {showImportModal && (
+          <Modal
+            className="w-full max-w-4xl mx-auto p-6"
+            open={showImportModal}
+            onClose={() => {
+              setShowImportModal(false);
+              console.log("first", showImportModal);
+            }}
+            title={"Import controls"}
+          >
+            <ImportControls targetChecklistId={checklistId} />
+          </Modal>
+        )}
+        {showUploadModal && (
+          <Modal
+            className="w-full max-w-2xl mx-auto p-6"
+            open={showUploadModal}
+            onClose={() => setShowUploadModal(false)}
+            title="Upload Controls"
+          >
+            <UploadControls
+              checklistId={checklistId}
+              onClose={() => setShowUploadModal(false)}
+            />
+          </Modal>
+        )}
       </div>
     );
 
   return (
-    <div className="p-2 space-y-4">
+    <div className="h-full flex flex-col overflow-hidden">
+      {/* Header - Fixed */}
       {currentChecklist && (
-        <div className="flex items-center justify-between">
+        <div className="flex-shrink-0 flex items-center justify-between pb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-900">
-            {currentChecklist.checklistType} Controls
+            Controls for Checklist - {currentChecklist.checklistType}
           </h3>
           <div className="text-sm text-gray-500">
             {allControls?.list_controls?.length} control
             {allControls?.list_controls?.length !== 1 ? "s" : ""}
           </div>
+          {checklistId && (
+            <div className="flex">
+              <Button onClick={handleExport}>Export Checklist CSV</Button>
+              <Button
+                onClick={() => {
+                  console.log("BOOL", showImportResponsesModal);
+                  setShowImportResponsesModal(true);
+                }}
+              >
+                Import Responses
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Controls Table */}
-      <div className="overflow-x-auto border rounded-lg shadow bg-white">
+      {/* Controls Table - Scrollable */}
+      <div className="flex-[0.5] overflow-auto border rounded-lg shadow bg-white">
         <table className="w-full border-collapse">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 sticky top-0 z-10">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => (
@@ -660,16 +815,38 @@ const Controls = () => {
                     key={header.id}
                     className="relative text-left px-1 py-3 border-b font-medium text-sm text-gray-700"
                     style={{
-                      width: header.getSize(), // dynamic width
+                      width: header.getSize(),
                       minWidth: header.column.columnDef.minSize,
                       maxWidth: header.column.columnDef.maxSize,
                     }}
                   >
                     <div className="flex items-center justify-between">
+                      {/* <div
+                        className={`flex items-center gap-2 ${
+                          header.column.getCanSort()
+                            ? "cursor-pointer select-none"
+                            : ""
+                        }`}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                        {header.column.getCanSort() && (
+                          <span className="text-xs">
+                            {{
+                              asc: "↑",
+                              desc: "↓",
+                            }[header.column.getIsSorted()] ?? "↕️"}
+                          </span>
+                        )}
+                      </div> */}
                       {flexRender(
                         header.column.columnDef.header,
                         header.getContext()
                       )}
+
                       {header.column.getCanResize() && (
                         <div
                           {...{
@@ -702,12 +879,97 @@ const Controls = () => {
           </tbody>
         </table>
       </div>
+      {/* Pagination */}
+      <div className="flex justify-center mt-4">
+        <Pagination>
+          <PaginationContent>
+            {/* Previous button */}
+            <PaginationItem>
+              <Button
+                asChild
+                disabled={controlsPage <= 1}
+                variant="ghost"
+                className={`hover:cursor-pointer ${
+                  controlsPage <= 1 ? "cursor-not-allowed" : ""
+                }`}
+              >
+                <PaginationPrevious
+                  className={`hover:cursor-pointer ${
+                    controlsPage <= 1 ? "cursor-not-allowed" : ""
+                  }`}
+                  onClick={() => {
+                    if (controlsPage > 1) {
+                      goToControlsPage(controlsPage - 1);
+                    }
+                  }}
+                />
+              </Button>
+            </PaginationItem>
 
-      <div className="flex justify-between items-center space-x-4 border-t pt-4">
+            {/* Dynamic page links */}
+            {getVisiblePageNumbers(
+              controlsPage,
+              Math.ceil(
+                allControls?.total_counts?.total_controls / controlsPageSize
+              ) || 1
+            ).map((page, idx) => (
+              <PaginationItem key={idx}>
+                {page === "…" ? (
+                  <span className="px-2">
+                    <Ellipsis />
+                  </span>
+                ) : (
+                  <PaginationLink
+                    isActive={controlsPage === page}
+                    onClick={() => {
+                      if (page !== "...") goToControlsPage(page);
+                    }}
+                  >
+                    {page}
+                  </PaginationLink>
+                )}
+              </PaginationItem>
+            ))}
+
+            {/* Next button */}
+            <PaginationItem>
+              <PaginationNext
+                className={`hover:cursor-pointer ${
+                  controlsPage >=
+                  Math.ceil(
+                    allControls?.total_counts?.total_controls / controlsPageSize
+                  )
+                    ? "cursor-not-allowed"
+                    : ""
+                }`}
+                onClick={() => {
+                  if (
+                    controlsPage >
+                    Math.ceil(
+                      allControls?.total_counts?.total_controls /
+                        controlsPageSize
+                    )
+                  )
+                    goToControlsPage(controlsPage + 1);
+                }}
+                disabled={
+                  controlsPage ===
+                  Math.ceil(
+                    allControls?.total_counts?.total_controls / controlsPageSize
+                  )
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+
+      {/* Footer Actions - Fixed */}
+      <div className="flex-shrink-0 flex justify-between items-center space-x-4 border-t pt-4 mt-4">
         {/* Add Control Section (admins only) */}
-        <div>
+        <div className="flex-1">
           {user.role === "admin" && (
-            <div className="">
+            <div>
               {adding ? (
                 <form
                   onSubmit={handleAddSubmit(onSubmitAddControl)}
@@ -716,7 +978,7 @@ const Controls = () => {
                   <h4 className="font-medium text-gray-900 mb-3">
                     Add New Control
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <input
                       type="text"
                       placeholder="Control Area"
@@ -738,6 +1000,13 @@ const Controls = () => {
                         placeholder="Control Text"
                         className="border rounded px-3 py-2 text-sm focus:ring-2 w-full focus:ring-blue-500 focus:border-transparent"
                         {...registerAdd("control_text", { required: true })}
+                      />
+                    </div>
+                    <div className="md:col-span-1">
+                      <textarea
+                        placeholder="Description"
+                        className="border rounded px-3 py-2 text-sm focus:ring-2 w-full focus:ring-blue-500 focus:border-transparent"
+                        {...registerAdd("description", { required: true })}
                       />
                     </div>
                   </div>
@@ -771,7 +1040,9 @@ const Controls = () => {
             </div>
           )}
         </div>
-        <div>
+
+        {/* Submit Button */}
+        <div className="flex-shrink-0">
           <span
             data-tooltip-id="submit-tooltip"
             data-tooltip-content="Complete the checklist to submit"
@@ -799,9 +1070,18 @@ const Controls = () => {
               Submit
             </button>
           </span>
-
           <Tooltip id="submit-tooltip" place="top" />
         </div>
+        {showImportResponsesModal && (
+          <div>
+            <h1 className="text-4xl">HELLO</h1>
+            <ImportResponsesDialog
+              checklistId={checklistId}
+              open={showImportResponsesModal}
+              onClose={() => setShowImportResponsesModal(false)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import select, and_, not_, desc, asc
+from sqlalchemy import select, and_, not_, desc, asc, func
 from sqlalchemy.orm import Session
 from models.applications import Application
 from models.checklist_assignments import ChecklistAssignment
@@ -11,6 +11,7 @@ from models.schemas.crud_schemas import (
     UserOut,
 )
 from models.schemas.params import AppQueryParams
+from typing import Any
 
 
 def create_app(
@@ -33,7 +34,7 @@ def create_app(
 
 def list_apps(
     db: Session, user: UserOut, params: AppQueryParams
-) -> list[ApplicationOut]:
+) -> dict[str, Any | list[ApplicationOut]]:
     stmt = select(Application).where(Application.is_active)
 
     if user.role != "admin":
@@ -45,14 +46,35 @@ def list_apps(
         )
     # else:
     # stmt = stmt.where(Application.creator_id == user.id)
+
+    total_count = db.scalar(select(func.count()).select_from(stmt.subquery()))
     sort_column = getattr(Application, params.sort_by)
     if params.sort_order == "desc":
         sort_column = desc(sort_column)
     else:
         sort_column = asc(sort_column)
-    apps = db.scalars(stmt.order_by(sort_column)).all()
 
-    return [ApplicationOut.model_validate(app) for app in apps]
+    if params.search and params.search != "null" and params.search_by:
+        print("FOUND SEARCH Q", params.search)
+        print("FOUND SEARCH BY", params.search_by)
+        search_value = f"%{params.search}%"
+        search_column = getattr(Application, params.search_by, None)
+        if search_column is not None:
+            stmt = stmt.where(search_column.ilike(search_value))
+
+    if params.page >= 1:
+        apps = db.scalars(
+            stmt.order_by(sort_column)
+            .limit(params.page_size)
+            .offset(params.page * params.page_size - params.page_size)
+        ).all()
+    else:
+        apps = db.scalars(stmt.order_by(sort_column)).all()
+
+    return {
+        "apps": [ApplicationOut.model_validate(app) for app in apps],
+        "total_count": total_count,
+    }
 
 
 def update_app(

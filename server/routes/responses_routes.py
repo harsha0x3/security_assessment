@@ -9,6 +9,8 @@ from fastapi import (
     Form,
     Path,
     UploadFile,
+    HTTPException,
+    status,
 )
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -18,6 +20,7 @@ from controllers.user_responses_controller import (
     add_user_response,
     save_uploaded_file,
     update_user_response,
+    add_responses_from_csv,
 )
 from db.connection import get_db_conn
 from models.schemas.crud_schemas import (
@@ -86,3 +89,39 @@ async def edit_user_response(
     return update_user_response(
         payload=payload, response_id=response_id, db=db, current_user=current_user
     )
+
+
+@router.post("/checklists/{checklist_id}/responses/upload")
+async def upload_controls_file(
+    checklist_id: Annotated[
+        str,
+        Path(...),
+    ],
+    input_file: Annotated[UploadFile, File(...)],
+    db: Annotated[Session, Depends(get_db_conn), ""],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+):
+    if not input_file:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please Upload the file",
+        )
+    try:
+        content = await input_file.read()
+        if input_file.filename is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Uploaded file must have a filename",
+            )
+        result = add_responses_from_csv(
+            file_content=content,
+            file_name=input_file.filename,
+            current_user=current_user,
+            checklist_id=checklist_id,
+            db=db,
+        )
+        return result
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")

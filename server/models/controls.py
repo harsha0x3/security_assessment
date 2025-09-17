@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Index, String
+from sqlalchemy import ForeignKey, Index, String, Text
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,6 +12,7 @@ class Control(Base, BaseMixin):
     control_area: Mapped[str] = mapped_column(String(100), nullable=False)
     severity: Mapped[str] = mapped_column(String(50), nullable=False)
     control_text: Mapped[str] = mapped_column(MEDIUMTEXT, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
 
     # ----------------Relationships--------------------
     checklist = relationship("Checklist", back_populates="controls")

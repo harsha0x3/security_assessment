@@ -46,11 +46,23 @@ export const applicationApiSlice = apiSlice.injectEndpoints({
     }),
 
     getApplications: builder.query({
-      query: ({ sort_by, sort_order }) => {
+      query: ({
+        sort_by,
+        sort_order,
+        page,
+        page_size,
+        search = "",
+        search_by,
+      }) => {
         const params = new URLSearchParams({
           sort_order,
           sort_by,
+          page,
+          page_size,
+          search,
+          search_by,
         });
+        console.log("PARAMS INAPPSLICE", params.toString());
         return `/applications/?${params.toString()}`;
       },
       providesTags: ["Apps"],

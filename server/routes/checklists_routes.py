@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status, Query
 from sqlalchemy.orm import Session
@@ -10,6 +10,7 @@ from controllers.checklist_controller import (
     remove_checklist,
     update_checklist,
     get_trash_checklists,
+    get_checklists_for_user,
 )
 from db.connection import get_db_conn
 from models.schemas.crud_schemas import (
@@ -20,6 +21,7 @@ from models.schemas.crud_schemas import (
 )
 from services.auth.deps import get_current_user
 from models.schemas.params import ChecklistQueryParams
+from models.users import User
 
 router = APIRouter(tags=["checklists"])
 
@@ -34,23 +36,74 @@ async def create_new_checklist(
     return create_checklist(payload=payload, app_id=app_id, db=db, creator=current_user)
 
 
-@router.get("/applications/{app_id}/checklists", response_model=list[ChecklistOut])
+@router.get("/applications/{app_id}/checklists")
 async def get_app_checklists(
     app_id: str,
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
     sort_by: Annotated[str, Query()] = "created_at",
     sort_order: Annotated[Literal["asc", "desc"], Query()] = "desc",
-):
-    params = ChecklistQueryParams(sort_by=sort_by, sort_order=sort_order)
+    search: Annotated[str | None, Query()] = None,
+    page: Annotated[int, Query()] = 1,
+    page_size: Annotated[int, Query()] = 10,
+    search_by: Annotated[
+        Literal["checklist_type", "priority", "is_completed"],
+        Query(),
+    ] = "checklist_type",
+) -> dict[str, Any]:
+    params = ChecklistQueryParams(
+        sort_by=sort_by,
+        sort_order=sort_order,
+        search_by=search_by,
+        search=search,
+        page=page,
+        page_size=page_size,
+    )
     return get_checklists_for_app(
         app_id=app_id, db=db, user=current_user, params=params
     )
 
 
-@router.get("/checklists/my-checklists", response_model=list[ChecklistOut])
-def test():
-    return "Worked"
+# @router.get("/checklists/user-checklists/{user_id}")
+# def get_user_checklists(
+#     db: Annotated[Session, Depends(get_db_conn)],
+#     current_user: Annotated[UserOut, Depends(get_current_user)],
+#     sort_by: Annotated[str, Query()] = "created_at",
+#     sort_order: Annotated[Literal["asc", "desc"], Query()] = "desc",
+#     search: Annotated[str | None, Query()] = None,
+#     page: Annotated[int, Query()] = 1,
+#     page_size: Annotated[int, Query()] = 10,
+#     search_by: Annotated[
+#         Literal["checklist_type", "priority", "is_completed"],
+#         Query(),
+#     ] = "checklist_type",
+#     user_id: Annotated[str | None, Path()] = None,
+# ):
+#     params = ChecklistQueryParams(
+#         sort_by=sort_by,
+#         sort_order=sort_order,
+#         search_by=search_by,
+#         search=search,
+#         page=page,
+#         page_size=page_size,
+#     )
+#     user = current_user
+#     if user_id:
+#         if current_user.role != "admin":
+#             raise HTTPException(
+#                 status_code=status.HTTP_403_FORBIDDEN,
+#                 detail=f"You are not authorised {current_user.username}",
+#             )
+
+#         user = db.get(User, user_id)
+#         if not user:
+#             raise HTTPException(
+#                 status_code=status.HTTP_404_NOT_FOUND,
+#                 detail=f"User not found for ID {user_id}",
+#             )
+#         user = UserOut.model_validate(user)
+
+#     return get_checklists_for_user(user=user, db=db)
 
 
 # async def get_user_checklists(

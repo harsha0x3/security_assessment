@@ -1,6 +1,9 @@
+from typing import Any
+
 from fastapi import HTTPException, status
-from sqlalchemy import and_, func, select, not_, asc, desc
+from sqlalchemy import and_, asc, desc, func, not_, select
 from sqlalchemy.orm import Session
+
 from models.applications import Application
 from models.checklist_assignments import ChecklistAssignment
 from models.checklists import Checklist
@@ -11,9 +14,10 @@ from models.schemas.crud_schemas import (
     ChecklistUpdate,
     UserOut,
 )
-from models.user_responses import UserResponse
-from .application_controller import update_app_completion
 from models.schemas.params import ChecklistQueryParams
+from models.user_responses import UserResponse
+
+from .application_controller import update_app_completion
 
 
 def create_checklist(
@@ -51,7 +55,7 @@ def create_checklist(
 
 def get_checklists_for_app(
     app_id: str, db: Session, user: UserOut, params: ChecklistQueryParams
-) -> list[ChecklistOut]:
+) -> dict[str, list[ChecklistOut] | Any]:
     try:
         app = db.scalar(select(Application).where(Application.id == app_id))
 
@@ -61,20 +65,34 @@ def get_checklists_for_app(
                 detail=f"Application not found. {app_id}",
             )
 
+        stmt = select(Checklist).where(
+            and_(Checklist.app_id == app.id, Checklist.is_active)
+        )
+
+        total_count = db.scalar(select(func.count()).select_from(stmt.subquery()))
+
         sort_column = getattr(Checklist, params.sort_by)
         if params.sort_order == "asc":
             sort_column = asc(sort_column)
         else:
             sort_column = desc(sort_column)
 
+        if params.search and params.search != "null" and params.search_by:
+            search_value = f"%{params.search}%"
+            search_column = getattr(Checklist, params.search_by)
+            if search_column is not None:
+                stmt = stmt.where(search_column.ilike(search_value))
+
         results: list[ChecklistOut] = []
         if user.role == "admin":
-            print("admin")
-            checklists = db.scalars(
-                select(Checklist)
-                .where(and_(Checklist.app_id == app.id, Checklist.is_active))
-                .order_by(sort_column)
-            ).all()
+            if params.page >= 1:
+                checklists = db.scalars(
+                    stmt.order_by(sort_column)
+                    .limit(params.page_size)
+                    .offset(params.page * params.page_size - params.page_size)
+                ).all()
+            else:
+                checklists = db.scalars(stmt.order_by(sort_column)).all()
             print(
                 "Checklist is complete",
                 [checklist.is_completed for checklist in checklists],
@@ -98,18 +116,19 @@ def get_checklists_for_app(
 
         else:
             # Non-admins: only checklists assigned to them
-            checklists = db.scalars(
-                select(Checklist)
-                .join(ChecklistAssignment)
-                .where(
-                    and_(
-                        Checklist.app_id == app.id,
-                        ChecklistAssignment.user_id == user.id,
-                        Checklist.is_active,
-                    )
-                )
-                .order_by(sort_column)
-            ).all()
+
+            stmt = stmt.join(ChecklistAssignment).where(
+                ChecklistAssignment.user_id == user.id,
+            )
+
+            if params.page >= 1:
+                checklists = db.scalars(
+                    stmt.order_by(sort_column)
+                    .limit(params.page_size)
+                    .offset(params.page * params.page_size - params.page_size)
+                ).all()
+            else:
+                checklists = db.scalars(stmt.order_by(sort_column)).all()
 
             for checklist in checklists:
                 results.append(
@@ -124,7 +143,7 @@ def get_checklists_for_app(
                     )
                 )
 
-        return results
+        return {"checklists": results, "total_count": total_count}
 
     except Exception as e:
         print(f"Error while getting the checklists for app: {str(e)}")

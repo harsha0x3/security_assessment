@@ -37,14 +37,30 @@ async def create_application(
     return create_app(payload=payload, db=db, creator=current_user)
 
 
-@router.get("", response_model=list[ApplicationOut])
+@router.get("")
 async def get_applications(
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
     sort_by: Annotated[str, Query()] = "created_at",
     sort_order: Annotated[Literal["asc", "desc"], Query()] = "desc",
-):
-    params = AppQueryParams(sort_by=sort_by, sort_order=sort_order)
+    search: Annotated[str | None, Query()] = None,
+    page: Annotated[int, Query()] = 1,
+    page_size: Annotated[int, Query()] = 10,
+    search_by: Annotated[
+        Literal[
+            "name", "platform", "region", "owner_name", "provider_name", "department"
+        ],
+        Query(),
+    ] = "name",
+) -> dict[str, Any]:
+    params = AppQueryParams(
+        sort_by=sort_by,
+        sort_order=sort_order,
+        search=search,
+        page=page,
+        page_size=page_size,
+        search_by=search_by,
+    )
     return list_apps(db=db, user=current_user, params=params)
 
 

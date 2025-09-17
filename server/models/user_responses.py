@@ -9,17 +9,20 @@ class UserResponse(Base, BaseMixin):
     __tablename__ = "user_responses"
 
     control_id: Mapped[str] = mapped_column(String(40), ForeignKey("controls.id"))
+    checklist_id: Mapped[str] = mapped_column(String(40), ForeignKey("checklists.id"))
     user_id: Mapped[str] = mapped_column(String(40), ForeignKey("users.id"))
     current_setting: Mapped[str] = mapped_column(MEDIUMTEXT, nullable=True)
     review_comment: Mapped[str] = mapped_column(MEDIUMTEXT, nullable=True)
     evidence_path: Mapped[str] = mapped_column(MEDIUMTEXT, nullable=True)
 
     control = relationship("Control", back_populates="responses", uselist=False)
+    checklist = relationship("Checklist", back_populates="responses")
     user = relationship("User", back_populates="responses")
 
     __table_args__ = (
         Index("ix_user_responses_user_id", "user_id"),
         Index("ix_user_responses_control_id", "control_id"),
+        Index("ix_user_responses_checklist_id", "checklist_id"),
     )
 
     def __repr__(self) -> str:

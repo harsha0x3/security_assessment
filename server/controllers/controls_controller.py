@@ -1,6 +1,9 @@
 from fastapi import HTTPException, status
 from sqlalchemy import and_, func, select, desc, asc
 from sqlalchemy.orm import Session
+import pandas as pd
+from io import BytesIO, StringIO
+from fastapi.responses import StreamingResponse
 
 from models.checklist_assignments import ChecklistAssignment
 from models.checklists import Checklist
@@ -17,6 +20,7 @@ from models.schemas.crud_schemas import (
 )
 from models.user_responses import UserResponse
 from .checklist_controller import update_checklist_status
+from models.schemas.params import ControlsResponsesQueryParams
 
 
 def update_checklist_completion_for_user(checklist_id: str, user: UserOut, db: Session):
@@ -78,6 +82,7 @@ def add_controls(control: ControlCreate, checklist_id: str, db: Session) -> Cont
             control_area=control.control_area,
             severity=control.severity,
             control_text=control.control_text,
+            description=control.description,
         )
 
         db.add(new_control)
@@ -130,6 +135,7 @@ def get_control(control_id: str, db: Session):
                 control_area="",
                 severity="",
                 control_text="",
+                description="",
             )
         return control
 
@@ -159,6 +165,7 @@ def get_controls(
                     control_area="",
                     severity="",
                     control_text="",
+                    description="",
                 )
             ]
         controls = db.scalars(
@@ -174,6 +181,7 @@ def get_controls(
                     control_area="",
                     severity="",
                     control_text="",
+                    description="",
                 )
             ]
 
@@ -187,15 +195,23 @@ def get_controls(
 
 
 def get_controls_with_responses(
-    checklist_id: str, db: Session, current_user: UserOut
+    checklist_id: str,
+    db: Session,
+    current_user: UserOut,
+    params: ControlsResponsesQueryParams,
 ) -> ControlWithResponseOut | list:
     try:
-        sort_order = "asc"
+        sort_order = params.sort_order
         filter_table = "controls"
         if filter_table == "controls":
             sort_column = getattr(Control, "created_at")
-        else:
+        elif filter_table == "responses":
             sort_column = getattr(UserResponse, "created_at")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid filter table param {filter_table}",
+            )
 
         if sort_order == "asc":
             sort_column_by = asc(sort_column)
@@ -207,16 +223,39 @@ def get_controls_with_responses(
             if not checklist:
                 return []
 
-            stmt = (
-                select(Control, UserResponse)
-                .outerjoin(UserResponse, and_(UserResponse.control_id == Control.id))
-                .where(Control.checklist_id == checklist_id)
-                .order_by(sort_column_by)
-            )
+            if params.page >= 1:
+                stmt = (
+                    select(Control, UserResponse)
+                    .outerjoin(
+                        UserResponse, and_(UserResponse.control_id == Control.id)
+                    )
+                    .where(Control.checklist_id == checklist_id)
+                    .order_by(sort_column_by)
+                    .limit(params.page_size)
+                    .offset(params.page * params.page_size - params.page_size)
+                )
+            else:
+                stmt = (
+                    select(Control, UserResponse)
+                    .outerjoin(
+                        UserResponse, and_(UserResponse.control_id == Control.id)
+                    )
+                    .where(Control.checklist_id == checklist_id)
+                    .order_by(sort_column_by)
+                )
 
             results = db.execute(stmt).all()
-            total_controls = len(results)
-            total_responses = sum(1 for _, response in results if response is not None)
+            total_controls = db.scalar(
+                select(func.count(Control.id)).where(
+                    Control.checklist_id == checklist_id
+                )
+            )
+
+            total_responses = db.scalar(
+                select(func.count(UserResponse.id)).where(
+                    UserResponse.checklist_id == checklist_id
+                )
+            )
 
             total_counts = TotalsCount(
                 total_responses=total_responses,
@@ -232,6 +271,7 @@ def get_controls_with_responses(
                     control_area=control.control_area,
                     severity=control.severity,
                     control_text=control.control_text,
+                    description=control.description,
                     current_setting=response.current_setting if response else None,
                     review_comment=response.review_comment if response else None,
                     evidence_path=response.evidence_path if response else None,
@@ -294,6 +334,7 @@ def get_controls_with_responses(
                 control_area=control.control_area,
                 severity=control.severity,
                 control_text=control.control_text,
+                description=control.description,
                 current_setting=response.current_setting if response else None,
                 review_comment=response.review_comment if response else None,
                 evidence_path=response.evidence_path if response else None,
@@ -373,6 +414,7 @@ def import_controls(target_checklist_id: str, source_checklist_id: str, db: Sess
                 control_area=control.control_area,
                 severity=control.severity,
                 control_text=control.control_text,
+                description=control.description,
             )
             for control in source_checklist.controls
         ]
@@ -391,4 +433,98 @@ def import_controls(target_checklist_id: str, source_checklist_id: str, db: Sess
         )
 
 
-# def delete_control
+def add_controls_from_file(
+    file_content: bytes, file_name: str, checklist_id: str, db: Session
+):
+    df = (
+        pd.read_csv(BytesIO(file_content))
+        if file_name.endswith(".csv")
+        else pd.read_excel(BytesIO(file_content))
+    )
+    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+
+    required_columns = ["control_area", "severity", "control_text", "description"]
+    missing_cols = [col for col in required_columns if col not in df.columns]
+    if missing_cols:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Missing required columns: {', '.join(missing_cols)}",
+        )
+    valid_severities = ["low", "medium", "high", "critical"]
+    invalid_severities = (
+        df.loc[~df["severity"].str.lower().isin(valid_severities), "severity"]
+        .dropna()
+        .unique()
+    )
+    if len(invalid_severities) > 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid severity values: {', '.join(invalid_severities)}. "
+            f"Must be one of: {', '.join(valid_severities)}",
+        )
+
+    errors = []
+    new_controls = []
+
+    for index, row in df.iterrows():
+        control_data = {
+            "checklist_id": checklist_id,
+            "control_area": str(row["control_area"]).strip(),
+            "severity": str(row["severity"]).strip(),
+            "control_text": str(row["control_text"]).strip(),
+            "description": str(row.get("description", "")).strip()
+            if pd.notna(row.get("description"))
+            else None,
+        }
+
+        if not control_data["control_area"] or not control_data["control_text"]:
+            errors.append(f"Row {index}: Control area and control text cannot be empty")
+            continue
+
+        new_controls.append(Control(**control_data))
+
+    try:
+        db.add_all(new_controls)
+        db.commit()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error adding data from file: {str(e)}",
+        )
+
+    return {"msg": f"Added {df.shape[0]} row to the checklist"}
+
+
+def export_controls_csv(checklist_id: str, db: Session, current_user: UserOut):
+    checklist = db.get(Checklist, checklist_id)
+    params = ControlsResponsesQueryParams(
+        sort_by="created_at", sort_order="desc", page=-1, page_size=100
+    )
+    data = get_controls_with_responses(
+        checklist_id=checklist_id, db=db, current_user=current_user, params=params
+    )
+    if not data or not data.list_controls:  # type: ignore
+        raise HTTPException(status_code=404, detail="No controls found")
+
+    EXCLUDE_COLUMNS = [
+        "checklist_id",
+        "response_created_at",
+        "response_updated_at",
+        "control_created_at",
+        "control_updated_at",
+    ]
+
+    records = [c.model_dump() for c in data.list_controls]
+
+    df = pd.DataFrame(records)
+    df = df.drop(columns=[col for col in EXCLUDE_COLUMNS if col in df.columns])
+    output = StringIO()
+    df.to_csv(output, index=False)
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={checklist.checklist_type}_controls.csv"
+        },
+    )

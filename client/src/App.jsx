@@ -1,10 +1,5 @@
 // App.jsx - Main App Component with Router Setup
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 import { useGetApplicationsQuery } from "./store/apiSlices/applicationApiSlice";
 import { useGetCurrentUserQuery } from "./store/apiSlices/authApiSlice";
 import {
@@ -31,9 +26,12 @@ import TrashPage from "./pages/TrashPage";
 function App() {
   const user = useSelector(selectAuth);
 
-  const { data, isSuccess } = useGetApplicationsQuery(undefined, {
-    skip: !user.isAuthenticated,
-  });
+  const { data, isSuccess } = useGetApplicationsQuery(
+    { sort_by: "created_at", sort_order: "desc" },
+    {
+      skip: !user.isAuthenticated,
+    }
+  );
   const dispatch = useDispatch();
   useEffect(() => {
     if (data && isSuccess) {
@@ -53,47 +51,45 @@ function App() {
   }, [isAuthenticated, dispatch]);
 
   return (
-    <Router>
-      <div className="min-h-screen bg-background">
-        <ToastContainer
-          position="top-right"
-          autoClose={2000}
-          hideProgressBar
-          newestOnTop
-          closeOnClick
-          pauseOnHover
-          draggable={false}
-          theme="light"
-          toastClassName={() =>
-            "bg-white shadow-lg rounded-xl text-gray-900 text-sm p-3 flex items-center gap-2"
-          }
-          bodyClassName={() => "flex items-center"}
-        />
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+    <div className="min-h-screen bg-background">
+      <ToastContainer
+        position="top-right"
+        autoClose={2000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable={false}
+        theme="light"
+        toastClassName={() =>
+          "bg-white shadow-lg rounded-xl text-gray-900 text-sm p-3 flex items-center gap-2"
+        }
+        bodyClassName={() => "flex items-center"}
+      />
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected Routes */}
-          <Route path="/" element={<ProtectedLayout />}>
-            <Route path="/" element={<RootLayout />}>
-              <Route index element={<Navigate to="/applications" replace />} />
-              {/* <Route path="dashboard" element={<Dashboard />} /> */}
-              <Route path="applications" element={<Applications />} />
-              <Route path=":appId/checklists" element={<ChecklistsLayout />}>
-                <Route path=":checklistId" element={<Controls />} />
-              </Route>
-              <Route path="addUsers" element={<AddUsers />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="trash" element={<TrashPage />} />
+        {/* Protected Routes */}
+        <Route path="/" element={<ProtectedLayout />}>
+          <Route path="/" element={<RootLayout />}>
+            <Route index element={<Navigate to={`applications`} replace />} />
+            {/* <Route path="dashboard" element={<Dashboard />} /> */}
+            <Route path="applications" element={<Applications />} />
+            <Route path=":appId/checklists" element={<ChecklistsLayout />}>
+              <Route path=":checklistId" element={<Controls />} />
             </Route>
+            <Route path="addUsers" element={<AddUsers />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="trash" element={<TrashPage />} />
           </Route>
+        </Route>
 
-          {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
-    </Router>
+        {/* Catch all route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </div>
   );
 }
 

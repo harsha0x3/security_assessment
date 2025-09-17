@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
 import { useAuth } from "../../hooks/useAuth";
-import Button from "../ui/Button";
+import { Button } from "@/components/ui/button";
 import { Card } from "../ui/Card";
 import { Eye, EyeOff, Mail, Lock, Loader } from "lucide-react";
 
@@ -134,7 +134,6 @@ const LoginForm = ({ onSwitchToRegister, onClose }) => {
         </div>
         <Button
           type="submit"
-          variant="primary"
           size="lg"
           className="w-full"
           disabled={
