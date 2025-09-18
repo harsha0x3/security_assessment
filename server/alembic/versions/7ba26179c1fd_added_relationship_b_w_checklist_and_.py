@@ -34,7 +34,12 @@ def upgrade() -> None:
         WHERE ur.checklist_id IS NULL or ur.checklist_id = ''
     """)
     )
-    op.alter_column("user_responses", "checklist_id", nullable=False)
+    op.alter_column(
+        "user_responses",
+        "checklist_id",
+        existing_type=sa.String(length=40),
+        nullable=False,
+    )
     op.create_index(
         "ix_user_responses_checklist_id",
         "user_responses",
