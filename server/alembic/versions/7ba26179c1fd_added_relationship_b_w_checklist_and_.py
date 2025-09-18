@@ -46,8 +46,13 @@ def upgrade() -> None:
         ["checklist_id"],
         unique=False,
     )
+
     op.create_foreign_key(
-        None, "user_responses", "checklists", ["checklist_id"], ["id"]
+        "fk_user_responses_checklist",  # explicit name
+        "user_responses",
+        "checklists",
+        ["checklist_id"],
+        ["id"],
     )
     # ### end Alembic commands ###
 
