@@ -1,9 +1,9 @@
 from sqlalchemy import event, func, select
 from sqlalchemy.orm import Session
 
-from models.checklists import Checklist
-from models.controls import Control
-from models.user_responses import UserResponse
+from models.core.checklists import Checklist
+from models.core.controls import Control
+from models.core.user_responses import UserResponse
 
 
 @event.listens_for(Session, "after_flush")

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from db.connection import get_db_conn
 from models.schemas.crud_schemas import UserOut
-from models.users import User
+from models.core.users import User
 
 from .jwt_handler import decode_access_token
 

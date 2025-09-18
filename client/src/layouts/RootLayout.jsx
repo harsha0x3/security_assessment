@@ -12,22 +12,24 @@ const RootLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen overflow-hidden bg-background">
       <Header
         onToggleSidebar={handleToggleSidebar}
         isSidebarCollapsed={isSidebarCollapsed}
       />
-      <Sidebar
-        isCollapsed={isSidebarCollapsed}
-        onToggle={handleToggleSidebar}
-      />
-      <div className="flex">
+      <div className="flex h-full pt-8">
+        <Sidebar
+          isCollapsed={isSidebarCollapsed}
+          onToggle={handleToggleSidebar}
+        />
         <main
-          className={`flex-1 pt-16 p-6 transition-all duration-300  w-[calc(100%-16rem)] ${
-            isSidebarCollapsed ? "w-[calc(100%-4rem)]" : "w-[calc(100%-14rem)]"
-          } ${isSidebarCollapsed ? "ml-12" : "ml-52"}`}
+          className={`flex-1 overflow-hidden transition-all duration-300 ${
+            isSidebarCollapsed ? "ml-12" : "ml-52"
+          }`}
         >
-          <Outlet />
+          <div className="h-full overflow-y-auto p-6">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

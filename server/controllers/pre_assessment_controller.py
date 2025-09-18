@@ -1,0 +1,278 @@
+from models.pre_assessment.answers import Answer
+from models.pre_assessment.pre_assemments import PreAssessment
+from models.pre_assessment.questions import Question
+from models.pre_assessment.sections import Section
+from models.pre_assessment.submissions import Submission
+
+from fastapi import HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from models.schemas.pre_assessment_schema import (
+    AssessmentCreate,
+    AssessmentOut,
+    SectionCreate,
+    SectionOut,
+    QuestionCreate,
+    QuestionOut,
+    AnswerCreate,
+    SubmissionsOut,
+)
+from models.schemas.crud_schemas import UserOut
+
+
+def create_assessement(payload: AssessmentCreate, db: Session):
+    try:
+        assessment = PreAssessment(**payload.model_dump())
+        db.add(assessment)
+        db.commit()
+        db.refresh(assessment)
+
+        return AssessmentOut.model_validate(assessment)
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error Adding the pre assessment {str(e)}",
+        )
+
+
+def get_assessments(db: Session):
+    try:
+        assessments = db.scalars(select(PreAssessment)).all()
+
+        if not assessments:
+            return []
+
+        return [AssessmentOut.model_validate(assessment) for assessment in assessments]
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching assessments {str(e)}",
+        )
+
+
+def add_sections(payload: SectionCreate, assessment_id: str, db: Session):
+    try:
+        assessment = db.get(PreAssessment, assessment_id)
+
+        if not assessment:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Assessment not found for section creation",
+            )
+
+        new_section = Section(assessment_id=assessment.id, **payload.model_dump())
+
+        db.add(new_section)
+        db.commit()
+        db.refresh(new_section)
+
+        return SectionOut.model_validate(new_section)
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error Adding the Section {str(e)}",
+        )
+
+
+def get_sections(assessment_id: str, db: Session):
+    try:
+        assessment = db.get(PreAssessment, assessment_id)
+
+        if not assessment:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Assessment not found for section creation",
+            )
+
+        return [SectionOut.model_validate(section) for section in assessment.sections]
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching the sections {str(e)}",
+        )
+
+
+def add_questions(payload: list[QuestionCreate], section_id: str, db: Session):
+    try:
+        section = db.get(Section, section_id)
+
+        if not section:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Section not found for section creation",
+            )
+
+        new_questions = [
+            Question(section_id=section_id, **Q.model_dump()) for Q in payload
+        ]
+        db.add_all(new_questions)
+        db.commit()
+
+        return [QuestionOut.model_validate(new_q) for new_q in new_questions]
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error Adding the Question {str(e)}",
+        )
+
+
+def get_assessment_questionnaire(assessment_id: str, db: Session):
+    try:
+        assessment = db.get(PreAssessment, assessment_id)
+        if not assessment:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Assessment not found for section creation",
+            )
+        sections = assessment.sections
+
+        results = []
+
+        for section in sections:
+            questions = section.questions
+            results.append(
+                {
+                    "section": SectionOut.model_validate(section),
+                    "questions": [
+                        QuestionOut.model_validate(question) for question in questions
+                    ],
+                }
+            )
+        return results
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting Questionnaire {str(e)}",
+        )
+
+
+def get_section_questions(section_id: str, db: Session):
+    try:
+        section = db.get(Section, section_id)
+        if not section:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Section not found for questions fetch",
+            )
+        questions = section.questions
+
+        return [QuestionOut.model_validate(question) for question in questions]
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error Adding the Question {str(e)}",
+        )
+
+
+def submit_answers(
+    assessment_id: str, responses: list[AnswerCreate], user_id: str, db: Session
+):
+    try:
+        assessment = db.get(PreAssessment, assessment_id)
+
+        if not assessment:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Assessment not found for section creation",
+            )
+
+        new_submission = Submission(assessment_id=assessment_id, user_id=user_id)
+        db.add(new_submission)
+        db.flush()
+
+        try:
+            new_answers = [
+                Answer(submission_id=new_submission.id, **res.model_dump())
+                for res in responses
+            ]
+            db.add_all(new_answers)
+            db.commit()
+            return {
+                "submission_id": new_submission.id,
+                "answers_saved": len(new_answers),
+            }
+
+        except Exception as e:
+            db.rollback()
+            new_sub = db.get(Submission, new_submission.id)
+            if new_sub:
+                db.delete(new_sub)
+                db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Unable to submit responses {str(e)}",
+            )
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error Adding the Question {str(e)}",
+        )
+
+
+def get_submissions_for_admin(user_id: str, db: Session):
+    try:
+        # db.scalars(select(Submission).where(Submission.user_id))
+        stmt = select(Submission)
+
+        submissions = db.scalars(stmt).all()
+
+        result = []
+        for sub in submissions:
+            result.append(
+                SubmissionsOut(
+                    id=sub.id,
+                    status=sub.status,
+                    created_at=sub.created_at,
+                    updated_at=sub.created_at,
+                    user=UserOut.model_validate(sub.user),
+                    assessment=AssessmentOut.model_validate(sub.pre_assessment),
+                )
+            )
+
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching submissions {str(e)}",
+        )
+
+
+# try:
+#     ...
+# except HTTPException:
+#     raise
+
+# except Exception as e:
+#     raise HTTPException(
+#         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#         detail=f"Error Adding the Question {str(e)}",
+#     )

@@ -5,9 +5,9 @@ import pandas as pd
 from io import BytesIO, StringIO
 from fastapi.responses import StreamingResponse
 
-from models.checklist_assignments import ChecklistAssignment
-from models.checklists import Checklist
-from models.controls import Control
+from models.core.checklist_assignments import ChecklistAssignment
+from models.core.checklists import Checklist
+from models.core.controls import Control
 from models.schemas.crud_schemas import (
     ControlCreate,
     ControlOut,
@@ -18,7 +18,7 @@ from models.schemas.crud_schemas import (
     TotalsCount,
     UserOut,
 )
-from models.user_responses import UserResponse
+from models.core.user_responses import UserResponse
 from .checklist_controller import update_checklist_status
 from models.schemas.params import ControlsResponsesQueryParams
 

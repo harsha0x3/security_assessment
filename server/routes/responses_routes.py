@@ -29,7 +29,7 @@ from models.schemas.crud_schemas import (
     UserResponseOut,
     UserResponseUpdate,
 )
-from models.user_responses import UserResponse
+from models.core.user_responses import UserResponse
 from services.auth.deps import get_current_user
 
 router = APIRouter(tags=["responses"])

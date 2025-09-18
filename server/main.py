@@ -15,6 +15,7 @@ from routes import (
     checklists_routes,
     control_routes,
     responses_routes,
+    pre_assessment_routes,
 )
 
 
@@ -52,3 +53,4 @@ app.include_router(checklists_routes.router)
 app.include_router(assignment_routes.router)
 app.include_router(control_routes.router)
 app.include_router(responses_routes.router)
+app.include_router(pre_assessment_routes.router)

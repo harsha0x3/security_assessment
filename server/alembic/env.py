@@ -8,12 +8,14 @@ from db.base import Base
 from dotenv import load_dotenv
 import os
 
-from models import (
-    applications,
-    checklists,
+from models.core import (
     users,
-    controls,
+)
+from models.core import (
+    applications,
     checklist_assignments,
+    checklists,
+    controls,
     user_responses,
 )
 

@@ -1,11 +1,12 @@
 // App.jsx - Main App Component with Router Setup
-import { Routes, Route, Navigate, useSearchParams } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useGetApplicationsQuery } from "./store/apiSlices/applicationApiSlice";
 import { useGetCurrentUserQuery } from "./store/apiSlices/authApiSlice";
 import {
   loadApps,
   setCurrentApplication,
 } from "./store/appSlices/applicationSlice";
+import { lazy, Suspense } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { ToastContainer } from "react-toastify";
@@ -25,6 +26,8 @@ import TrashPage from "./pages/TrashPage";
 
 function App() {
   const user = useSelector(selectAuth);
+
+  const PreAssessmentPage = lazy(() => import("./pages/PreAssessmentPage"));
 
   const { data, isSuccess } = useGetApplicationsQuery(
     { sort_by: "created_at", sort_order: "desc" },
@@ -83,6 +86,14 @@ function App() {
             <Route path="addUsers" element={<AddUsers />} />
             <Route path="profile" element={<Profile />} />
             <Route path="trash" element={<TrashPage />} />
+            <Route
+              path="pre-assessment"
+              element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  <PreAssessmentPage />
+                </Suspense>
+              }
+            />
           </Route>
         </Route>
 

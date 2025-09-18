@@ -7,15 +7,15 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
-from models.controls import Control
+from models.core.controls import Control
 from models.schemas.crud_schemas import (
     UserOut,
     UserResponseCreate,
     UserResponseOut,
     UserResponseUpdate,
 )
-from models.user_responses import UserResponse
-from models.checklists import Checklist
+from models.core.user_responses import UserResponse
+from models.core.checklists import Checklist
 
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 UPLOAD_DIR = os.path.join(ROOT_DIR, "uploads")

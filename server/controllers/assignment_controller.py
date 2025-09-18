@@ -2,8 +2,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
-from models.checklist_assignments import ChecklistAssignment
-from models.checklists import Checklist
+from models.core.checklist_assignments import ChecklistAssignment
+from models.core.checklists import Checklist
 from models.schemas.crud_schemas import AssignmentCreate, AssignmentOut, UserOut
 
 

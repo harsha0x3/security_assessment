@@ -119,4 +119,36 @@
   body {
     @apply bg-background text-foreground;
   }
+  * {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: var(--muted-foreground) transparent;
+  }
+
+  /* Webkit (Chrome, Safari, Edge) */
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--muted-foreground);
+    border-radius: 9999px; /* fully rounded */
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary);
+  }
+}
+
+@layer utilities {
+  .section-alt-1 {
+    @apply bg-muted text-muted-foreground;
+  }
+  .section-alt-2 {
+    @apply bg-accent text-accent-foreground;
+  }
 }

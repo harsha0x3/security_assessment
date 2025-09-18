@@ -21,7 +21,7 @@ from models.schemas.crud_schemas import (
 )
 from services.auth.deps import get_current_user
 from models.schemas.params import ChecklistQueryParams
-from models.users import User
+from models.core.users import User
 
 router = APIRouter(tags=["checklists"])
 

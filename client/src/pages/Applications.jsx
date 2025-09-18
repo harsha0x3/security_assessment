@@ -639,7 +639,7 @@ const Applications = () => {
                     )}
                   </button>
                   <Button
-                    variant={"delete"}
+                    variant="destructive"
                     onClick={() => setSetShowDeleteModal(true)}
                   >
                     <span className="flex">

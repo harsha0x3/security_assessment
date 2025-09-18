@@ -4,10 +4,10 @@ from fastapi import HTTPException, status
 from sqlalchemy import and_, asc, desc, func, not_, select
 from sqlalchemy.orm import Session
 
-from models.applications import Application
-from models.checklist_assignments import ChecklistAssignment
-from models.checklists import Checklist
-from models.controls import Control
+from models.core.applications import Application
+from models.core.checklist_assignments import ChecklistAssignment
+from models.core.checklists import Checklist
+from models.core.controls import Control
 from models.schemas.crud_schemas import (
     ChecklistCreate,
     ChecklistOut,
@@ -15,7 +15,7 @@ from models.schemas.crud_schemas import (
     UserOut,
 )
 from models.schemas.params import ChecklistQueryParams
-from models.user_responses import UserResponse
+from models.core.user_responses import UserResponse
 
 from .application_controller import update_app_completion
 

@@ -5,7 +5,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from models.schemas.auth_schemas import LoginRequest, RegisterRequest, UserUpdateRequest
-from models.users import User
+from models.core.users import User
 from services.auth.jwt_handler import (
     create_tokens,
     set_jwt_cookies,

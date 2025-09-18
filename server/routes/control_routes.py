@@ -33,7 +33,7 @@ from models.schemas.crud_schemas import (
     ImportControlsRequest,
 )
 from services.auth.deps import get_current_user
-from models import Checklist
+from models.core import Checklist
 from models.schemas.params import ControlsResponsesQueryParams
 
 router = APIRouter(tags=["controls"])

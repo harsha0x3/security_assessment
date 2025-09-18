@@ -13,7 +13,7 @@ from controllers.auth_controller import (
 )
 from db.connection import get_db_conn
 from models.schemas.auth_schemas import LoginRequest, RegisterRequest, UserUpdateRequest
-from models.users import User
+from models.core.users import User
 from services.auth.deps import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])

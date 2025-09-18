@@ -1,8 +1,8 @@
 from sqlalchemy import event
 from sqlalchemy.orm import Session
 
-from models.applications import Application
-from models.checklists import Checklist
+from models.core.applications import Application
+from models.core.checklists import Checklist
 
 
 @event.listens_for(Session, "after_flush")
