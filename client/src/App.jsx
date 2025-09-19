@@ -28,6 +28,15 @@ function App() {
   const user = useSelector(selectAuth);
 
   const PreAssessmentPage = lazy(() => import("./pages/PreAssessmentPage"));
+  const PreAssessmentsDash = lazy(() =>
+    import("@/components/preAssessment/PreAssessmentsDash")
+  );
+  const PreAssessmentUser = lazy(() =>
+    import("@/components/preAssessment/preAssessmentUser")
+  );
+  const PreAssessmentSubmissions = lazy(() =>
+    import("@/components/preAssessment/PreAssessmentSubmissions")
+  );
 
   const { data, isSuccess } = useGetApplicationsQuery(
     { sort_by: "created_at", sort_order: "desc" },
@@ -93,7 +102,33 @@ function App() {
                   <PreAssessmentPage />
                 </Suspense>
               }
-            />
+            >
+              <Route index element={<Navigate to="user" replace />} />
+              <Route
+                path="user"
+                element={
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <PreAssessmentUser />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="modify"
+                element={
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <PreAssessmentsDash />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="submissions"
+                element={
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <PreAssessmentSubmissions />
+                  </Suspense>
+                }
+              />
+            </Route>
           </Route>
         </Route>
 

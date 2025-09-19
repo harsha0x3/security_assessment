@@ -19,6 +19,14 @@ from models.core import (
     user_responses,
 )
 
+from models.pre_assessment import (
+    answers,
+    pre_assemments,
+    submissions,
+    questions,
+    sections,
+)
+
 load_dotenv()
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -43,7 +43,16 @@ class User(Base, BaseMixin):
     applications = relationship("Application", back_populates="creator")
     assignments = relationship("ChecklistAssignment", back_populates="user")
     responses = relationship("UserResponse", back_populates="user")
-    pre_assessment_submissions = relationship("Submission", back_populates="user")
+    pre_assessment_submissions = relationship(
+        "Submission",
+        back_populates="submitted_user",
+        foreign_keys="Submission.user_id",
+    )
+    assessed_submissions = relationship(
+        "Submission",
+        back_populates="assessed_person",
+        foreign_keys="Submission.assessed_by",
+    )
 
     # ----------------------Functions---------------------------------
     def set_password(self, plain_password: str) -> None:

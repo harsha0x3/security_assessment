@@ -17,6 +17,8 @@ from models.schemas.pre_assessment_schema import (
     QuestionOut,
     AnswerCreate,
     SubmissionsOut,
+    AnswerOut,
+    PreAssessmentEvaluateSchema,
 )
 from models.schemas.crud_schemas import UserOut
 
@@ -238,7 +240,7 @@ def submit_answers(
         )
 
 
-def get_submissions_for_admin(user_id: str, db: Session):
+def get_assessment_submissions_for_admin(user_id: str, db: Session):
     try:
         # db.scalars(select(Submission).where(Submission.user_id))
         stmt = select(Submission)
@@ -253,8 +255,11 @@ def get_submissions_for_admin(user_id: str, db: Session):
                     status=sub.status,
                     created_at=sub.created_at,
                     updated_at=sub.created_at,
-                    user=UserOut.model_validate(sub.user),
+                    submitted_user=UserOut.model_validate(sub.submitted_user),
                     assessment=AssessmentOut.model_validate(sub.pre_assessment),
+                    assessed_by=UserOut.model_validate(sub.assessed_person)
+                    if sub.assessed_person
+                    else None,
                 )
             )
 
@@ -263,6 +268,88 @@ def get_submissions_for_admin(user_id: str, db: Session):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching submissions {str(e)}",
+        )
+
+
+def get_assessment_submissions_for_user(user_id: str, db: Session):
+    try:
+        stmt = select(Submission).where(Submission.user_id == user_id)
+
+        submissions = db.scalars(stmt).all()
+
+        result = []
+        for sub in submissions:
+            result.append(
+                SubmissionsOut(
+                    id=sub.id,
+                    status=sub.status,
+                    created_at=sub.created_at,
+                    updated_at=sub.created_at,
+                    assessment=AssessmentOut.model_validate(sub.pre_assessment),
+                    submitted_user=UserOut.model_validate(sub.submitted_user),
+                    assessed_by=UserOut.model_validate(sub.assessed_person)
+                    if sub.assessed_person
+                    else None,
+                )
+            )
+
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching submissions {str(e)}",
+        )
+
+
+def get_assessment_responses(submission_id: str, db: Session, user: UserOut):
+    try:
+        submission = db.get(Submission, submission_id)
+        if not submission:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Submission doesn't exist"
+            )
+        if submission.user_id != user.id and user.role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"You are not authorised {user.username}",
+            )
+
+        result = [AnswerOut.model_validate(ans) for ans in submission.answers]
+
+        return result if result else []
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error Adding the Question {str(e)}",
+        )
+
+
+def evaluate_pre_assessment(
+    submission_id: str, db: Session, user: UserOut, payload: PreAssessmentEvaluateSchema
+):
+    try:
+        submission = db.get(Submission, submission_id)
+        if not submission:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Submission doesn't exist"
+            )
+        submission.status = payload.status
+        submission.assessed_by = user.id
+
+        db.commit()
+        db.refresh(submission)
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error Evaluating assessment {str(e)}",
         )
 
 

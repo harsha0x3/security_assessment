@@ -16,7 +16,7 @@ import { Eye, EyeOff, Mail, Lock, Loader } from "lucide-react";
 
 import { selectAuth, setError } from "../../store/appSlices/authSlice";
 
-const LoginForm = ({ onSwitchToRegister, onClose }) => {
+const LoginForm = ({ onClose }) => {
   const [formData, setFormData] = useState({
     email_or_username: "",
     password: "",

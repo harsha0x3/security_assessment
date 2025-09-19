@@ -64,10 +64,23 @@ class AnswerCreate(BaseModel):
     answer_text: str
 
 
+class AnswerOut(BaseModel):
+    question_id: str
+    answer_text: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class SubmissionsOut(BaseModel):
     id: str
     status: str
     created_at: datetime | None = None
     updated_at: datetime | None = None
-    user: UserOut | None
+    submitted_user: UserOut | None = None
     assessment: AssessmentOut
+    assessed_by: UserOut | None = None
+
+
+class PreAssessmentEvaluateSchema(BaseModel):
+    status: str
+    reason: str | None = None

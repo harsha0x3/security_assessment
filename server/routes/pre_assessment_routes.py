@@ -18,7 +18,10 @@ from controllers.pre_assessment_controller import (
     get_sections,
     get_section_questions,
     submit_answers,
-    get_submissions_for_admin,
+    get_assessment_submissions_for_admin,
+    get_assessment_submissions_for_user,
+    get_assessment_responses,
+    evaluate_pre_assessment,
 )
 from models.schemas.pre_assessment_schema import (
     AssessmentCreate,
@@ -29,6 +32,7 @@ from models.schemas.pre_assessment_schema import (
     QuestionOut,
     AnswerCreate,
     SubmissionsOut,
+    PreAssessmentEvaluateSchema,
 )
 from models.schemas.crud_schemas import UserOut
 from services.auth.deps import get_current_user
@@ -170,11 +174,47 @@ async def submit_responses(
     )
 
 
-@router.get("/submissions", response_model=SubmissionsOut)
+@router.get("/submissions/assessments", response_model=list[SubmissionsOut])
 async def get_submissions(
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
 ):
     if current_user.role == "admin":
-        return get_submissions_for_admin(user_id=current_user.id, db=db)
-    return "Not authorised "
+        return get_assessment_submissions_for_admin(user_id=current_user.id, db=db)
+    return get_assessment_submissions_for_user(user_id=current_user.id, db=db)
+
+
+@router.get("/submissions/{submission_id}/responses")
+async def get_responses(
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+    submission_id: Annotated[str, Path(...)],
+):
+    return get_assessment_responses(
+        submission_id=submission_id, db=db, user=current_user
+    )
+
+
+@router.patch("/submissions/{submission_id}/evaluate")
+async def evaluate_pre_assessment_sub(
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+    submission_id: Annotated[str, Path(...)],
+    payload: Annotated[PreAssessmentEvaluateSchema, ""],
+):
+    try:
+        if current_user.role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Not authorised for this action {current_user.username}",
+            )
+        return evaluate_pre_assessment(
+            submission_id=submission_id, db=db, user=current_user, payload=payload
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error evaluating the assessment in route {str(e)}",
+        )

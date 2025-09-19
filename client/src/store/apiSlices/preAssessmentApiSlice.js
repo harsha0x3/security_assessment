@@ -8,7 +8,7 @@ const preAssessmentApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: ["PerAssessment"],
+      invalidatesTags: ["PreAssessment"],
     }),
 
     createSection: builder.mutation({
@@ -17,7 +17,7 @@ const preAssessmentApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: ["PerAssessment"],
+      invalidatesTags: ["PreAssessment"],
     }),
 
     addQuestions: builder.mutation({
@@ -26,34 +26,61 @@ const preAssessmentApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: ["PerAssessment"],
+      invalidatesTags: ["PreAssessment"],
     }),
 
     getAssessments: builder.query({
       query: () => `/pre-assessment/assessments`,
-      providesTags: ["PerAssessment"],
+      providesTags: ["PreAssessment"],
     }),
     getSections: builder.query({
       query: (assessmentId) => `/pre-assessment/${assessmentId}/sections`,
-      providesTags: ["PerAssessment"],
+      providesTags: ["PreAssessment"],
     }),
-    getQuestionnaire: builder.query({
-      query: (sectionId) => `/pre-assessment/${sectionId}/questionnaire`,
-      providesTags: ["PerAssessment"],
+
+    getAssessmentQuestionnaire: builder.query({
+      query: (assessmentId) => `/pre-assessment/${assessmentId}/questionnaire`,
+      providesTags: ["PreAssessment"],
     }),
 
     getSectionQuestions: builder.query({
       query: (sectionId) => `/pre-assessment/section/${sectionId}/questions`,
-      providesTags: ["PerAssessment"],
+      providesTags: ["PreAssessment"],
     }),
 
     submitResponses: builder.mutation({
-      query: ({ assessmentId, payload }) => ({
-        url: `/pre-assessment/${assessmentId}/submit`,
-        method: "POST",
-        body: payload.responses,
-      }),
-      invalidatesTags: ["PerAssessmentResponses"],
+      query: ({ assessmentId, payload }) => {
+        console.log("PAYLOAD IN SLICE", payload);
+        return {
+          url: `/pre-assessment/${assessmentId}/submit`,
+          method: "POST",
+          body: payload,
+        };
+      },
+      invalidatesTags: ["PreAssessmentResponses"],
+    }),
+
+    getSubmittedAssessments: builder.query({
+      query: () => `/pre-assessment/submissions/assessments`,
+      providesTags: ["PreAssessmentResponses"],
+    }),
+
+    getSubmittedResponses: builder.query({
+      query: ({ submissionId }) =>
+        `/pre-assessment/submissions/${submissionId}/responses`,
+      providesTags: ["PreAssessmentResponses"],
+    }),
+
+    evaluateSubmission: builder.mutation({
+      query: ({ submissionId, payload }) => {
+        console.log("PAYLOAD IN SLICE", payload);
+        return {
+          url: `/pre-assessment/submissions/${submissionId}/evaluate`,
+          method: "PATCH",
+          body: payload,
+        };
+      },
+      invalidatesTags: ["PreAssessmentResponses", "PreAssessment"],
     }),
   }),
 });
@@ -63,8 +90,13 @@ export const {
   useCreateAssessmentMutation,
   useCreateSectionMutation,
   useGetAssessmentsQuery,
-  useGetQuestionnaireQuery,
   useGetSectionsQuery,
   useGetSectionQuestionsQuery,
   useSubmitResponsesMutation,
+  useGetAssessmentQuestionnaireQuery,
+  useGetSubmittedAssessmentsQuery,
+  useGetSubmittedResponsesQuery,
+  useLazyGetSubmittedResponsesQuery,
+  useLazyGetAssessmentQuestionnaireQuery,
+  useEvaluateSubmissionMutation,
 } = preAssessmentApiSlice;

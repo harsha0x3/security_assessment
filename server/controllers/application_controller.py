@@ -1,9 +1,9 @@
 from fastapi import HTTPException, status
 from sqlalchemy import select, and_, not_, desc, asc, func
 from sqlalchemy.orm import Session
-from models.core.applications import Application
-from models.core.checklist_assignments import ChecklistAssignment
-from models.core.checklists import Checklist
+from models import Application
+from models import ChecklistAssignment
+from models import Checklist
 from models.schemas.crud_schemas import (
     ApplicationCreate,
     ApplicationOut,
