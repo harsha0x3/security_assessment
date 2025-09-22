@@ -15,11 +15,11 @@ class AllUsersOut(BaseModel):
 
 class ApplicationCreate(BaseModel):
     name: str
-    description: str
-    platform: str
-    region: str
-    owner_name: str
-    provider_name: str
+    description: str | None = None
+    platform: str | None = None
+    region: str | None = None
+    owner_name: str | None = None
+    provider_name: str | None = None
     infra_host: str | None = None
     app_tech: str | None = None
     priority: int = 2
@@ -29,11 +29,11 @@ class ApplicationCreate(BaseModel):
 class ApplicationOut(BaseModel):
     id: str
     name: str
-    description: str
-    platform: str
-    region: str
+    description: str | None = None
+    platform: str | None = None
+    region: str | None = None
     owner_name: str
-    provider_name: str
+    provider_name: str | None = None
     infra_host: str | None = None
     app_tech: str | None = None
     priority: int = 2

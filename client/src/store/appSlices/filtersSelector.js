@@ -1,7 +1,10 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { selectAppSearchTerm, selectChecklistSearchTerm } from "./filtersSlice";
-import { loadAllApps, selectCurrentApp } from "./applicationSlice";
-import { selectAllChecklists } from "./checklistsSlice";
+import {
+  loadAllApps,
+  selectCurrentApp,
+} from "../../features/applications/store/applicationSlice";
+import { selectAllChecklists } from "../../features/checklists/store/checklistsSlice";
 
 export const selectFilterdApps = createSelector(
   [loadAllApps, selectAppSearchTerm],

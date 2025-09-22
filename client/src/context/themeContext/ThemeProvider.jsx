@@ -1,4 +1,6 @@
+// ThemeProvider.jsx
 import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 import { ThemeProviderContext } from "./ThemeContext";
 
 export function ThemeProvider({
@@ -8,7 +10,7 @@ export function ThemeProvider({
   ...props
 }) {
   const [theme, setTheme] = useState(
-    () => localStorage.getItem(storageKey) || defaultTheme
+    () => Cookies.get(storageKey) || defaultTheme
   );
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (theme) => {
-      localStorage.setItem(storageKey, theme);
+      Cookies.set(storageKey, theme, { expires: 365 });
       setTheme(theme);
     },
   };

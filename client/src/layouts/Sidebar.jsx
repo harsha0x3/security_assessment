@@ -1,8 +1,8 @@
 // layouts/Sidebar.jsx
 import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { selectCurrentApp } from "../store/appSlices/applicationSlice";
-import { selectAuth } from "../store/appSlices/authSlice";
+import { selectCurrentApp } from "../features/applications/store/applicationSlice";
+import { selectAuth } from "../features/auth/store/authSlice";
 import {
   LayoutGrid,
   CheckSquare,
@@ -11,6 +11,7 @@ import {
   Trash,
   ClipboardCheck,
 } from "lucide-react";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 
 const Sidebar = ({ isCollapsed, onToggle }) => {
   const location = useLocation();
@@ -67,6 +68,37 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       >
         {/* Navigation Items */}
         <nav className="p-2 space-y-1">
+          <Collapsible
+            title="Dashboard"
+            defaultOpen
+            className="group/collapsible"
+          >
+            <CollapsibleTrigger>
+              Dashboard
+              <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              {
+                <Link
+                  to={"user_dashboard"}
+                  className={`flex items-center px-3 py-2 rounded-lg transition-colors group relative ${
+                    isActiveRoute("user_dashboard")
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                      : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  }`}
+                  title={isCollapsed ? "user dashboard" : undefined}
+                >
+                  {!isCollapsed && (
+                    <span className="ml-3 font-medium">{"user dashboard"}</span>
+                  )}
+                  {/* Active indicator for collapsed state */}
+                  {isCollapsed && isActiveRoute("user_dashboard") && (
+                    <div className="absolute right-1 w-2 h-2 bg-blue-600 rounded-full"></div>
+                  )}
+                </Link>
+              }
+            </CollapsibleContent>
+          </Collapsible>
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = isActiveRoute(item.path);

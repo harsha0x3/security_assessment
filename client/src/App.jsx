@@ -1,41 +1,45 @@
 // App.jsx - Main App Component with Router Setup
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useGetApplicationsQuery } from "./store/apiSlices/applicationApiSlice";
-import { useGetCurrentUserQuery } from "./store/apiSlices/authApiSlice";
+import { useGetApplicationsQuery } from "./features/applications/store/applicationApiSlice";
+import { useGetCurrentUserQuery } from "./features/auth/store/authApiSlice";
 import {
   loadApps,
   setCurrentApplication,
-} from "./store/appSlices/applicationSlice";
+} from "./features/applications/store/applicationSlice";
 import { lazy, Suspense } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 // Import components
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import Profile from "./pages/Profile";
+import LoginPage from "./features/auth/pages/LoginPage";
+import RegisterPage from "./features/auth/pages/RegisterPage";
+import Profile from "./features/userManagement/pages/Profile";
 import RootLayout from "./layouts/RootLayout";
 import ProtectedLayout from "./layouts/ProtectedLayout";
 
-import Applications from "./pages/Applications";
-import Controls from "./components/core/Controls";
-import ChecklistsLayout from "./layouts/ChecklistsLayout";
-import AddUsers from "./pages/AddUsers";
-import { setError, selectAuth } from "./store/appSlices/authSlice";
-import TrashPage from "./pages/TrashPage";
+import Applications from "./features/applications/pages/Applications";
+import Controls from "./features/checklists/components/Controls";
+import ChecklistsPage from "./features/checklists/pages/ChecklistsPage";
+import AddUsers from "./features/userManagement/pages/AddUsers";
+import { setError, selectAuth } from "./features/auth/store/authSlice";
+import TrashPage from "./features/trash/pages/TrashPage";
+import UserDash from "./features/dashboard/pages/UserDash";
+import AdminDash from "./features/dashboard/pages/AdminDash";
 
 function App() {
   const user = useSelector(selectAuth);
 
-  const PreAssessmentPage = lazy(() => import("./pages/PreAssessmentPage"));
+  const PreAssessmentPage = lazy(() =>
+    import("./features/preAssessments/pages/PreAssessmentPage")
+  );
   const PreAssessmentsDash = lazy(() =>
-    import("@/components/preAssessment/PreAssessmentsDash")
+    import("@/features/preAssessments/pages/PreAssessmentsDash")
   );
   const PreAssessmentUser = lazy(() =>
-    import("@/components/preAssessment/preAssessmentUser")
+    import("@/features/preAssessments/pages/preAssessmentUser")
   );
   const PreAssessmentSubmissions = lazy(() =>
-    import("@/components/preAssessment/PreAssessmentSubmissions")
+    import("@/features/preAssessments/pages/PreAssessmentSubmissions")
   );
 
   const { data, isSuccess } = useGetApplicationsQuery(
@@ -86,10 +90,11 @@ function App() {
         {/* Protected Routes */}
         <Route path="/" element={<ProtectedLayout />}>
           <Route path="/" element={<RootLayout />}>
-            <Route index element={<Navigate to={`applications`} replace />} />
-            {/* <Route path="dashboard" element={<Dashboard />} /> */}
+            <Route index element={<Navigate to={`user_dashboard`} replace />} />
+            <Route path="user_dashboard" element={<UserDash />} />
+            <Route path="admin_dashboard" element={<AdminDash />} />
             <Route path="applications" element={<Applications />} />
-            <Route path=":appId/checklists" element={<ChecklistsLayout />}>
+            <Route path=":appId/checklists" element={<ChecklistsPage />}>
               <Route path=":checklistId" element={<Controls />} />
             </Route>
             <Route path="addUsers" element={<AddUsers />} />

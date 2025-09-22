@@ -84,3 +84,9 @@ class SubmissionsOut(BaseModel):
 class PreAssessmentEvaluateSchema(BaseModel):
     status: str
     reason: str | None = None
+
+
+class DefaultQuestions(BaseModel):
+    app_name: str = "What is the name of Application?"
+    owner: str = "Who is the owner of application?"
+    app_tech: str = "What technologies are used in development of this application?"

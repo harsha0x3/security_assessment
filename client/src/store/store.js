@@ -1,8 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./appSlices/authSlice";
-import { apiSlice } from "./apiSlices/apiSlice";
-import applicationReducer from "./appSlices/applicationSlice";
-import checklistReducer from "./appSlices/checklistsSlice";
+import authReducer from "@/features/auth/store/authSlice";
+import { apiSlice } from "./apiSlice";
+import applicationReducer from "../features/applications/store/applicationSlice";
+import checklistReducer from "../features/checklists/store/checklistsSlice";
 import filtersReducer from "./appSlices/filtersSlice";
 const store = configureStore({
   reducer: {

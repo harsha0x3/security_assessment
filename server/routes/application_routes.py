@@ -10,6 +10,7 @@ from controllers.application_controller import (
     restore_app,
     update_app,
     get_trashed_apps,
+    get_app_stats,
 )
 from db.connection import get_db_conn
 from models.schemas.crud_schemas import (
@@ -114,3 +115,11 @@ async def get_apps_in_trash(
             detail=f"You are not authorised {current_user.username}",
         )
     return get_trashed_apps(db=db)
+
+
+@router.get("/stats")
+def application_stats(
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+):
+    return get_app_stats(current_user=current_user, db=db)

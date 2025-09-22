@@ -274,3 +274,20 @@ def get_trashed_apps(db: Session):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching trashed apps {str(e)}",
         )
+
+
+def get_app_stats(current_user: UserOut, db: Session):
+    stmt = select(Application).where(Application.is_active)
+
+    if current_user.role != "admin":
+        # join checklists and assignments to filter by user_id
+        stmt = (
+            stmt.join(Application.checklists)
+            .join(Checklist.assignments)
+            .where(ChecklistAssignment.user_id == current_user.id)
+        )
+
+    total_count = db.scalar(select(func.count()).select_from(stmt.subquery()))
+    completed_apps = db.scalar(stmt.where(Application.is_completed))
+
+    return {"total_apps": total_count, "completed_apps": completed_apps}

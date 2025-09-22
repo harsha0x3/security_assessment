@@ -1,7 +1,7 @@
 // Enhanced Header with minimal design and sidebar toggle
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../features/auth/hooks/useAuth";
 import { useSelector, useDispatch } from "react-redux";
 import {
   selectAppSearchTerm,
@@ -9,7 +9,7 @@ import {
   setAppSearchTerm,
   setChecklistSearchTerm,
 } from "../store/appSlices/filtersSlice";
-import { selectCurrentApp } from "../store/appSlices/applicationSlice";
+import { selectCurrentApp } from "../features/applications/store/applicationSlice";
 import {
   User,
   Settings,
