@@ -4,4 +4,4 @@ instance = DefaultQuestions()
 print(instance.app_name)
 
 for field_name, field in DefaultQuestions.model_fields.items():
-    print(field)
+    print(field.)

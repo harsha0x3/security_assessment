@@ -7,8 +7,10 @@ from models import Application
 from models.schemas.crud_schemas import ApplicationCreate
 
 from fastapi import HTTPException, status
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, desc
 from sqlalchemy.orm import Session
+from datetime import date
+from services.notifications.email_notify import send_email
 
 from models.schemas.pre_assessment_schema import (
     AssessmentCreate,
@@ -24,6 +26,28 @@ from models.schemas.pre_assessment_schema import (
     DefaultQuestions,
 )
 from models.schemas.crud_schemas import UserOut
+
+
+def generate_ticket_id(db: Session, model) -> str:
+    today_str = date.today().strftime("%y%m%d")
+
+    # Get the latest submission for today
+    last_id = db.scalar(
+        select(model.id)
+        .where(model.id.like(f"ISP-{today_str}-%"))
+        .order_by(desc(model.created_at))
+    )
+
+    if last_id:
+        try:
+            last_seq = int(last_id.split("-")[-1])
+        except ValueError:
+            last_seq = 0
+        next_seq = last_seq + 1
+    else:
+        next_seq = 1
+
+    return f"ISP-{today_str}-{next_seq:03d}"
 
 
 def create_assessement(payload: AssessmentCreate, db: Session):
@@ -214,8 +238,8 @@ def get_section_questions(section_id: str, db: Session):
         )
 
 
-def submit_answers(
-    assessment_id: str, responses: list[AnswerCreate], user_id: str, db: Session
+async def submit_answers(
+    assessment_id: str, responses: list[AnswerCreate], user: UserOut, db: Session
 ):
     try:
         assessment = db.get(PreAssessment, assessment_id)
@@ -225,8 +249,11 @@ def submit_answers(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Assessment not found for section creation",
             )
+        next_ticket_id = generate_ticket_id(db, Submission)
 
-        new_submission = Submission(assessment_id=assessment_id, user_id=user_id)
+        new_submission = Submission(
+            id=next_ticket_id, assessment_id=assessment_id, user_id=user.id
+        )
         db.add(new_submission)
         db.flush()
 
@@ -237,6 +264,25 @@ def submit_answers(
             ]
             db.add_all(new_answers)
             db.commit()
+
+            await send_email(
+                subject="Assessment Submission recieved",
+                reciepient=user,
+                message=f"We have recieved your submission on ID {new_submission.id}. Please wait until our team evaluates your submission.",
+            )
+            admin = UserOut(
+                id="ad",
+                username="suman",
+                email="harshavardhancg@titan.co.in",
+                role="admin",
+                first_name="Suman",
+            )
+            await send_email(
+                subject="Assessment Submission recieved",
+                reciepient=admin,
+                message=f"You have new submission for pre assessment evaulation from {user.first_name}.\n Reference ID: {new_submission.id}. Please evaluate the submission.",
+            )
+
             return {
                 "submission_id": new_submission.id,
                 "answers_saved": len(new_answers),
@@ -263,7 +309,7 @@ def submit_answers(
         )
 
 
-def get_assessment_submissions_for_admin(user_id: str, db: Session):
+def get_assessment_submissions_for_admin(user: UserOut, db: Session):
     try:
         # db.scalars(select(Submission).where(Submission.user_id))
         stmt = select(Submission)
@@ -277,7 +323,7 @@ def get_assessment_submissions_for_admin(user_id: str, db: Session):
                     id=sub.id,
                     status=sub.status,
                     created_at=sub.created_at,
-                    updated_at=sub.created_at,
+                    updated_at=sub.updated_at,
                     submitted_user=UserOut.model_validate(sub.submitted_user),
                     assessment=AssessmentOut.model_validate(sub.pre_assessment),
                     assessed_by=UserOut.model_validate(sub.assessed_person)
@@ -307,7 +353,7 @@ def get_assessment_submissions_for_user(user_id: str, db: Session):
                     id=sub.id,
                     status=sub.status,
                     created_at=sub.created_at,
-                    updated_at=sub.created_at,
+                    updated_at=sub.updated_at,
                     assessment=AssessmentOut.model_validate(sub.pre_assessment),
                     submitted_user=UserOut.model_validate(sub.submitted_user),
                     assessed_by=UserOut.model_validate(sub.assessed_person)
@@ -351,7 +397,7 @@ def get_assessment_responses(submission_id: str, db: Session, user: UserOut):
         )
 
 
-def evaluate_pre_assessment(
+async def evaluate_pre_assessment(
     submission_id: str, db: Session, user: UserOut, payload: PreAssessmentEvaluateSchema
 ):
     try:
@@ -383,16 +429,42 @@ def evaluate_pre_assessment(
                 if field:
                     new_app_data[field] = ans.answer_text
 
-            new_app = Application(creator_id=submission.assessed_by, **new_app_data)
-            db.add(new_app)
+            try:
+                new_app = Application(
+                    creator_id=submission.assessed_by,
+                    owner_id=submission.user_id,
+                    ticket_id=submission.id,
+                    **new_app_data,
+                )
+                db.add(new_app)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                    detail=f"Falied to create app after evaluation {str(e)}",
+                )
+
+        status_message = (
+            f"""We have to reject your application assessment request due to the following reasons.\n
+                                    {payload.reason}"""
+            if submission.status == "rejected"
+            else f"""We have evaluated you pre assessment and ready to assess your application.\n {payload.reason}"""
+        )
+
+        res = await send_email(
+            subject="Assessment Evaluation update",
+            reciepient=submission.submitted_user,
+            message=f"We have evaluated your assessment submission with ID: {submission.id}.\n {status_message}",
+        )
 
         db.commit()
         db.refresh(submission)
+        return {"email_status": res["success"], "msg": "Evaluation done."}
 
     except HTTPException:
         raise
 
     except Exception as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error Evaluating assessment {str(e)}",

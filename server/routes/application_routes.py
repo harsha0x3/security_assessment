@@ -35,7 +35,7 @@ async def create_application(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
         )
-    return create_app(payload=payload, db=db, creator=current_user)
+    return create_app(payload=payload, db=db, creator=current_user, owner=current_user)
 
 
 @router.get("")

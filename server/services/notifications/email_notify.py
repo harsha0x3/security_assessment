@@ -2,7 +2,9 @@ import os
 from msal import ConfidentialClientApplication
 import httpx
 from dotenv import load_dotenv
-import pandas as pd
+import json
+from models.schemas.crud_schemas import UserOut
+from fastapi import HTTPException, status
 
 load_dotenv()
 
@@ -25,38 +27,64 @@ def fetch_token():
 
     result = app.acquire_token_for_client(scopes=scopes)
     if not result:
-        return {"success":False}  
-    return {"success":True ,"token":result.get("access_token")}
+        return {"success": False}
+    return {"success": True, "token": result.get("access_token")}
 
 
 async def send_email(
-    client: httpx.AsyncClient,
-    access_token: str,
-    custom_message: str | None = None
+    subject: str,
+    reciepient: UserOut,
+    message: str | None = None,
 ):
     try:
-        response = await client.post(
-            graph_endpoint,
-            headers={
-                "Authorization": f"Bearer {access_token}",
-                "Content-Type": "application/json",
-            },
-            content=json.dumps(email_msg),
+        token = fetch_token()
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Access token not found for sending mail",
+            )
+        access_token = token["token"]
+        reciepient_name = (
+            f"{reciepient.first_name} {reciepient.last_name}"
+            if reciepient.last_name
+            else f"{reciepient.first_name}"
         )
-        if response.status_code == 202:
-            return {
-                "email": manager_email,
-                "status": "success",
-                "code": response.status_code,
-                "message": response.text,
+        html_body = f"""
+                        <html>
+                        <body>
+                            <h2>Hello {reciepient_name},</h2>
+                            <p>{message}</p>
+                            <p>Thankyou.</p>
+                        </body>
+                        </html>
+
+                    """
+
+        email_msg = {
+            "message": {
+                "subject": subject,
+                "body": {"contentType": "HTML", "content": html_body},
+                "toRecipients": [{"emailAddress": {"address": reciepient.email}}],
             }
-        else:
-            return {
-                "email": manager_email,
-                "status": "error",
-                "code": response.status_code,
-                "message": response.text,
-            }
+        }
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                graph_endpoint,
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                },
+                content=json.dumps(email_msg),
+            )
+            if response.status_code == 202:
+                print({"success": True, "status_code": response.status_code})
+                return {"success": True, "status_code": response.status_code}
+            else:
+                print({"success": False, "status_code": response.status_code})
+                return {"success": False, "status_code": response.status_code}
 
     except Exception as e:
-        return {"email": manager_email, "status": "not sent", "message": str(e)}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send mail {str(e)}",
+        )

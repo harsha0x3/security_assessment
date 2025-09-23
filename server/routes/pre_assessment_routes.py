@@ -169,8 +169,8 @@ async def submit_responses(
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
 ):
-    return submit_answers(
-        assessment_id=assessment_id, responses=responses, user_id=current_user.id, db=db
+    return await submit_answers(
+        assessment_id=assessment_id, responses=responses, user=current_user, db=db
     )
 
 
@@ -180,7 +180,7 @@ async def get_submissions(
     current_user: Annotated[UserOut, Depends(get_current_user)],
 ):
     if current_user.role == "admin":
-        return get_assessment_submissions_for_admin(user_id=current_user.id, db=db)
+        return get_assessment_submissions_for_admin(user=current_user, db=db)
     return get_assessment_submissions_for_user(user_id=current_user.id, db=db)
 
 
@@ -208,7 +208,7 @@ async def evaluate_pre_assessment_sub(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Not authorised for this action {current_user.username}",
             )
-        return evaluate_pre_assessment(
+        return await evaluate_pre_assessment(
             submission_id=submission_id, db=db, user=current_user, payload=payload
         )
     except HTTPException:

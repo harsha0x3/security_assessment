@@ -42,6 +42,8 @@ class ApplicationOut(BaseModel):
     is_completed: bool
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    owner_id: str | None = None
+    ticket_id: str | None = None
 
     # Automatically convert UTC -> Asia/Kolkata
 
@@ -71,7 +73,7 @@ class UserOut(BaseModel):
     username: str
     email: str
     first_name: str
-    last_name: str
+    last_name: str | None = None
     role: str
 
     created_at: datetime | None = None

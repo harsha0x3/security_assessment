@@ -40,7 +40,12 @@ class User(Base, BaseMixin):
     )
 
     # -----------------------Relationships-----------------------
-    applications = relationship("Application", back_populates="creator")
+    created_applications = relationship(
+        "Application", back_populates="creator", foreign_keys="Application.creator_id"
+    )
+    owned_applications = relationship(
+        "Application", back_populates="owner", foreign_keys="Application.owner_id"
+    )
     assignments = relationship("ChecklistAssignment", back_populates="user")
     responses = relationship("UserResponse", back_populates="user")
     pre_assessment_submissions = relationship(

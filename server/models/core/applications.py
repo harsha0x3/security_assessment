@@ -11,7 +11,6 @@ class Application(Base, BaseMixin):
     description: Mapped[str] = mapped_column(Text, nullable=True)
     platform: Mapped[str] = mapped_column(String(512), nullable=True)
     region: Mapped[str] = mapped_column(String(100), nullable=True)
-    creator_id: Mapped[str] = mapped_column(String(40), ForeignKey("users.id"))
     owner_name: Mapped[str] = mapped_column(String(512), nullable=True)
     provider_name: Mapped[str] = mapped_column(String(666), nullable=True)
     infra_host: Mapped[str] = mapped_column(String(512), nullable=True)
@@ -19,8 +18,20 @@ class Application(Base, BaseMixin):
     priority: Mapped[int] = mapped_column(Integer, default=2)
     department: Mapped[str] = mapped_column(String(128), nullable=True)
     is_completed: Mapped[bool] = mapped_column(default=False)
+    creator_id: Mapped[str] = mapped_column(String(40), ForeignKey("users.id"))
+    owner_id: Mapped[str] = mapped_column(
+        String(40), ForeignKey("users.id"), nullable=True
+    )
+    ticket_id: Mapped[str] = mapped_column(
+        String(40), ForeignKey("submissions.id"), unique=False, nullable=True
+    )
 
-    creator = relationship("User", back_populates="applications")
+    creator = relationship(
+        "User", back_populates="created_applications", foreign_keys=[creator_id]
+    )
+    owner = relationship(
+        "User", back_populates="owned_applications", foreign_keys=[owner_id]
+    )
     checklists = relationship("Checklist", back_populates="app")
 
     def refresh_completion_status(self):
@@ -28,4 +39,4 @@ class Application(Base, BaseMixin):
         self.is_completed = all(c.is_completed for c in self.checklists)
 
     def __repr__(self) -> str:
-        return f"<app_id={self.id}, app_name={self.id}>"
+        return f"<app_id={self.id}, app_name={self.name}>"

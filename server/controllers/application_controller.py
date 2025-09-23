@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import select, and_, not_, desc, asc, func
+from sqlalchemy import select, and_, not_, desc, asc, func, or_
 from sqlalchemy.orm import Session
 from models import Application
 from models import ChecklistAssignment
@@ -15,10 +15,12 @@ from typing import Any
 
 
 def create_app(
-    payload: ApplicationCreate, db: Session, creator: UserOut
+    payload: ApplicationCreate, db: Session, creator: UserOut, owner: UserOut
 ) -> ApplicationOut:
     try:
-        app = Application(**payload.model_dump(), creator_id=creator.id)
+        app = Application(
+            **payload.model_dump(), creator_id=creator.id, owner_id=owner.id
+        )
         db.add(app)
         db.commit()
         db.refresh(app)
@@ -40,9 +42,14 @@ def list_apps(
     if user.role != "admin":
         # join checklists and assignments to filter by user_id
         stmt = (
-            stmt.join(Application.checklists)
-            .join(Checklist.assignments)
-            .where(ChecklistAssignment.user_id == user.id)
+            stmt.outerjoin(Application.checklists)
+            .outerjoin(Checklist.assignments)
+            .where(
+                or_(
+                    ChecklistAssignment.user_id == user.id,
+                    Application.owner_id == user.id,
+                )
+            )
         )
     # else:
     # stmt = stmt.where(Application.creator_id == user.id)
