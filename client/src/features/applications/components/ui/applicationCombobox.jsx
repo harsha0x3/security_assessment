@@ -40,8 +40,10 @@ export function AppsCombobox({
           aria-expanded={open}
           className="w-full justify-between"
         >
-          {selectedLabel || placeHolder}
-          <ChevronsUpDown className="opacity-50" />
+          <span className="flex-1 truncate text-left">
+            {selectedLabel || placeHolder}
+          </span>
+          <ChevronsUpDown className="opacity-50 shrink-0" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">

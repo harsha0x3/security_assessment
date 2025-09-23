@@ -168,7 +168,6 @@ const Profile = ({ userDetails = null }) => {
               name="email"
               value={form.email}
               onChange={handleChange}
-              readOnly
               className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
             />
           ) : (

@@ -22,21 +22,23 @@ const PreAssessmentPage = () => {
   ];
 
   return (
-    <div className="flex flex-col h-full overflow-hidden gap-4">
+    <div className="flex flex-col h-full overflow-hidden gap-2">
       {/* Top Card (tabs) */}
       <Tabs value={getCurrentTab()} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          {navItems.map((item) => (
-            <TabsTrigger key={item.path} value={item.path} asChild>
-              <NavLink to={item.path}>{item.label}</NavLink>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="flex justify-center w-full">
+          <TabsList className="w-fit flex">
+            {navItems.map((item) => (
+              <TabsTrigger key={item.path} value={item.path} asChild>
+                <NavLink to={item.path}>{item.label}</NavLink>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
       </Tabs>
 
       {/* Bottom Card (fills remaining height, scrolls internally) */}
       <Card className="flex-1 min-h-0 overflow-hidden">
-        <CardContent className="h-full overflow-y-auto p-4">
+        <CardContent className="h-full overflow-y-auto p-2">
           <Outlet />
         </CardContent>
       </Card>

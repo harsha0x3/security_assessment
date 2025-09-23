@@ -3,7 +3,7 @@ import {
   useGetAssessmentQuestionnaireQuery,
   useSubmitResponsesMutation,
 } from "@/features/preAssessments/store/preAssessmentApiSlice";
-import { Card, CardHeader } from "../../../components/ui/Card";
+import { Card, CardContent, CardHeader } from "../../../components/ui/Card";
 import { Combobox } from "../../../components/ui/ComboBox";
 import { useSearchParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
@@ -80,13 +80,14 @@ const PreAssessmentUser = () => {
           )}
         </div>
       </CardHeader>
-
-      <PreAssessmentForm
-        assessment={currentAssessment}
-        questionnaire={questionnaireFetched ? questionnaire : []}
-        subResponses={[]} // empty array means no previous answers
-        onSubmit={handleSubmit}
-      />
+      <CardContent className="pt-2">
+        <PreAssessmentForm
+          assessment={currentAssessment}
+          questionnaire={questionnaireFetched ? questionnaire : []}
+          subResponses={[]} // empty array means no previous answers
+          onSubmit={handleSubmit}
+        />
+      </CardContent>
     </Card>
   );
 };

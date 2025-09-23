@@ -113,22 +113,24 @@ export function ChecklistCombobox({
             className="w-full justify-between"
           >
             {selectedChecklist ? (
-              <div className="flex items-center space-x-2">
-                <span>{selectedChecklist.checklist_type}</span>
+              <div className="flex items-center space-x-2 flex-1 truncate">
+                <span className="truncate">
+                  {selectedChecklist.checklist_type}
+                </span>
                 <Star
-                  className={`w-4 h-4 ${getPriorityColor(
+                  className={`w-4 h-4 shrink-0 ${getPriorityColor(
                     selectedChecklist.priority
                   )}`}
                   fill="currentColor"
                 />
                 {selectedChecklist.is_completed && (
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded shrink-0">
                     Completed
                   </span>
                 )}
               </div>
             ) : (
-              placeHolder
+              <span className="flex-1 truncate text-left">{placeHolder}</span>
             )}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>

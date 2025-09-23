@@ -64,7 +64,7 @@ const RootLayout = () => {
             ${!isMobile ? (isSidebarCollapsed ? "ml-16" : "ml-56") : "ml-16"}
           `}
         >
-          <div className="h-full overflow-y-auto p-6 bg-background text-foreground">
+          <div className="h-full overflow-y-auto p-2 bg-background text-foreground">
             <Outlet />
           </div>
         </main>

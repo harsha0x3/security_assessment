@@ -103,6 +103,12 @@ const PreAssessmentSubmissions = () => {
 
   const columns = useMemo(
     () => [
+      colHelper.accessor((row) => row.id, {
+        id: "submission_id",
+        header: "Submission ID",
+        cell: (info) => <div>{info.getValue()}</div>,
+      }),
+
       colHelper.accessor((row) => row.submitted_user, {
         id: "submitted_user",
         header: "Submitted By",
@@ -130,7 +136,7 @@ const PreAssessmentSubmissions = () => {
         header: "Submitted At",
         cell: (info) => (
           <div className="font-medium">
-            {new Date(info.getValue()).toLocaleString()}
+            {new Date(info.getValue() + "Z").toLocaleString()}
           </div>
         ),
       }),
@@ -168,7 +174,7 @@ const PreAssessmentSubmissions = () => {
         header: "Assessed At",
         cell: (info) =>
           info.getValue() ? (
-            <span>{new Date(info.getValue()).toLocaleString()}</span>
+            <span>{new Date(info.getValue() + "Z").toLocaleString()}</span>
           ) : (
             <span className="text-gray-400 italic">Not Yet Assessed</span>
           ),

@@ -33,6 +33,10 @@ import {
   Info,
   ImportIcon,
   Ellipsis,
+  ChevronDownIcon,
+  Columns3Icon,
+  RefreshCcwIcon,
+  SearchIcon,
 } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import { useForm } from "react-hook-form";
@@ -49,6 +53,24 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 import { useControlsNResponses } from "@/features/checklists/hooks/useControlsNResponses";
 
@@ -262,7 +284,7 @@ const Controls = () => {
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
-            <input
+            <Input
               className="border rounded p-1 text-sm w-full"
               {...registerEditControl("control_area")}
             />
@@ -316,17 +338,14 @@ const Controls = () => {
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
-            <textarea
-              className="border rounded p-1 text-sm w-full min-h-[60px] resize-y"
-              {...registerEditControl("control_text")}
-            />
+            <Textarea className="" {...registerEditControl("control_text")} />
           ) : (
-            <div
-              className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1"
+            <Textarea
+              className="border-none shadow-none"
               title={row.original.control_text}
-            >
-              {row.original.control_text || "-"}
-            </div>
+              value={row.original.control_text || "-"}
+              readOnly
+            />
           );
         },
       },
@@ -338,17 +357,14 @@ const Controls = () => {
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingRowId === controlId ? (
-            <textarea
-              className="border rounded p-1 text-sm w-full min-h-[60px] resize-y"
-              {...register("description")}
-            />
+            <Textarea className="" {...register("description")} />
           ) : (
-            <div
-              className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1"
+            <Textarea
+              className="border-none shadow-none"
               title={row.original.description}
-            >
-              {row.original.description || "-"}
-            </div>
+              value={row.original.description || "-"}
+              readOnly
+            />
           );
         },
       },
@@ -360,17 +376,14 @@ const Controls = () => {
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingRowId === controlId ? (
-            <textarea
-              className="border rounded p-1 text-sm w-full min-h-[60px] resize-y"
-              {...register("current_setting")}
-            />
+            <Textarea className="" {...register("current_setting")} />
           ) : (
-            <div
-              className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1"
+            <Textarea
+              className="border-none shadow-none"
               title={row.original.current_setting}
-            >
-              {row.original.current_setting || "-"}
-            </div>
+              value={row.original.current_setting || "-"}
+              readOnly
+            />
           );
         },
       },
@@ -382,17 +395,14 @@ const Controls = () => {
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingRowId === controlId ? (
-            <textarea
-              className="border rounded p-1 text-sm w-full min-h-[60px] resize-y"
-              {...register("review_comment")}
-            />
+            <Textarea {...register("review_comment")} />
           ) : (
-            <div
-              className="max-w-xs text-sm leading-snug line-clamp-3 overflow-y-auto max-h-20 pr-1"
+            <Textarea
+              className="border-none shadow-none"
               title={row.original.review_comment}
-            >
-              {row.original.review_comment || "-"}
-            </div>
+              value={row.original.review_comment || "-"}
+              readOnly
+            />
           );
         },
       },
