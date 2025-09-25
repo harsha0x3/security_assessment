@@ -7,7 +7,7 @@ import {
   loadAllApps,
 } from "../../applications/store/applicationSlice";
 import { selectAuth } from "../../auth/store/authSlice";
-import { AppsCombobox } from "@/features/applications/components/ui/applicationCombobox";
+import { AppsCombobox } from "@/features/applications/components/applicationCombobox";
 import { ChecklistCombobox } from "@/features/checklists/components/ChecklistCombobox";
 
 import {
@@ -41,6 +41,7 @@ import {
 } from "@/store/appSlices/filtersSlice";
 import { useChecklists } from "@/features/checklists/hooks/useChecklists";
 import { Button } from "@/components/ui/Button";
+import { Label } from "@/components/ui/label";
 
 const Checklists = () => {
   const { currentApp } = useApplications();
@@ -197,7 +198,6 @@ const Checklists = () => {
         <div className="relative gap-3 text-left flex">
           <Button
             variant={"outline"}
-            className="px-3 py-2 border rounded-md bg-white shadow-sm"
             onClick={() => setShowChecklistsFilter((prev) => !prev)}
           >
             Filters
@@ -205,7 +205,7 @@ const Checklists = () => {
           {showChecklistsFilters && (
             <div className="absolute mt-2 w-56 rounded-md shadow-lg bg-white border z-[9999]">
               <div className="p-2">
-                <label className="block text-sm font-medium">Sort By</label>
+                <Label className="block text-sm font-medium">Sort By</Label>
                 <select
                   value={cListSortBy}
                   onChange={(e) =>

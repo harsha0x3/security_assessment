@@ -26,6 +26,10 @@ from models.schemas.pre_assessment_schema import (
     DefaultQuestions,
 )
 from models.schemas.crud_schemas import UserOut
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 
 def generate_ticket_id(db: Session, model) -> str:
@@ -272,10 +276,11 @@ async def submit_answers(
             )
             admin = UserOut(
                 id="ad",
-                username="suman",
-                email="harshavardhancg@titan.co.in",
+                username="is_assessment_team",
+                email=os.getenv("RECIEVER_ADMIN", ""),
                 role="admin",
-                first_name="Suman",
+                first_name="IS Assessment",
+                last_name="Team",
             )
             await send_email(
                 subject="Assessment Submission recieved",

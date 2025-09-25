@@ -11,6 +11,7 @@ from models.core.controls import Control
 from models.schemas.crud_schemas import (
     UserOut,
     UserResponseCreate,
+    UserResponseCreateBulk,
     UserResponseOut,
     UserResponseUpdate,
 )
@@ -77,6 +78,33 @@ def add_user_response(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to add the response. {str(e)}",
+        )
+
+
+def save_bulk_responses(
+    payload: list[UserResponseCreateBulk],
+    checklist_id: str,
+    db: Session,
+    current_user: UserOut,
+):
+    try:
+        checklist = db.get(Checklist, checklist_id)
+        if not checklist:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Checklist doesn't esist for writing responses",
+            )
+        new_responses = [UserResponse(**res.model_dump()) for res in payload]
+        db.add_all(new_responses)
+        db.commit()
+        for r in new_responses:
+            db.refresh(r)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error in adding responses, {str(e)}",
         )
 
 

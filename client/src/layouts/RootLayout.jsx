@@ -32,7 +32,7 @@ const RootLayout = () => {
   return (
     <div className="h-screen overflow-hidden bg-background text-foreground">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-10 bg-background border-b border-border flex items-center px-4 z-50">
+      <header className="fixed top-0 left-0 right-0 h-[var(--header-height)] bg-transparent/75 backdrop-blur-sm border-b border-border flex items-center px-4 z-50">
         <Button
           variant="ghost"
           size="icon"
@@ -53,7 +53,7 @@ const RootLayout = () => {
       </header>
 
       {/* Main content area */}
-      <div className="flex h-full pt-10">
+      <div className="flex h-full pt-[var(--header-height)]">
         <AppSidebar
           isCollapsed={isSidebarCollapsed}
           onToggle={handleToggleSidebar}

@@ -13,7 +13,7 @@ export const applicationApiSlice = apiSlice.injectEndpoints({
         console.log("app api", payload);
         return { url: "/applications", method: "POST", body: payload };
       },
-      invalidatesTags: ["Apps"],
+      invalidatesTags: [{ type: "Apps", id: "LIST" }],
       onQueryStarted: async (args, { dispatch, queryFulfilled }) => {
         try {
           const result = await queryFulfilled;
@@ -34,7 +34,10 @@ export const applicationApiSlice = apiSlice.injectEndpoints({
           body: payload,
         };
       },
-      invalidatesTags: (result, error, appId) => [{ type: "Apps", id: appId }],
+      invalidatesTags: (result, error, { appId }) => [
+        { type: "Apps", id: appId },
+        { type: "Apps", id: "LIST" },
+      ],
       onQueryStarted: async (args, { dispatch, queryFulfilled }) => {
         try {
           const result = await queryFulfilled;
@@ -49,10 +52,10 @@ export const applicationApiSlice = apiSlice.injectEndpoints({
       query: ({
         sort_by,
         sort_order,
-        page,
-        page_size,
+        page = 1,
+        page_size = 10,
         search = "",
-        search_by,
+        search_by = "name",
       }) => {
         const params = new URLSearchParams({
           sort_order,
@@ -65,7 +68,16 @@ export const applicationApiSlice = apiSlice.injectEndpoints({
         console.log("PARAMS INAPPSLICE", params.toString());
         return `/applications/?${params.toString()}`;
       },
-      providesTags: ["Apps"],
+      providesTags: (result) =>
+        result
+          ? [
+              ...(result.apps || []).map((app) => ({
+                type: "Apps",
+                id: app.id,
+              })),
+              { type: "Apps", id: "LIST" },
+            ]
+          : [{ type: "Apps", id: "LIST" }],
       // onQueryStarted: async (args, { dispatch, queryFulfilled }) => {
       //   try {
       //     const result = await queryFulfilled;

@@ -159,6 +159,13 @@ class UserResponseCreate(BaseModel):
     evidence_path: str | None = None
 
 
+class UserResponseCreateBulk(BaseModel):
+    control_id: str
+    current_setting: str
+    review_comment: str
+    evidence_path: str | None = None
+
+
 class UserResponseUpdate(BaseModel):
     current_setting: str | None = None
     review_comment: str | None = None

@@ -4,19 +4,19 @@ import {
   useGetSectionsQuery,
   useGetSectionQuestionsQuery,
 } from "@/features/preAssessments/store/preAssessmentApiSlice";
-import { Button } from "../../../components/ui/button";
-import { Card, CardContent, CardHeader } from "../../../components/ui/Card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "../../../components/ui/accordion";
+} from "@/components/ui/accordion";
+import { toast } from "sonner";
 import { Combobox } from "../../../components/ui/ComboBox";
 import AssessmentDialogForm from "../components/AssessmentModal";
 import SectionDialogForm from "../components/SectionModal";
 import QuestionsDialogForm from "../components/QuestionModal";
-import { toast } from "react-toastify";
 import { BadgeQuestionMark } from "lucide-react";
 
 const PreAssessmentsDash = () => {
@@ -112,17 +112,29 @@ const PreAssessmentsDash = () => {
 
   const handleAssessmentCreateSuccess = () => {
     refetchAssessments();
-    toast.info({
-      title: "Success",
-      description: "Assessment created successfully!",
+    toast.success("Assessment created successfully!", {
+      style: {
+        "--normal-bg":
+          "color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))",
+        "--normal-text":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+        "--normal-border":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+      },
     });
   };
 
   const handleAssessmentEditSuccess = () => {
     refetchAssessments();
-    toast.info({
-      title: "Success",
-      description: "Assessment updated successfully!",
+    toast.success("Assessment updated successfully!", {
+      style: {
+        "--normal-bg":
+          "color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))",
+        "--normal-text":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+        "--normal-border":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+      },
     });
   };
 
@@ -149,34 +161,48 @@ const PreAssessmentsDash = () => {
         }
 
         refetchAssessments();
-        toast.info({
-          title: "Success",
-          description: "Assessment deleted successfully!",
+        toast.success("Assessment deleted successfully!", {
+          style: {
+            "--normal-bg":
+              "color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))",
+            "--normal-text":
+              "light-dark(var(--color-green-600), var(--color-green-400))",
+            "--normal-border":
+              "light-dark(var(--color-green-600), var(--color-green-400))",
+          },
         });
       } catch (error) {
         console.error("Error deleting assessment:", error);
-        toast.error({
-          title: "Error",
-          description: "Failed to delete assessment. Please try again.",
-          variant: "destructive",
-        });
+        toast.error("Failed to delete assessment. Please try again.", {});
       }
     }
   };
 
   const handleSectionCreateSuccess = () => {
     refetchSections();
-    toast.info({
-      title: "Success",
-      description: "Section created successfully!",
+    toast.success("Section created successfully!", {
+      style: {
+        "--normal-bg":
+          "color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))",
+        "--normal-text":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+        "--normal-border":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+      },
     });
   };
 
   const handleSectionEditSuccess = () => {
     refetchSections();
-    toast.info({
-      title: "Success",
-      description: "Section updated successfully!",
+    toast.success("Section updated successfully!", {
+      style: {
+        "--normal-bg":
+          "color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))",
+        "--normal-text":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+        "--normal-border":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+      },
     });
   };
 
@@ -197,28 +223,36 @@ const PreAssessmentsDash = () => {
         }
       } catch (error) {
         console.error("Error deleting section:", error);
-        toast.error({
-          title: "Error",
-          description: "Failed to delete section. Please try again.",
-          variant: "destructive",
-        });
+        toast.error("Failed to delete section. Please try again.", {});
       }
     }
   };
 
   const handleQCreateSuccess = () => {
     refetchQs();
-    toast.info({
-      title: "Success",
-      description: "Questions created successfully!",
+    toast.success("Questions created successfully!", {
+      style: {
+        "--normal-bg":
+          "color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))",
+        "--normal-text":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+        "--normal-border":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+      },
     });
   };
 
   const handleQEditSuccess = () => {
     refetchQs();
-    toast.info({
-      title: "Success",
-      description: "Question updated successfully!",
+    toast.success("Question updated successfully!", {
+      style: {
+        "--normal-bg":
+          "color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))",
+        "--normal-text":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+        "--normal-border":
+          "light-dark(var(--color-green-600), var(--color-green-400))",
+      },
     });
   };
 
@@ -235,11 +269,7 @@ const PreAssessmentsDash = () => {
         // If we're deleting the currently selected assessment, reset selection
       } catch (error) {
         console.error("Error deleting section:", error);
-        toast.error({
-          title: "Error",
-          description: "Failed to delete section. Please try again.",
-          variant: "destructive",
-        });
+        toast.error("Failed to delete section. Please try again.", {});
       }
     }
   };

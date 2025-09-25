@@ -21,6 +21,7 @@ from controllers.user_responses_controller import (
     save_uploaded_file,
     update_user_response,
     add_responses_from_csv,
+    save_bulk_responses,
 )
 from db.connection import get_db_conn
 from models.schemas.crud_schemas import (
@@ -28,6 +29,7 @@ from models.schemas.crud_schemas import (
     UserResponseCreate,
     UserResponseOut,
     UserResponseUpdate,
+    UserResponseCreateBulk,
 )
 from models.core.user_responses import UserResponse
 from services.auth.deps import get_current_user
@@ -53,6 +55,10 @@ async def create_user_response(
     return add_user_response(
         payload=payload, control_id=control_id, db=db, current_user=current_user
     )
+
+
+# @router.patch("/checklist/{checklist_id}/responses")
+# async def save_bulk_res(payload:Annotated[list[UserResponseCreateBulk],]):
 
 
 @router.patch("/responses/{response_id}")

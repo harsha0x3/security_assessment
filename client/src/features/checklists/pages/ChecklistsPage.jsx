@@ -3,7 +3,7 @@ import Checklists from "../components/Checklists";
 
 const ChecklistsPage = () => {
   return (
-    <div>
+    <div className="flex flex-col gap-1">
       <Checklists />
       <Outlet />
       {/* This is where nested routes will render */}

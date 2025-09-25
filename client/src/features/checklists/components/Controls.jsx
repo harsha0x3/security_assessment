@@ -29,7 +29,6 @@ import {
   Settings,
   Shredder,
   Upload,
-  CheckSquare,
   Info,
   ImportIcon,
   Ellipsis,
@@ -37,9 +36,15 @@ import {
   Columns3Icon,
   RefreshCcwIcon,
   SearchIcon,
+  FileSpreadsheetIcon,
+  DownloadIcon,
+  UploadIcon,
+  XIcon,
+  AlertTriangle,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Tooltip } from "react-tooltip";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import Modal from "../../../components/ui/Modal";
 import ImportControls from "./ImportControls";
 import UploadControls from "./UploadControls";
@@ -73,9 +78,13 @@ import {
 } from "@/components/ui/table";
 
 import { useControlsNResponses } from "@/features/checklists/hooks/useControlsNResponses";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 const Controls = () => {
   const isProd = import.meta.env.VITE_PROD_ENV === "true";
+  const [editAll, setEditAll] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const apiBaseUrl = isProd
     ? "http://10.160.14.76:8060"
@@ -112,13 +121,70 @@ const Controls = () => {
   const currentChecklist = useSelector(selectCurrentChecklist);
 
   // react-hook-form for editing responses
-  const { register, handleSubmit, reset } = useForm({
+  const {
+    control,
+    register: registerRes,
+    handleSubmit,
+    reset: resetRes,
+    watch,
+  } = useForm({
     defaultValues: {
-      current_setting: "",
-      review_comment: "",
-      evidence_path: "",
+      responses:
+        allControls?.list_controls?.map((c) => ({
+          control_id: c.control_id,
+          current_setting: c.current_setting || "",
+          review_comment: c.review_comment || "",
+          evidence_file: null,
+          remove_evidence: false,
+          response_id: c.response_id ?? null,
+        })) || [],
     },
   });
+
+  const { fields } = useFieldArray({
+    control,
+    name: "responses",
+  });
+  const onSubmitAll = async (data) => {
+    setSaving(true);
+    try {
+      toast.promise(
+        (async () => {
+          console.log("DATA>RESPONSES", data);
+          for (const r of data.responses) {
+            console.log(":::::SOMETHING r IN DATA", r);
+            const form = new FormData();
+            form.append("current_setting", r.current_setting);
+            form.append("review_comment", r.review_comment);
+            if (r.evidence_file?.[0])
+              form.append("evidence_file", r.evidence_file[0]);
+            if (r.remove_evidence) form.append("remove_evidence", "true");
+
+            await saveResponse({
+              controlId: r.control_id,
+              payload: form,
+              responseId: r.response_id,
+            }).unwrap();
+          }
+
+          setEditAll(false);
+          resetRes(data);
+          return "All responses saved";
+        })(),
+        {
+          loading: "Saving responses...",
+          success: "Responses saved successfully!",
+          error: "Failed to save responses",
+        }
+      );
+    } catch (err) {
+      toast.error("Failed to save responses", {
+        description: JSON.stringify(err),
+      });
+      console.error("Failed to save responses:", err);
+    }
+    setSaving(false);
+  };
 
   // react-hook-form for editing controls
   const {
@@ -151,7 +217,7 @@ const Controls = () => {
   // Edit existing response
   const handleEdit = (controlId, rowData) => {
     setEditingRowId(controlId);
-    reset({
+    resetRes({
       current_setting: rowData.current_setting || "",
       review_comment: rowData.review_comment || "",
       evidence_path: rowData.evidence_path || "",
@@ -171,7 +237,7 @@ const Controls = () => {
 
   const handleCancel = () => {
     setEditingRowId(null);
-    reset();
+    resetRes();
   };
 
   const handleCancelEditControl = () => {
@@ -230,7 +296,7 @@ const Controls = () => {
     try {
       await saveResponse({ controlId, payload: form, responseId }).unwrap();
       setEditingRowId(null);
-      reset();
+      resetRes();
     } catch (err) {
       console.error("Failed to save response:", err);
     }
@@ -357,7 +423,7 @@ const Controls = () => {
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingRowId === controlId ? (
-            <Textarea className="" {...register("description")} />
+            <Textarea className="" {...registerAdd("description")} />
           ) : (
             <Textarea
               className="border-none shadow-none"
@@ -375,8 +441,12 @@ const Controls = () => {
         maxSize: 600,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
-          return editingRowId === controlId ? (
-            <Textarea className="" {...register("current_setting")} />
+          const idx = row.index;
+          return editAll ? (
+            <Textarea
+              className=""
+              {...registerRes(`responses.${idx}.current_setting`)}
+            />
           ) : (
             <Textarea
               className="border-none shadow-none"
@@ -394,8 +464,9 @@ const Controls = () => {
         maxSize: 600,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
-          return editingRowId === controlId ? (
-            <Textarea {...register("review_comment")} />
+          const idx = row.index;
+          return editAll ? (
+            <Textarea {...registerRes(`responses.${idx}.review_comment`)} />
           ) : (
             <Textarea
               className="border-none shadow-none"
@@ -414,8 +485,9 @@ const Controls = () => {
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           const evidencePath = row.original.evidence_path;
+          const idx = row.index;
 
-          if (editingRowId === controlId) {
+          if (editAll) {
             return (
               <>
                 <div className="flex felx-col gap-2">
@@ -433,11 +505,11 @@ const Controls = () => {
                         className="text-red-600 text-xs underline flex"
                         disabled={!evidencePath}
                         onClick={() => {
-                          reset((prev) => ({
-                            ...prev,
-                            evidence_file: null,
-                            remove_evidence: true,
-                          }));
+                          resetRes((prev) => {
+                            const newRes = [...prev];
+                            newRes[idx].evidence_file = null;
+                            newRes[idx].remove_evidence = true;
+                          });
                         }}
                       >
                         <span>Remove</span>
@@ -451,7 +523,7 @@ const Controls = () => {
                 <input
                   type="file"
                   className="border rounded px-2 py-1 text-sm w-full"
-                  {...register("evidence_file")}
+                  {...registerRes(`responses.${idx}.evidence_file`)}
                 />
               </>
             );
@@ -596,7 +668,7 @@ const Controls = () => {
               <Tooltip
                 id={`info-tooltip-${controlId}`}
                 place="top"
-                className="max-w-xs whitespace-pre-wrap text-xs bg-gray-800 text-white p-2 rounded-md shadow"
+                className="max-w-xs whitespace-pre-wrap text-xs p-2 rounded-md shadow"
                 content={tooltipContent}
               />
             </div>
@@ -604,7 +676,7 @@ const Controls = () => {
         },
       },
     ],
-    [editingRowId, editingControlId, user.role]
+    [editingRowId, editingControlId, user.role, editAll]
   );
 
   const handleSortingChange = (newSorting) => {
@@ -636,6 +708,21 @@ const Controls = () => {
       updateSearchParams({ controlsSortBy, controlsSortOrder });
     }
   }, [sorting]);
+
+  useEffect(() => {
+    if (allControls?.list_controls?.length) {
+      resetRes({
+        responses: allControls.list_controls.map((c) => ({
+          control_id: c.control_id,
+          current_setting: c.current_setting || "",
+          review_comment: c.review_comment || "",
+          evidence_file: null,
+          remove_evidence: false,
+          response_id: c.response_id || null,
+        })),
+      });
+    }
+  }, [allControls, resetRes]);
 
   const table = useReactTable({
     data: allControls?.list_controls || [],
@@ -673,13 +760,12 @@ const Controls = () => {
                 {adding ? (
                   <form
                     onSubmit={handleAddSubmit(onSubmitAddControl)}
-                    className="bg-gray-50 p-4 rounded-lg space-y-4"
+                    className="bg-[var(--card)] p-4 rounded-lg space-y-4"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <input
+                      <Input
                         type="text"
                         placeholder="Control Area"
-                        className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         {...registerAdd("control_area", { required: true })}
                       />
                       <select
@@ -693,63 +779,59 @@ const Controls = () => {
                         <option value="Critical">Critical</option>
                       </select>
                       <div className="md:col-span-1">
-                        <textarea
+                        <Textarea
                           placeholder="Control Text"
-                          className="border rounded px-3 py-2 text-sm w-full h-20 resize-y focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           {...registerAdd("control_text", { required: true })}
                         />
                       </div>
                       <div className="md:col-span-1">
-                        <textarea
+                        <Textarea
                           placeholder="Description"
-                          className="border rounded px-3 py-2 text-sm focus:ring-2 w-full focus:ring-blue-500 focus:border-transparent"
                           {...registerAdd("description", { required: true })}
                         />
                       </div>
                     </div>
                     <div className="flex justify-center gap-3">
-                      <button
-                        type="submit"
-                        className="px-6 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-                      >
+                      <Button type="submit" variant="primary">
                         Save Control
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
                         onClick={() => {
                           setAdding(false);
                           resetAdd();
                         }}
-                        className="px-6 py-2 text-sm rounded-lg bg-gray-300 text-gray-700 hover:bg-gray-400 transition-colors"
+                        variant="destructive"
                       >
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </form>
                 ) : (
                   <div>
                     <div className="flex gap-3 items-center justify-center">
-                      <button
+                      <Button
                         onClick={() => setAdding(true)}
-                        className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                        className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg"
                       >
                         <Plus className="w-5 h-5" /> Add First Control
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => {
                           setShowImportModal(true);
                           console.log(showImportModal);
                         }}
-                        className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                        className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg"
                       >
                         <ImportIcon className="w-5 h-5" /> Import Controls
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => setShowUploadModal(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+                        variant="secondary"
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg"
                       >
                         <Upload className="w-5 h-5" /> Upload Controls
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -787,107 +869,170 @@ const Controls = () => {
     );
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="w-full">
       {/* Header - Fixed */}
-      {currentChecklist && (
-        <div className="flex-shrink-0 flex items-center justify-between pb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-900">
-            Controls for Checklist - {currentChecklist.checklistType}
-          </h3>
-          <div className="text-sm text-gray-500">
-            {allControls?.list_controls?.length} control
-            {allControls?.list_controls?.length !== 1 ? "s" : ""}
-          </div>
-          {checklistId && (
-            <div className="flex">
-              <Button onClick={handleExport}>Export Checklist CSV</Button>
-              <Button
-                onClick={() => {
-                  console.log("BOOL", showImportResponsesModal);
-                  setShowImportResponsesModal(true);
-                }}
-              >
-                Import Responses
-              </Button>
+      <div className="flex justify-between gap-2 pb-4 max-sm:flex-col sm:items-center">
+        <div className="flex items-center space-x-2">
+          {currentChecklist && (
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-[var(--foreground)">
+                Controls for Checklist - {currentChecklist.checklistType}
+              </h3>
+              <div className="text-sm text-[var(--muted-foreground)]">
+                {allControls?.list_controls?.length} control
+                {allControls?.list_controls?.length !== 1 ? "s" : ""}
+              </div>
             </div>
           )}
         </div>
-      )}
+        <div className="flex items-center space-x-2">
+          <div>
+            {editAll ? (
+              <div className="flex items-center">
+                <span className="px-5 flex gap-2">
+                  <AlertTriangle /> <span>You are editing all responses</span>
+                </span>
+                <Button onClick={handleSubmit(onSubmitAll)} disabled={saving}>
+                  {saving ? "Saving..." : "Save All"}
+                </Button>
+              </div>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">Export</Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExport}>
+                    <FileSpreadsheetIcon className="mr-2 h-4 w-4" />
+                    Download as csv
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setShowImportResponsesModal(true)}
+                  >
+                    <UploadIcon className="mr-2 h-4 w-4" />
+                    Upload Responses
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+
+          {/* Just drop the absolute/relative wrappers */}
+          <div className="relative inline-grid h-7 w-14 grid-cols-[1fr_1fr] items-center text-sm font-medium">
+            <Switch
+              checked={editAll}
+              onCheckedChange={setEditAll}
+              className="peer absolute inset-0 h-[inherit] w-[inherit]
+               data-[state=checked]:bg-input/50 data-[state=unchecked]:bg-input/50
+               [&_span]:!bg-background
+               [&_span]:size-6.5 [&_span]:transition-transform
+               [&_span]:duration-300 [&_span]:ease-[cubic-bezier(0.16,1,0.3,1)]
+               [&_span]:data-[state=checked]:translate-x-7
+               [&_span]:data-[state=checked]:rtl:-translate-x-7"
+              aria-label="Toggle edit all"
+            />
+
+            <span className="pointer-events-none flex items-center justify-center">
+              <XIcon className="size-4 peer-data-[state=checked]:text-muted-foreground/70" />
+            </span>
+            <span className="pointer-events-none flex items-center justify-center">
+              <Edit3 className="size-4 peer-data-[state=unchecked]:text-muted-foreground/70" />
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Controls Table - Scrollable */}
-      <div className="flex-[0.5] overflow-auto border rounded-lg shadow bg-white">
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-50 sticky top-0 z-10">
+      <div
+        className={`flex-[0.5] overflow-auto border rounded-lg shadow bg-[var(--card)] text-[var(--card-foreground)] ${
+          editAll ? "ring-green-500 border-green-500" : ""
+        }`}
+      >
+        {/* <div className="flex justify-between items-center mb-4">
+          <Button
+            onClick={() => {
+              setEditAll(!editAll);
+              console.log("DATA IN USE FORM", registerRes);
+            }}
+          >
+            {editAll ? "Cancel Edit All" : "Edit All Responses"}
+          </Button>
+          {editAll && (
+            <Button onClick={handleSubmit(onSubmitAll)} disabled={saving}>
+              {saving ? "Saving..." : "Save All"}
+            </Button>
+          )}
+        </div> */}
+        <Table
+          className={`table-fixed ${
+            editAll ? "ring-green-500 border-amber-500" : ""
+          }`}
+          style={{
+            width: table.getCenterTotalSize(),
+          }}
+        >
+          <TableHeader className="">
             {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id}>
+              <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
-                  <th
+                  <TableHead
                     key={header.id}
-                    className="relative text-left px-1 py-3 border-b font-medium text-sm text-gray-700"
-                    style={{
-                      width: header.getSize(),
-                      minWidth: header.column.columnDef.minSize,
-                      maxWidth: header.column.columnDef.maxSize,
+                    className="group/head relative h-10 select-none last:[&>.cursor-col-resize]:opacity-0"
+                    {...{
+                      colSpan: header.colSpan,
+                      style: {
+                        width: header.getSize(),
+                      },
                     }}
                   >
-                    <div className="flex items-center justify-between">
-                      {/* <div
-                        className={`flex items-center gap-2 ${
-                          header.column.getCanSort()
-                            ? "cursor-pointer select-none"
-                            : ""
-                        }`}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
                           header.column.columnDef.header,
                           header.getContext()
                         )}
-                        {header.column.getCanSort() && (
-                          <span className="text-xs">
-                            {{
-                              asc: "↑",
-                              desc: "↓",
-                            }[header.column.getIsSorted()] ?? "↕️"}
-                          </span>
-                        )}
-                      </div> */}
+                    {header.column.getCanResize() && (
+                      <div
+                        {...{
+                          onDoubleClick: () => header.column.resetSize(),
+                          onMouseDown: header.getResizeHandler(),
+                          onTouchStart: header.getResizeHandler(),
+                          className:
+                            "group-last/head:hidden absolute top-0 h-full w-4 cursor-col-resize user-select-none touch-none -right-2 z-10 flex justify-center before:absolute before:w-px before:inset-y-0 before:bg-border before:translate-x-px",
+                        }}
+                      />
+                    )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.original.control_id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
                       {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
+                        cell.column.columnDef.cell,
+                        cell.getContext()
                       )}
-
-                      {header.column.getCanResize() && (
-                        <div
-                          {...{
-                            onMouseDown: header.getResizeHandler(),
-                            onTouchStart: header.getResizeHandler(),
-                            className:
-                              "absolute right-0 top-0 h-full w-1 cursor-col-resize z-10",
-                          }}
-                        />
-                      )}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr
-                key={row.original.control_id}
-                className="border-b hover:bg-gray-50"
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="p-2 text-sm">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
       {/* Pagination */}
       <div className="flex justify-center mt-4">
@@ -1021,31 +1166,26 @@ const Controls = () => {
                     </div>
                   </div>
                   <div className="flex justify-end gap-3">
-                    <button
+                    <Button
                       type="button"
                       onClick={() => {
                         setAdding(false);
                         resetAdd();
                       }}
-                      className="px-4 py-2 text-sm rounded-lg bg-gray-300 text-gray-700 hover:bg-gray-400 transition-colors"
+                      variant="destructive"
                     >
                       Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-                    >
-                      Save Control
-                    </button>
+                    </Button>
+                    <Button type="submit">Save Control</Button>
                   </div>
                 </form>
               ) : (
-                <button
+                <Button
                   onClick={() => setAdding(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm"
                 >
                   <Plus className="w-5 h-5" /> Add Control
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -1058,8 +1198,9 @@ const Controls = () => {
             data-tooltip-content="Complete the checklist to submit"
             className="inline-block"
           >
-            <button
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            <Button
+              variant="secondary"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm disabled:cursor-not-allowed"
               disabled={
                 !(
                   allControls?.list_controls.length !== 0 &&
@@ -1078,13 +1219,12 @@ const Controls = () => {
               }}
             >
               Submit
-            </button>
+            </Button>
           </span>
           <Tooltip id="submit-tooltip" place="top" />
         </div>
         {showImportResponsesModal && (
           <div>
-            <h1 className="text-4xl">HELLO</h1>
             <ImportResponsesDialog
               checklistId={checklistId}
               open={showImportResponsesModal}

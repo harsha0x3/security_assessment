@@ -12,7 +12,16 @@ import {
 } from "../../../components/ui/Card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Mail, Lock, Loader } from "lucide-react";
+import { Mail, Lock, Loader } from "lucide-react";
+
+import { REGEXP_ONLY_DIGITS } from "input-otp";
+
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 
 import { selectAuth, setError } from "../store/authSlice";
 
@@ -46,18 +55,15 @@ const LoginForm = ({ onClose }) => {
     }
 
     const result = await login(formData);
+    console.log("FORM DATA", formData);
 
     if (result.success) {
       onClose?.();
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
-  };
-
   return (
-    <Card className="w-full max-w-md mx-auto p-6">
+    <Card className="w-full mx-auto p-3">
       {/* Header */}
       <CardHeader>
         <CardTitle className="text-center font-bold text-xl">
@@ -99,7 +105,7 @@ const LoginForm = ({ onClose }) => {
               <div className="flex relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-textMuted" />
                 <Input
-                  type={showPassword ? "text" : "password"}
+                  type="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
@@ -109,40 +115,44 @@ const LoginForm = ({ onClose }) => {
                 />
               </div>
             </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="mfa_code">MFA Code</Label>
+              <InputOTP
+                id="mfa_code"
+                maxLength={6}
+                pattern={REGEXP_ONLY_DIGITS}
+                value={formData.mfa_code}
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, mfa_code: val }))
+                }
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSeparator />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-text mb-2">
-              MFA Code
-            </label>
-            <input
-              type="text"
-              name="mfa_code"
-              value={formData.mfa_code}
-              onChange={handleChange}
-              placeholder="Enter MFA code (if enabled)"
-              className="w-full pl-10 pr-12 py-3 border text-black border-border rounded-xl focus:border-accent focus:ring-1 focus:ring-accent/50 transition-colors"
-            />
-          </div>
-          <div>
-            <button
-              type="button"
-              className="text-sm text-accent hover:text-accent/80 transition-colors"
+          <div className="flex justify-center pt-4">
+            <Button
+              type="submit"
+              size="lg"
+              className=""
+              disabled={
+                isLoading || !formData.email_or_username || !formData.password
+              }
+              icon={isLoading ? Loader : null}
+              loading={isLoading}
             >
-              Forgot password?
-            </button>
+              {isLoading ? "Signing In..." : "Sign In"}
+            </Button>
           </div>
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full"
-            disabled={
-              isLoading || !formData.email_or_username || !formData.password
-            }
-            icon={isLoading ? Loader : null}
-            loading={isLoading}
-          >
-            {isLoading ? "Signing In..." : "Sign In"}
-          </Button>
         </form>
       </CardContent>
 

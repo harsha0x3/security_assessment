@@ -100,6 +100,7 @@ const applicationSlice = createSlice({
       }
     },
     loadApps: (state, action) => {
+      console.log("INSIDE LOAD APPS");
       state.apps = [];
       const data = action.payload;
       state.totalCount = data.total_count;

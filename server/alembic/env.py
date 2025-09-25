@@ -27,6 +27,8 @@ from models.pre_assessment import (
     sections,
 )
 
+from models.drafts import pre_assess_drafts
+
 load_dotenv()
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

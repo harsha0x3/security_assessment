@@ -78,9 +78,12 @@ async def send_email(
             )
             if response.status_code == 202:
                 print({"success": True, "status_code": response.status_code})
+                print(response.__dict__)
                 return {"success": True, "status_code": response.status_code}
             else:
                 print({"success": False, "status_code": response.status_code})
+                print(response.__dict__)
+
                 return {"success": False, "status_code": response.status_code}
 
     except Exception as e:

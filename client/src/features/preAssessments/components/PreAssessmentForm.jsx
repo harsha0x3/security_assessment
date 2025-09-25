@@ -45,16 +45,70 @@ const PreAssessmentForm = ({
     formState: { errors },
   } = useForm({
     defaultValues: { responses },
+    shouldFocusError: true,
+    shouldUnregister: false,
   });
+  const [openSections, setOpenSections] = useState([]);
+  const [validationAttempt, setValidationAttempt] = useState(0);
+  useEffect(() => {
+    const erroredQuestionIds = Object.keys(errors.responses || {});
+    if (erroredQuestionIds.length === 0) return;
 
-  const [currentSection, setCurrentSection] = useState(null);
+    const erroredSection = questionnaire.find((qItem) =>
+      qItem.questions.some((q) => erroredQuestionIds.includes(q.id))
+    );
+
+    if (!erroredSection) return;
+
+    const sectionId = `${erroredSection.section.id}`;
+
+    setOpenSections((prev) =>
+      prev.includes(sectionId) ? prev : [...prev, sectionId]
+    );
+
+    // Scroll/focus the first errored input
+    const el = document.getElementById(erroredQuestionIds[0]);
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.focus();
+      }, 100);
+    }
+  }, [errors, questionnaire, validationAttempt]);
+
+  useEffect(() => {
+    console.log("ERROR SECTIONS", openSections);
+  }, [openSections]);
 
   useEffect(() => {
     if (assessment) {
       reset({ responses });
-      setCurrentSection(null);
     }
-  }, [assessment?.id, responses, reset]);
+  }, [assessment, responses, reset]);
+
+  useEffect(() => {
+    console.log("FULL ERRORS", errors);
+  }, [errors]);
+
+  const onFormSubmit = handleSubmit(
+    (data) => {
+      if (isReadOnly) return;
+      const formatted = Object.entries(data.responses || {}).map(
+        ([question_id, answer_text]) => ({
+          question_id,
+          answer_text,
+        })
+      );
+      onSubmit?.({
+        assessmentId: assessment?.id,
+        responses: formatted,
+      });
+    },
+    () => {
+      // On validation error callback
+      setValidationAttempt((prev) => prev + 1);
+    }
+  );
 
   return (
     <div className="flex justify-center min-h-screen w-full">
@@ -63,42 +117,33 @@ const PreAssessmentForm = ({
           <TooltipProvider>
             <form
               id="assessment_sub_form"
-              onSubmit={handleSubmit((data) => {
-                if (isReadOnly) return;
-                const formatted = Object.entries(data.responses || {}).map(
-                  ([question_id, answer_text]) => ({
-                    question_id,
-                    answer_text,
-                  })
-                );
-                onSubmit?.({
-                  assessmentId: assessment?.id,
-                  responses: formatted,
-                });
-              })}
+              onSubmit={onFormSubmit}
               className="flex flex-col h-full"
             >
               {questionnaire?.length > 0 ? (
-                <Accordion type="single" collapsible>
+                <Accordion
+                  type="multiple"
+                  collapsible
+                  forceMount
+                  value={openSections}
+                  onValueChange={setOpenSections}
+                >
                   {questionnaire.map((qItem, idx) => (
                     <AccordionItem
-                      value={`${assessment?.id}-${qItem?.section?.id}`}
-                      key={`${assessment?.id}-${qItem?.section.id}`}
+                      value={`${qItem?.section?.id}`}
+                      key={`${qItem?.section.id}`}
                       className={`${
                         idx % 2 === 0
                           ? "bg-card text-card-foreground"
                           : "bg-muted text-muted-foreground"
                       } rounded-md px-10`}
                     >
-                      <AccordionTrigger
-                        onClick={() => setCurrentSection(qItem?.section)}
-                      >
+                      <AccordionTrigger>
                         {qItem?.section.title}
                       </AccordionTrigger>
 
                       <AccordionContent className="flex flex-col gap-4 text-balance">
-                        {currentSection?.id === qItem?.section.id &&
-                        Array.isArray(qItem?.questions) ? (
+                        {Array.isArray(qItem?.questions) && (
                           <div className="flex-1 flex flex-col gap-1 overflow-y-auto max-h-1/2">
                             {qItem.questions.map((q, idx) => (
                               <Label
@@ -138,7 +183,7 @@ const PreAssessmentForm = ({
                               </Label>
                             ))}
                           </div>
-                        ) : null}
+                        )}
                       </AccordionContent>
                     </AccordionItem>
                   ))}

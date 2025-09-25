@@ -143,6 +143,7 @@ const Applications = () => {
 
   const handleSelect = (appId) => {
     setSelectedAppId(appId);
+    console.log("CURR APPID", appId);
     dispatch(setCurrentApplication({ appId }));
     setIsNewApp(false);
   };

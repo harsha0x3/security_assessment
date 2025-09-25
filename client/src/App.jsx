@@ -10,6 +10,7 @@ import { lazy, Suspense } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { ToastContainer } from "react-toastify";
+import { Toaster } from "sonner";
 // Import components
 import LoginPage from "./features/auth/pages/LoginPage";
 import RegisterPage from "./features/auth/pages/RegisterPage";
@@ -23,8 +24,7 @@ import ChecklistsPage from "./features/checklists/pages/ChecklistsPage";
 import AddUsers from "./features/userManagement/pages/AddUsers";
 import { setError, selectAuth } from "./features/auth/store/authSlice";
 import TrashPage from "./features/trash/pages/TrashPage";
-import UserDash from "./features/dashboard/pages/UserDash";
-import AdminDash from "./features/dashboard/pages/AdminDash";
+import ApplicationsPage from "./features/applications/pages/ApplicationsPage";
 
 function App() {
   const user = useSelector(selectAuth);
@@ -52,7 +52,8 @@ function App() {
   useEffect(() => {
     if (data && isSuccess) {
       dispatch(loadApps(data));
-      dispatch(setCurrentApplication({ appId: data[0]?.id }));
+      dispatch(setCurrentApplication({ appId: data?.apps[0]?.id }));
+      console.log("first", data?.apps[0]?.id);
     }
   }, [data, isSuccess, dispatch]);
 
@@ -82,6 +83,23 @@ function App() {
         }
         bodyClassName={() => "flex items-center"}
       />
+      <Toaster
+        position="bottom-right"
+        richColors
+        toastOptions={{
+          success: {
+            style: {
+              "--normal-bg":
+                "color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))",
+              "--normal-text":
+                "light-dark(var(--color-green-600), var(--color-green-400))",
+              "--normal-border":
+                "light-dark(var(--color-green-600), var(--color-green-400))",
+            },
+          },
+        }}
+      />
+
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
@@ -90,10 +108,8 @@ function App() {
         {/* Protected Routes */}
         <Route path="/" element={<ProtectedLayout />}>
           <Route path="/" element={<RootLayout />}>
-            <Route index element={<Navigate to={`user_dashboard`} replace />} />
-            <Route path="user_dashboard" element={<UserDash />} />
-            <Route path="admin_dashboard" element={<AdminDash />} />
-            <Route path="applications" element={<Applications />} />
+            <Route index element={<Navigate to={`applications`} replace />} />
+            <Route path="applications" element={<ApplicationsPage />} />
             <Route path=":appId/checklists" element={<ChecklistsPage />}>
               <Route path=":checklistId" element={<Controls />} />
             </Route>

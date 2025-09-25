@@ -14,13 +14,14 @@ export const useApplications = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const appPage = parseInt(searchParams.get("appPage") || "1", 10);
-  const appPageSize = parseInt(searchParams.get("appPagSize") || "10", 10);
+  const appPageSize = parseInt(searchParams.get("appPageSize") || "10", 10);
   const appSortBy = searchParams.get("appSortBy") || "created_at";
   const appSortOrder = searchParams.get("appSortOrder") || "desc";
   const appSearchBy = searchParams.get("appSearchBy") || "name";
 
   const appSearch = useSelector(selectAppSearchTerm);
   const currentApp = useSelector(selectCurrentApp);
+  const [debouncedSearch, setDebouncedSearch] = useState(appSearch);
 
   const [lastAppPage, setLastAppPage] = useState(appPage);
 
@@ -31,10 +32,10 @@ export const useApplications = () => {
       page_size: appPageSize,
       sort_by: appSortBy,
       sort_order: appSortOrder,
-      search: appSearch || "",
+      search: debouncedSearch || "",
       search_by: appSearchBy,
     },
-    { skip: !appSortBy || !appSortOrder }
+    { skip: !appSortBy || !appSortOrder, refetchOnMountOrArgChange: true }
   );
 
   // Load apps into Redux when fetched
@@ -54,13 +55,15 @@ export const useApplications = () => {
         if (appPage >= 1) setLastAppPage(appPage);
         updateSearchParams({
           appSearch: appSearch,
-          appSearchBy: "name",
+          appSearchBy: appSearchBy,
           appPage: -1,
         });
+        setDebouncedSearch(appSearch);
       } else {
         updateSearchParams({ appSearch: null, appPage: lastAppPage });
+        setDebouncedSearch("");
       }
-    }, 600);
+    }, 400);
 
     return () => clearTimeout(handler);
   }, [appSearch]);

@@ -10,3 +10,5 @@ from .pre_assessment.answers import Answer
 from .pre_assessment.pre_assemments import PreAssessment
 from .pre_assessment.questions import Question
 from .pre_assessment.submissions import Submission
+
+from .drafts.pre_assess_drafts import PreAssessmentResDraft

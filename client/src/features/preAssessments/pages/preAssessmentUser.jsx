@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader } from "../../../components/ui/Card";
 import { Combobox } from "../../../components/ui/ComboBox";
 import { useSearchParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
-import { toast } from "react-toastify";
 import PreAssessmentForm from "../components/PreAssessmentForm";
+import { toast } from "sonner";
 
 const PreAssessmentUser = () => {
   const { data: allAssessments = [], isSuccess: assessmentsFetched } =
@@ -47,12 +47,20 @@ const PreAssessmentUser = () => {
 
   const handleSubmit = async ({ assessmentId, responses }) => {
     try {
-      const out = await submitResponses({
-        assessmentId,
-        payload: responses,
-      }).unwrap();
-      toast.success("Responses submitted successfully!");
-      console.log("SUBMIT SUCCESS", out);
+      toast.promise(
+        (async () => {
+          const out = await submitResponses({
+            assessmentId,
+            payload: responses,
+          }).unwrap();
+          console.log("SUBMIT SUCCESS", out);
+        })(),
+        {
+          loading: "Submitting Responses..",
+          success: "Responses saved successfully!",
+          error: "Failed to save responses",
+        }
+      );
     } catch (err) {
       console.error("Submit error", err);
       toast.error("Error submitting responses");

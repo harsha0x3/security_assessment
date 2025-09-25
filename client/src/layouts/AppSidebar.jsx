@@ -76,18 +76,25 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
       <div
         className={`transition-all duration-300 z-40
           ${isCollapsed ? "w-16" : "w-56"}
-          fixed left-0 top-10 h-[calc(100vh-4rem)] bg-sidebar border-r border-sidebar-border
+          fixed left-0 h-[calc(100vh-var(--header-height))] bg-sidebar border-r border-sidebar-border
         `}
       >
         {/* Navigation Items */}
         <nav className="p-2 space-y-1">
           {/* Dashboard Collapsible */}
           {/* Dashboard Collapsible */}
-          <Collapsible defaultOpen className="group/collapsible">
+          {/* <Collapsible
+            defaultOpen
+            open={!isCollapsed}
+            className="group/collapsible"
+          >
             <CollapsibleTrigger
               className={`flex items-center px-3 py-2 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
                 !isCollapsed ? "justify-between" : "justify-center"
               }`}
+              onClick={() => {
+                if (isCollapsed) onToggle(); // open sidebar if collapsed
+              }}
             >
               <LayoutDashboard className="w-5 h-5 shrink-0" />
               {!isCollapsed && (
@@ -100,7 +107,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
 
             <CollapsibleContent className="space-y-1">
               {/* User Dashboard */}
-              <TooltipProvider>
+          {/* <TooltipProvider>
                 <Tooltip delayDuration={200}>
                   <TooltipTrigger asChild>
                     <Link
@@ -123,10 +130,10 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
                     <TooltipContent side="right">User Dashboard</TooltipContent>
                   )}
                 </Tooltip>
-              </TooltipProvider>
+              </TooltipProvider> */}
 
-              {/* Admin Dashboard (only for admins) */}
-              {userInfo?.role === "admin" && (
+          {/* Admin Dashboard (only for admins) */}
+          {/* {userInfo?.role === "admin" && (
                 <TooltipProvider>
                   <Tooltip delayDuration={200}>
                     <TooltipTrigger asChild>
@@ -155,7 +162,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
                 </TooltipProvider>
               )}
             </CollapsibleContent>
-          </Collapsible>
+          </Collapsible> */}
 
           {/* Other navigation items */}
           {navigationItems.map((item) => {
