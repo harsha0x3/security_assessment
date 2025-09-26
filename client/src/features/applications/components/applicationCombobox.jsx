@@ -46,7 +46,7 @@ export function AppsCombobox({
           <ChevronsUpDown className="opacity-50 shrink-0" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
+      <PopoverContent className="w-full p-2 min-w-sm" align="start">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search..."
@@ -56,7 +56,7 @@ export function AppsCombobox({
           />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
-            <CommandGroup>
+            <CommandGroup className="">
               {items.map((item) => (
                 <CommandItem
                   key={item.value}
@@ -66,6 +66,11 @@ export function AppsCombobox({
                     setValue(currentValue);
                     setOpen(false);
                   }}
+                  className={`border mb-1 p-3 last:mb-0 ${
+                    selectedValue === item.value
+                      ? "border-l-primary border-l-5"
+                      : ""
+                  }`}
                 >
                   {item.label}
                   <Check

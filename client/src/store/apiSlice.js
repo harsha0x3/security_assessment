@@ -54,6 +54,7 @@ export const apiSlice = createApi({
     "TrashedChecklists",
     "PreAssessment",
     "PreAssessmentResponses",
+    "drafts",
   ],
   // eslint-disable-next-line no-unused-vars
   endpoints: (builder) => ({}),

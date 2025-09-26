@@ -8,6 +8,7 @@ import {
   Users,
   Star,
   CheckCircle,
+  CheckCircle2Icon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -135,7 +136,7 @@ export function ChecklistCombobox({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
+        <PopoverContent className="w-full p-2 min-w-sm" align="start">
           <Command shouldFilter={false}>
             <CommandInput
               placeholder="Search checklists..."
@@ -157,12 +158,16 @@ export function ChecklistCombobox({
                             onSelect(checklist);
                             setOpen(false);
                           }}
-                          className="flex items-center justify-between pr-8"
+                          className={`flex items-center justify-between pr-8 border mb-1 py-2 last:mb-0 ${
+                            selectedChecklistId === checklist.id
+                              ? "border-l-primary border-l-5"
+                              : ""
+                          }`}
                         >
                           <div className="flex items-center space-x-2 flex-1">
-                            <Check
-                              className={`mr-2 h-4 w-4 ${
-                                selectedChecklistId === checklist.id
+                            <CheckCircle2Icon
+                              className={`mr-2 h-4 w-4 text-green-500 ${
+                                checklist.is_completed
                                   ? "opacity-100"
                                   : "opacity-0"
                               }`}
@@ -179,11 +184,11 @@ export function ChecklistCombobox({
                                 checklist.priority
                               )} Priority`}
                             />
-                            {checklist.is_completed && (
+                            {/* {checklist.is_completed && (
                               <span className="text-xs bg-green-100 text-green-800 px-1 py-0.5 rounded">
                                 <CheckCircle />
                               </span>
-                            )}
+                            )} */}
                           </div>
                         </CommandItem>
                       </HoverCardTrigger>

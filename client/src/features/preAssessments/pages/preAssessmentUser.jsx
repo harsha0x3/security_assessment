@@ -9,6 +9,7 @@ import { useSearchParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import PreAssessmentForm from "../components/PreAssessmentForm";
 import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const PreAssessmentUser = () => {
   const { data: allAssessments = [], isSuccess: assessmentsFetched } =
@@ -68,8 +69,8 @@ const PreAssessmentUser = () => {
   };
 
   return (
-    <Card className="flex flex-col h-full border-none shadow-none">
-      <CardHeader className="flex w-full py-0">
+    <Card className="flex flex-col h-screen border-none shadow-none">
+      <CardHeader className="py-0">
         <div className="w-80 min-w-0">
           {assessmentsFetched && assessmentItems.length > 0 && (
             <Combobox
@@ -88,13 +89,15 @@ const PreAssessmentUser = () => {
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-2">
-        <PreAssessmentForm
-          assessment={currentAssessment}
-          questionnaire={questionnaireFetched ? questionnaire : []}
-          subResponses={[]} // empty array means no previous answers
-          onSubmit={handleSubmit}
-        />
+      <CardContent className="flex-1 overflow-auto flex justify-center">
+        <ScrollArea className="w-full max-w-4xl">
+          <PreAssessmentForm
+            assessment={currentAssessment}
+            questionnaire={questionnaireFetched ? questionnaire : []}
+            subResponses={[]} // empty array means no previous answers
+            onSubmit={handleSubmit}
+          />
+        </ScrollArea>
       </CardContent>
     </Card>
   );
