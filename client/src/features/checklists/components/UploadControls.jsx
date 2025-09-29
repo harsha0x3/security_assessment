@@ -1,15 +1,30 @@
 import { useState } from "react";
 import { useUploadControlsMutation } from "../store/controlsApiSlice";
 import { toast } from "react-toastify";
-import { Upload, Download, FileText, AlertCircle } from "lucide-react";
+import {
+  Upload,
+  Download,
+  FileText,
+  AlertCircle,
+  ImportIcon,
+} from "lucide-react";
 
-const UploadControls = ({ checklistId, onClose }) => {
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+const UploadControls = ({ checklistId }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploadControls, { isLoading }] = useUploadControlsMutation();
 
   const handleFileSelect = (file) => {
-    // Validate file type
     const allowedTypes = [
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
       "application/vnd.ms-excel", // .xls
@@ -68,9 +83,7 @@ const UploadControls = ({ checklistId, onClose }) => {
       if (result.success) {
         toast.success(result.message);
         setSelectedFile(null);
-        onClose && onClose();
       } else {
-        // Show validation errors
         toast.error(result.message);
         if (result.errors && result.errors.length > 0) {
           result.errors.forEach((error) => {
@@ -87,7 +100,6 @@ const UploadControls = ({ checklistId, onClose }) => {
   };
 
   const downloadTemplate = () => {
-    // Create a sample CSV template
     const csvContent = `control_area,severity,control_text,description
 IAM,High,"Ensure that multi-factor authentication is enabled for all non-service accounts","Setup multi-factor authentication for Google Cloud Platform accounts."`;
 
@@ -104,136 +116,134 @@ IAM,High,"Ensure that multi-factor authentication is enabled for all non-service
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Upload Controls from File
-        </h3>
-        <p className="text-sm text-gray-600">
-          Upload Excel (.xlsx, .xls) or CSV files containing control data
-        </p>
-      </div>
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <ImportIcon className="w-5 h-5" /> Upload Controls
+        </Button>
+      </DialogTrigger>
 
-      {/* Template Download */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <FileText className="w-5 h-5 text-blue-600" />
-            <span className="text-sm font-medium text-blue-900">
-              Download Template
-            </span>
+      <DialogContent className="w-[min(900px,95vw)] max-h-[85vh] overflow-hidden flex flex-col gap-6 p-6">
+        <DialogHeader className="text-left">
+          <DialogTitle>Upload Controls from File</DialogTitle>
+          <DialogDescription>
+            Upload Excel (.xlsx, .xls) or CSV files containing control data
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Template Download */}
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <FileText className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium">Download Template</span>
+            </div>
+            <Button
+              onClick={downloadTemplate}
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download CSV Template</span>
+            </Button>
           </div>
-          <button
-            onClick={downloadTemplate}
-            className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+          <p className="text-xs text-muted-foreground mt-2">
+            Required columns: control_area, severity, control_text. Optional:
+            description
+          </p>
+        </div>
+
+        {/* File Upload Area */}
+        <div
+          className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+            dragActive ? "border-primary bg-primary/5" : "border-muted"
+          }`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            onChange={handleFileChange}
+            accept=".xlsx,.xls,.csv"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+
+          <div className="space-y-4">
+            <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
+
+            {selectedFile ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">{selectedFile.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  Size: {(selectedFile.size / 1024).toFixed(2)} KB
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedFile(null)}
+                >
+                  Remove file
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Drag and drop your file here, or{" "}
+                  <span className="text-primary font-medium">browse</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Supports Excel (.xlsx, .xls) and CSV files up to 10MB
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Required Format Info */}
+        <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <div className="flex items-start space-x-2">
+            <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium mb-2">File Format Requirements:</p>
+              <ul className="space-y-1 text-xs text-muted-foreground">
+                <li>
+                  • <strong>control_area:</strong> Area/category of the control
+                  (required)
+                </li>
+                <li>
+                  • <strong>severity:</strong> Must be one of: Low, Medium,
+                  High, Critical (required)
+                </li>
+                <li>
+                  • <strong>control_text:</strong> Description of the control
+                  (required)
+                </li>
+                <li>
+                  • <strong>description:</strong> Additional details (optional)
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end space-x-3">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setSelectedFile(null)}
           >
-            <Download className="w-4 h-4" />
-            <span>Download CSV Template</span>
-          </button>
+            Cancel
+          </Button>
+          <Button onClick={handleUpload} disabled={!selectedFile || isLoading}>
+            {isLoading ? "Uploading..." : "Upload Controls"}
+          </Button>
         </div>
-        <p className="text-xs text-blue-700 mt-2">
-          Required columns: control_area, severity, control_text. Optional:
-          description
-        </p>
-      </div>
-
-      {/* File Upload Area */}
-      <div
-        className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-          dragActive
-            ? "border-blue-400 bg-blue-50"
-            : "border-gray-300 hover:border-gray-400"
-        }`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input
-          type="file"
-          onChange={handleFileChange}
-          accept=".xlsx,.xls,.csv"
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        />
-
-        <div className="space-y-4">
-          <Upload className="w-12 h-12 text-gray-400 mx-auto" />
-
-          {selectedFile ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-900">
-                Selected File: {selectedFile.name}
-              </p>
-              <p className="text-xs text-gray-500">
-                Size: {(selectedFile.size / 1024).toFixed(2)} KB
-              </p>
-              <button
-                onClick={() => setSelectedFile(null)}
-                className="text-sm text-red-600 hover:text-red-800"
-              >
-                Remove file
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600">
-                Drag and drop your file here, or{" "}
-                <span className="text-blue-600 font-medium">browse</span>
-              </p>
-              <p className="text-xs text-gray-400">
-                Supports Excel (.xlsx, .xls) and CSV files up to 10MB
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Required Format Info */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div className="flex items-start space-x-2">
-          <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
-          <div className="text-sm text-yellow-800">
-            <p className="font-medium mb-2">File Format Requirements:</p>
-            <ul className="space-y-1 text-xs">
-              <li>
-                • <strong>control_area:</strong> Area/category of the control
-                (required)
-              </li>
-              <li>
-                • <strong>severity:</strong> Must be one of: Low, Medium, High,
-                Critical (required)
-              </li>
-              <li>
-                • <strong>control_text:</strong> Description of the control
-                (required)
-              </li>
-              <li>
-                • <strong>description:</strong> Additional details (optional)
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex justify-end space-x-3">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleUpload}
-          disabled={!selectedFile || isLoading}
-          className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {isLoading ? "Uploading..." : "Upload Controls"}
-        </button>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -12,6 +12,17 @@ import { toast } from "react-toastify";
 import { Card } from "../../../components/ui/Card";
 import { Button } from "@/components/ui/button";
 import { useImportControlsMutation } from "../store/controlsApiSlice";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ImportIcon } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import AppPagination from "@/features/applications/components/AppPagination";
 
 const ImportControls = ({ targetChecklistId }) => {
   const dispatch = useDispatch();
@@ -31,6 +42,7 @@ const ImportControls = ({ targetChecklistId }) => {
     isError: isChecklistFetchError,
     error: checklistFetchError,
   } = useGetAllChecklistsQuery({ appId: selectedAppId });
+  console.log("APP CHECK", appChecklists);
 
   const currentChecklist = useSelector(selectCurrentChecklist);
 
@@ -64,59 +76,66 @@ const ImportControls = ({ targetChecklistId }) => {
   console.log(appChecklists);
 
   return (
-    <div className="p-6">
-      <Card className="p-6 space-y-6 shadow-2xl rounded-2xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-6 border border-gray-300 rounded-xl shadow-sm bg-gray-50 w-full">
-            <h2 className="text-lg font-semibold mb-4">Applications</h2>
-            {allApps &&
-              allApps.map((app) => (
-                <div
-                  className={`${
-                    app.appId === selectedAppId
-                      ? "bg-blue-500 text-white ring-2 ring-blue-600"
-                      : "bg-white"
-                  } 
-               border rounded-lg px-4 py-2 mb-2 cursor-pointer hover:bg-blue-100 transition w-full`}
-                  onClick={() => {
-                    setSelectedAppId(app.appId);
-                  }}
-                  key={app.appId}
-                >
-                  {app.name}
+    <Dialog className="">
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <ImportIcon className="w-5 h-5" /> Import Controls
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="mb-8 flex h-4/5 min-w-3/5 flex-col justify-between gap-3 p-6">
+        <DialogHeader className="contents space-y-0 text-left p-0">
+          <DialogTitle>Import Controls from Another Checklist</DialogTitle>
+        </DialogHeader>
+        <DialogDescription asChild>
+          <div className="flex gap-6 h-full p-1 pb-3">
+            <div className="border rounded-lg flex-1 h-full flex flex-col items-center">
+              <h2 className="text-lg font-semibold p-2 bg-muted w-full rounded-t-lg">
+                Applications
+              </h2>
+              <ScrollArea className="flex-1 overflow-auto py-3">
+                <div className="flex flex-col gap-2">
+                  {allApps &&
+                    allApps.map((app) => (
+                      <Button
+                        key={app.appId}
+                        variant={`${
+                          app.appId === selectedAppId ? "default" : "outline"
+                        }`}
+                        onClick={() => setSelectedAppId(app.appId)}
+                      >
+                        {app.name}
+                      </Button>
+                    ))}
                 </div>
-              ))}
-          </div>
-          <div className="p-6 border border-gray-300 rounded-xl shadow-sm bg-gray-50 w-full">
-            <h2 className="text-lg font-semibold mb-4">Checklists</h2>
-            {appChecklists &&
-              appChecklists.map((chk) => (
-                <div
-                  className={`${
-                    chk.id === selectedChecklistId
-                      ? "bg-blue-500 text-white ring-2 ring-blue-600"
-                      : "bg-white"
-                  } 
-                border rounded-lg px-4 py-2 mb-2 cursor-pointer hover:bg-blue-100 transition w-full`}
-                  onClick={() => setSelectedchecklistId(chk.id)}
-                  key={chk.id}
-                >
-                  {chk.checklist_type}
+              </ScrollArea>
+              <AppPagination />
+            </div>
+
+            <div className="border rounded-lg flex-1 h-full flex flex-col items-center">
+              <h2 className="text-lg font-semibold p-2 bg-muted w-full rounded-t-lg">
+                Checklists
+              </h2>
+              <ScrollArea className="flex-1 overflow-auto">
+                <div className="flex flex-col">
+                  {appChecklists &&
+                    appChecklists.checklists.map((chk) => (
+                      <Button
+                        key={chk.id}
+                        variant={`${
+                          chk.id === selectedChecklistId ? "default" : "outline"
+                        }`}
+                        onClick={() => setSelectedchecklistId(chk.id)}
+                      >
+                        {chk.checklist_type}
+                      </Button>
+                    ))}
                 </div>
-              ))}
+              </ScrollArea>
+            </div>
           </div>
-        </div>
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            className="px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition"
-            onClick={handleImportSubmit}
-          >
-            Import
-          </Button>
-        </div>
-      </Card>
-    </div>
+        </DialogDescription>
+      </DialogContent>
+    </Dialog>
   );
 };
 

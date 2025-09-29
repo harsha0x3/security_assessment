@@ -1,5 +1,3 @@
-import React from "react";
-import { useApplications } from "../hooks/useApplications";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,22 +13,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SlidersHorizontalIcon } from "lucide-react";
+import { selectAuth } from "@/features/auth/store/authSlice";
+import { useSelector } from "react-redux";
 
-const AppFilters = () => {
-  const { updateSearchParams } = useApplications();
+import { useChecklists } from "../hooks/useChecklists";
+
+const ChecklistFilters = () => {
+  const { updateSearchParams } = useChecklists();
+  const userInfo = useSelector(selectAuth);
 
   const validSearchBys = [
-    { name: "Name" },
-    { platform: "Platform" },
-    { region: "Region" },
-    { owner_name: "Owner Name" },
-    { provider_name: "Provider Name" },
-    { department: "Department" },
+    { checklist_type: "Name" },
+    { priority: "priority" },
+    { is_completed: "Completed" },
+    // ...(userInfo && userInfo.role === "admin"
+    //   ? [{ assigned_users: "Assigned Users" }]
+    //   : []),
   ];
 
   const validSortBys = [
     { updated_at: "Updated Date" },
-    { name: "Name" },
+    { checklist_type: "Name" },
     { created_at: "Created Date" },
     // { priority: "Priority" },
   ];
@@ -43,7 +46,7 @@ const AppFilters = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>App Filters</DropdownMenuLabel>
+        <DropdownMenuLabel>Checklist Filters</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuSub>
@@ -56,7 +59,7 @@ const AppFilters = () => {
                     <DropdownMenuItem
                       key={idx}
                       data-value={val}
-                      onClick={() => updateSearchParams({ appSearchBy: val })}
+                      onClick={() => updateSearchParams({ cListSearchBy: val })}
                     >
                       {label}
                     </DropdownMenuItem>
@@ -74,7 +77,10 @@ const AppFilters = () => {
                 <DropdownMenuItem
                   data-value="asc"
                   onClick={() =>
-                    updateSearchParams({ appSortOrder: "asc", appPage: 1 })
+                    updateSearchParams({
+                      cListSortOrder: "asc",
+                      cListPage: 1,
+                    })
                   }
                 >
                   Ascending
@@ -82,7 +88,10 @@ const AppFilters = () => {
                 <DropdownMenuItem
                   data-value="desc"
                   onClick={() =>
-                    updateSearchParams({ appSortOrder: "desc", appPage: 1 })
+                    updateSearchParams({
+                      cListSortOrder: "desc",
+                      cListPage: 1,
+                    })
                   }
                 >
                   Descending
@@ -102,7 +111,10 @@ const AppFilters = () => {
                       key={idx}
                       data-value={val}
                       onClick={() =>
-                        updateSearchParams({ appSortBy: val, appPage: 1 })
+                        updateSearchParams({
+                          cListSortBy: val,
+                          cListPage: 1,
+                        })
                       }
                     >
                       {label}
@@ -118,4 +130,4 @@ const AppFilters = () => {
   );
 };
 
-export default AppFilters;
+export default ChecklistFilters;

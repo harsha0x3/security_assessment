@@ -10,12 +10,14 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import AppPagination from "./AppPagination";
 
 export function AppsCombobox({
   items,
@@ -26,10 +28,19 @@ export function AppsCombobox({
   searchValue,
 }) {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
+
   const selectedLabel = items.find(
     (item) => item.value === selectedValue
   )?.label;
+
+  const handleSelect = (itemValue) => {
+    // Find the actual item to make sure we're passing the correct value
+    const selectedItem = items.find((item) => item.value === itemValue);
+    if (selectedItem) {
+      onSelect(selectedItem.value);
+    }
+    setOpen(false);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -38,15 +49,27 @@ export function AppsCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between p-5"
         >
-          <span className="flex-1 truncate text-left">
+          <span
+            className={cn(
+              "truncate",
+              !selectedValue && "text-muted-foreground"
+            )}
+          >
             {selectedLabel || placeHolder}
           </span>
-          <ChevronsUpDown className="opacity-50 shrink-0" />
+          <ChevronsUpDown
+            size={16}
+            className="text-muted-foreground/80 shrink-0"
+            aria-hidden="true"
+          />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-2 min-w-sm" align="start">
+      <PopoverContent
+        className="border-input w-full p-2 min-w-sm"
+        align="start"
+      >
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search..."
@@ -61,11 +84,7 @@ export function AppsCombobox({
                 <CommandItem
                   key={item.value}
                   value={item.value}
-                  onSelect={(currentValue) => {
-                    onSelect(currentValue);
-                    setValue(currentValue);
-                    setOpen(false);
-                  }}
+                  onSelect={() => handleSelect(item.value)}
                   className={`border mb-1 p-3 last:mb-0 ${
                     selectedValue === item.value
                       ? "border-l-primary border-l-5"
@@ -76,11 +95,15 @@ export function AppsCombobox({
                   <Check
                     className={cn(
                       "ml-auto",
-                      value === item.value ? "opacity-100" : "opacity-0"
+                      selectedValue === item.value ? "opacity-100" : "opacity-0"
                     )}
                   />
                 </CommandItem>
               ))}
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup>
+              <AppPagination />
             </CommandGroup>
           </CommandList>
         </Command>

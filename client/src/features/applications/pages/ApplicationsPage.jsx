@@ -53,6 +53,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import AppPagination from "../components/AppPagination";
 
 const ApplicationsPage = () => {
   const dispatch = useDispatch();
@@ -68,11 +69,10 @@ const ApplicationsPage = () => {
     goToPage,
     updateSearchParams,
     data: allAppData,
+    totalApps,
   } = useApplications();
-  const allApps = useSelector(loadAllApps);
   const appSearchTerm = useSelector(selectAppSearchTerm);
-  const user = useSelector(selectAuth);
-  const totalApps = useSelector((state) => state.applications.totalCount);
+  const userInfo = useSelector(selectAuth);
   const totalPages = useMemo(
     () => totalApps / appPageSize,
     [appPageSize, totalApps]
@@ -91,10 +91,15 @@ const ApplicationsPage = () => {
     [dispatch]
   );
 
+  useEffect(() => {
+    console.log("TOTAL APPS", totalApps);
+    console.log("TOTAL PAGES", totalPages);
+  }, [totalApps, totalPages]);
+
   return (
     <TooltipProvider>
       <div className="w-full h-full">
-        <Card className="w-3/5 max-w-3/5 h-full flex flex-col overflow-hidden rounded-lg shadow-none">
+        <Card className="w-3/5 max-w-3/5 h-full flex flex-col overflow-hidden rounded-lg shadow-none bg-background">
           {/* Header */}
           <CardHeader className="bg-muted p-2 text-accent-foreground">
             <div className="flex items-center justify-between w-full">
@@ -102,33 +107,36 @@ const ApplicationsPage = () => {
                 <CardTitle className="text-xl font-semibold">
                   Applications
                 </CardTitle>
-                <Sheet>
-                  <Tooltip>
-                    <SheetTrigger asChild>
-                      <TooltipTrigger asChild>
-                        <Button variant="secondary" size="sm">
-                          <ListPlusIcon className="mr-1" />
-                          New
-                        </Button>
-                      </TooltipTrigger>
-                    </SheetTrigger>
-                    <TooltipContent className="max-w-64 text-pretty">
-                      <p>Create New App</p>
-                    </TooltipContent>
-                  </Tooltip>
 
-                  <SheetContent className="h-full overflow-auto">
-                    <ScrollArea>
-                      <AppDetailsSheet />
-                    </ScrollArea>
-                  </SheetContent>
-                </Sheet>
+                {userInfo?.role === "admin" && (
+                  <Sheet>
+                    <Tooltip>
+                      <SheetTrigger asChild>
+                        <TooltipTrigger asChild>
+                          <Button variant="accent" size="sm">
+                            <ListPlusIcon className="mr-1" />
+                            New
+                          </Button>
+                        </TooltipTrigger>
+                      </SheetTrigger>
+                      <TooltipContent className="max-w-64 text-pretty">
+                        <p>Create New App</p>
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <SheetContent className="h-full overflow-auto">
+                      <ScrollArea>
+                        <AppDetailsSheet />
+                      </ScrollArea>
+                    </SheetContent>
+                  </Sheet>
+                )}
               </div>
 
               {/* Search box */}
-              <div className="flex">
+              <div className="flex gap-2">
                 <div className="relative max-w-64 min-w-32">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-primary h-4 w-4" />
                   <Input
                     type="text"
                     name="email_or_username"
@@ -145,7 +153,7 @@ const ApplicationsPage = () => {
 
           {/* Content */}
           <ScrollArea>
-            <CardContent className="flex-1 overflow-auto p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+            <CardContent className="flex-1 overflow-auto p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
               {Array.isArray(allAppData?.apps) && allAppData.apps.length > 0 ? (
                 allAppData.apps.map((app) => {
                   const isSelected = app.id === selectedAppId;
@@ -153,19 +161,22 @@ const ApplicationsPage = () => {
                     <Card
                       key={app.appId}
                       className={`p-4 border rounded-lg shadow hover:shadow-lg transition-transform transform hover:-translate-y-1 ${
-                        isSelected ? "border-accent-foreground" : "border-muted"
+                        isSelected
+                          ? "border-primary border-l-8"
+                          : "border-black"
                       }`}
+                      onClick={() => setSelectedAppId(app.id)}
                     >
                       <CardHeader className="p-0 mb-2">
-                        <CardTitle className="text-lg font-bold text-gray-800">
+                        <CardTitle className="text-lg font-bold ">
                           {app.name}
                         </CardTitle>
-                        <CardDescription className="text-gray-500">
+                        <CardDescription className="text-accent-muted">
                           {app.description || "No description"}
                         </CardDescription>
                       </CardHeader>
 
-                      <CardContent className="p-0 grid grid-cols-1 gap-2 text-gray-700">
+                      <CardContent className="p-0 grid grid-cols-1 gap-2">
                         <Label className="flex justify-between">
                           Owner:{" "}
                           <span className="font-medium">{app.owner_name}</span>
@@ -209,7 +220,7 @@ const ApplicationsPage = () => {
                   );
                 })
               ) : (
-                <div className="text-gray-500 col-span-full text-center mt-20">
+                <div className="text-muted col-span-full text-center mt-20">
                   No apps available
                 </div>
               )}
@@ -217,85 +228,12 @@ const ApplicationsPage = () => {
           </ScrollArea>
 
           {/* Footer */}
-          <CardFooter className="bg-accent p-1">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationLink
-                    aria-label="Go to first page"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={() => goToPage(1)}
-                  >
-                    <ChevronFirstIcon className="h-4 w-4" />
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink
-                    aria-label="Go to previous page"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={() => {
-                      if (appPage <= 1) return;
-                      goToPage(appPage - 1);
-                    }}
-                    disabled={appPage <= 1}
-                  >
-                    <ChevronLeftIcon className="h-4 w-4" />
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <Select
-                    value={String(appPage)}
-                    aria-label="Select page"
-                    onValueChange={(value) => goToPage(Number(value))}
-                  >
-                    <SelectTrigger
-                      id="select-page"
-                      className="w-fit whitespace-nowrap"
-                      aria-label="Select page"
-                    >
-                      <SelectValue placeholder="Select page" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from(
-                        { length: Math.ceil(totalPages) },
-                        (_, i) => i + 1
-                      ).map((page) => (
-                        <SelectItem key={page} value={String(page)}>
-                          Page {page}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink
-                    onClick={() => {
-                      if (appPage === totalPages) return;
-                      goToPage(appPage + 1);
-                    }}
-                    disabled={appPage === totalPages}
-                    aria-label="Go to next page"
-                    size="icon"
-                    className="rounded-full"
-                  >
-                    <ChevronRightIcon className="h-4 w-4" />
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink
-                    onClick={() => goToPage(totalPages)}
-                    aria-label="Go to last page"
-                    size="icon"
-                    className="rounded-full"
-                  >
-                    <ChevronLastIcon className="h-4 w-4" />
-                  </PaginationLink>
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </CardFooter>
+
+          {allAppData?.apps?.length < totalApps && (
+            <CardFooter className="bg-accent p-1 shrink-0 bottom-0">
+              <AppPagination />
+            </CardFooter>
+          )}
         </Card>
       </div>
     </TooltipProvider>

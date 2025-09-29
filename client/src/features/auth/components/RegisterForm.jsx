@@ -14,6 +14,15 @@ import {
   XCircle,
 } from "lucide-react";
 import { selectIsLoading, selectError, setError } from "../store/authSlice";
+import { Label } from "@/components/ui/Label";
+import { Input } from "@/components/ui/Input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const RegisterForm = ({ onSwitchToLogin, onClose }) => {
   const dispatch = useDispatch();
@@ -68,7 +77,7 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
     });
   }, [formData.password]);
 
-  // Handle input changes
+  // Handle Input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -152,10 +161,10 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
         {/* Name Fields */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-text mb-2">
+            <Label className="block text-sm font-medium text-text mb-2">
               First Name
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               name="first_name"
               value={formData.first_name}
@@ -165,10 +174,10 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-text mb-2">
+            <Label className="block text-sm font-medium text-text mb-2">
               Last Name
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               name="last_name"
               value={formData.last_name}
@@ -181,12 +190,12 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
 
         {/* Username */}
         <div>
-          <label className="block text-sm font-medium text-text mb-2">
+          <Label className="block text-sm font-medium text-text mb-2">
             Username *
-          </label>
+          </Label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-textMuted" />
-            <input
+            <Input
               type="text"
               name="username"
               value={formData.username}
@@ -200,12 +209,12 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-text mb-2">
+          <Label className="block text-sm font-medium text-text mb-2">
             Email *
-          </label>
+          </Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/ 2text-blue-300 transform -translate-y-1/2 w-4 h-4 text-textMuted" />
-            <input
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-textMuted" />
+            <Input
               type="email"
               name="email"
               value={formData.email}
@@ -219,12 +228,12 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
 
         {/* Password */}
         <div>
-          <label className="block text-sm font-medium text-text mb-2">
+          <Label className="block text-sm font-medium text-text mb-2">
             Password *
-          </label>
+          </Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-textMuted" />
-            <input
+            <Input
               type={showPassword ? "text" : "password"}
               name="password"
               value={formData.password}
@@ -275,12 +284,12 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
 
         {/* Confirm Password */}
         <div>
-          <label className="block text-sm font-medium text-text mb-2">
+          <Label className="block text-sm font-medium text-text mb-2">
             Confirm Password *
-          </label>
+          </Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-textMuted" />
-            <input
+            <Input
               type={showPassword ? "text" : "password"}
               name="confirmPassword"
               value={formData.confirmPassword}
@@ -316,9 +325,10 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
             )}
         </div>
 
-        <div>
-          <input
+        <div className="flex text-left gap-0 items-center justify-start">
+          <Input
             type="checkbox"
+            checked={formData.isEnableMfa}
             name="isEnableMfa"
             value={formData.isEnableMfa}
             onChange={(e) =>
@@ -327,52 +337,31 @@ const RegisterForm = ({ onSwitchToLogin, onClose }) => {
                 isEnableMfa: e.target.checked,
               }))
             }
+            disabled
           />
-          <label>Enable MFA</label>
+          <Label>Enable MFA</Label>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-text mb-2">
+          <Label className="block text-sm font-medium text-text mb-2">
             Role *
-          </label>
-          <select
-            name="role"
-            value={formData.role || "user"}
-            onChange={handleChange}
-            className="w-full px-3 py-3 border border-border rounded-xl focus:border-accent focus:ring-1 focus:ring-accent/50 transition-colors"
-            required
-          >
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-          </select>
+          </Label>
+          <Select>
+            <SelectTrigger>
+              <SelectValue
+                placeholder="User Role"
+                value={formData.role || "user"}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, role: value }))
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="user">User</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        {/* Terms and Conditions */}
-        {/* <div className="flex items-start space-x-3">
-          <input
-            type="checkbox"
-            id="acceptTerms"
-            checked={acceptTerms}
-            onChange={(e) => setAcceptTerms(e.target.checked)}
-            className="w-4 h-4 text-accent border-border rounded focus:ring-accent/50 mt-1"
-            required
-          />
-          <label htmlFor="acceptTerms" className="text-sm text-textMuted">
-            I agree to the{" "}
-            <button
-              type="button"
-              className="text-accent hover:text-accent/80 underline"
-            >
-              Terms of Service
-            </button>{" "}
-            and{" "}
-            <button
-              type="button"
-              className="text-accent hover:text-accent/80 underline"
-            >
-              Privacy Policy
-            </button>
-          </label>
-        </div> */}
 
         {/* Submit Button */}
         <Button

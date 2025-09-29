@@ -2,7 +2,20 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import { selectAuth } from "../../auth/store/authSlice";
 import { useUpdateUserProfileMutation } from "../../auth/store/authApiSlice";
-import { User, Mail, Pencil, Check, X, Lock, Shield } from "lucide-react";
+import {
+  User,
+  Mail,
+  Pencil,
+  Check,
+  X,
+  Lock,
+  Shield,
+  UserIcon,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const Profile = ({ userDetails = null }) => {
   console.log("userDetails", userDetails);
@@ -59,22 +72,21 @@ const Profile = ({ userDetails = null }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg border border-black">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <User className="w-6 h-6 text-blue-600" /> Profile
-        </h1>
-
+    <Card className="mx-auto">
+      <CardHeader className="flex flex-row justify-between items-center mb-0">
+        <CardTitle className="text-xl flex">
+          <UserIcon className="w-6 h-6 text-primary" /> Profile
+        </CardTitle>
         {editMode ? (
           <div className="flex gap-2">
-            <button
+            <Button
               onClick={handleSubmit}
               disabled={isLoading}
-              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md flex items-center gap-1 disabled:opacity-50"
+              isLoading={isLoading}
             >
               <Check className="w-4 h-4" /> Save
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => {
                 setEditMode(false);
                 setForm({
@@ -85,156 +97,158 @@ const Profile = ({ userDetails = null }) => {
                 });
                 setErrorMsg("");
               }}
-              className="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded-md flex items-center gap-1"
+              variant="destructive"
             >
               <X className="w-4 h-4" /> Cancel
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
-            onClick={() => setEditMode(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md flex items-center gap-1"
-          >
+          <Button onClick={() => setEditMode(true)}>
             <Pencil className="w-4 h-4" /> Edit
-          </button>
+          </Button>
         )}
-      </div>
-
-      {errorMsg && (
-        <div className="mb-4 p-3 rounded-md bg-red-100 text-red-700 text-sm">
-          {errorMsg}
-        </div>
-      )}
-
-      <div className="space-y-4">
-        {/* Username */}
-        <div>
-          <label className="text-gray-500 text-sm">Username</label>
-          {editMode ? (
-            <input
-              type="text"
-              name="username"
-              value={form.username}
-              onChange={handleChange}
-              className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
-            />
-          ) : (
-            <div className="text-lg font-medium">{currentUser.username}</div>
-          )}
-        </div>
-
-        {/* Editable Fields */}
-        <div>
-          <label className="text-gray-500 text-sm">First Name</label>
-          {editMode ? (
-            <input
-              type="text"
-              name="first_name"
-              value={form.first_name}
-              onChange={handleChange}
-              className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
-            />
-          ) : (
-            <div className="text-lg font-medium">
-              {currentUser?.firstName || currentUser.first_name}
+      </CardHeader>
+      <CardContent>
+        <div className="max-w-2xl mx-auto p-6 rounded-2xl shadow-lg border border-black">
+          {errorMsg && (
+            <div className="mb-4 p-3 rounded-md bg-red-100 text-red-700 text-sm">
+              {errorMsg}
             </div>
           )}
-        </div>
 
-        <div>
-          <label className="text-gray-500 text-sm">Last Name</label>
-          {editMode ? (
-            <input
-              type="text"
-              name="last_name"
-              value={form.last_name}
-              onChange={handleChange}
-              className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
-            />
-          ) : (
-            <div className="text-lg font-medium">
-              {currentUser?.lastName || currentUser?.last_name}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <label className="text-gray-500 text-sm flex items-center gap-1">
-            <Mail className="w-4 h-4 text-gray-500" /> Email
-          </label>
-          {editMode ? (
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
-            />
-          ) : (
-            <div className="text-lg font-medium">{currentUser.email}</div>
-          )}
-        </div>
-
-        {/* Password + Confirm Password */}
-        {editMode && (
-          <>
+          <div className="space-y-4">
+            {/* Username */}
             <div>
-              <label className="text-gray-500 text-sm flex items-center gap-1">
-                <Lock className="w-4 h-4 text-gray-500" /> New Password
-              </label>
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Leave blank to keep current password"
-                className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
-              />
+              <Label className="text-gray-500 text-sm">Username</Label>
+              {editMode ? (
+                <Input
+                  type="text"
+                  name="username"
+                  value={form.username}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+                />
+              ) : (
+                <div className="text-lg font-medium">
+                  {currentUser.username}
+                </div>
+              )}
+            </div>
+
+            {/* Editable Fields */}
+            <div>
+              <Label className="text-gray-500 text-sm">First Name</Label>
+              {editMode ? (
+                <Input
+                  type="text"
+                  name="first_name"
+                  value={form.first_name}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+                />
+              ) : (
+                <div className="text-lg font-medium">
+                  {currentUser?.firstName || currentUser.first_name}
+                </div>
+              )}
             </div>
 
             <div>
-              <label className="text-gray-500 text-sm flex items-center gap-1">
-                <Lock className="w-4 h-4 text-gray-500" /> Confirm Password
-              </label>
-              <input
-                type="password"
-                name="confirm_password"
-                value={form.confirm_password}
-                onChange={handleChange}
-                placeholder="Re-enter password"
-                className={`w-full p-2 border rounded-md focus:ring-2 ${
-                  errorMsg
-                    ? "border-red-500 focus:ring-red-400"
-                    : "focus:ring-blue-400"
-                }`}
-              />
+              <Label className="text-gray-500 text-sm">Last Name</Label>
+              {editMode ? (
+                <Input
+                  type="text"
+                  name="last_name"
+                  value={form.last_name}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+                />
+              ) : (
+                <div className="text-lg font-medium">
+                  {currentUser?.lastName || currentUser?.last_name}
+                </div>
+              )}
             </div>
-          </>
-        )}
 
-        {/* Role - editable only if current user is admin */}
-        <div>
-          <label className="text-gray-500 text-sm flex items-center gap-1">
-            <Shield className="w-4 h-4 text-gray-500" /> Role
-          </label>
-          {editMode && currentUser.role === "admin" ? (
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
-            >
-              <option value="user">user</option>
-              <option value="admin">admin</option>
-            </select>
-          ) : (
-            <div className="inline-block px-3 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold text-sm">
-              {currentUser.role}
+            <div>
+              <Label className="text-gray-500 text-sm flex items-center gap-1">
+                <Mail className="w-4 h-4 text-gray-500" /> Email
+              </Label>
+              {editMode ? (
+                <Input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+                />
+              ) : (
+                <div className="text-lg font-medium">{currentUser.email}</div>
+              )}
             </div>
-          )}
+
+            {/* Password + Confirm Password */}
+            {editMode && (
+              <>
+                <div>
+                  <Label className="text-gray-500 text-sm flex items-center gap-1">
+                    <Lock className="w-4 h-4 text-gray-500" /> New Password
+                  </Label>
+                  <Input
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="Leave blank to keep current password"
+                    className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-gray-500 text-sm flex items-center gap-1">
+                    <Lock className="w-4 h-4 text-gray-500" /> Confirm Password
+                  </Label>
+                  <Input
+                    type="password"
+                    name="confirm_password"
+                    value={form.confirm_password}
+                    onChange={handleChange}
+                    placeholder="Re-enter password"
+                    className={`w-full p-2 border rounded-md focus:ring-2 ${
+                      errorMsg
+                        ? "border-red-500 focus:ring-red-400"
+                        : "focus:ring-blue-400"
+                    }`}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Role - editable only if current user is admin */}
+            <div>
+              <Label className="text-gray-500 text-sm flex items-center gap-1">
+                <Shield className="w-4 h-4 text-gray-500" /> Role
+              </Label>
+              {editMode && currentUser.role === "admin" ? (
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+                >
+                  <option value="user">user</option>
+                  <option value="admin">admin</option>
+                </select>
+              ) : (
+                <div className="inline-block px-3 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold text-sm">
+                  {currentUser.role}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

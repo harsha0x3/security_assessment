@@ -111,7 +111,7 @@ export function ChecklistCombobox({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between"
+            className="w-full justify-between p-5"
           >
             {selectedChecklist ? (
               <div className="flex items-center space-x-2 flex-1 truncate">

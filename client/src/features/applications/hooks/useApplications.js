@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -22,6 +22,7 @@ export const useApplications = () => {
   const appSearch = useSelector(selectAppSearchTerm);
   const currentApp = useSelector(selectCurrentApp);
   const [debouncedSearch, setDebouncedSearch] = useState(appSearch);
+  const [hasSetInitialApp, setHasSetInitialApp] = useState(false);
 
   const [lastAppPage, setLastAppPage] = useState(appPage);
 
@@ -38,15 +39,23 @@ export const useApplications = () => {
     { skip: !appSortBy || !appSortOrder, refetchOnMountOrArgChange: true }
   );
 
+  const totalApps = useMemo(() => data?.total_count, [data]);
+
   // Load apps into Redux when fetched
   useEffect(() => {
     if (isSuccess && data) {
       dispatch(loadApps(data));
-      if (data?.apps?.length > 0) {
-        dispatch(setCurrentApplication(data.apps[0].id));
+
+      // Only set default current app if:
+      // 1. We haven't set an initial app yet
+      // 2. There's no current app selected
+      // 3. There are apps available
+      if (!hasSetInitialApp && !currentApp && data?.apps?.length > 0) {
+        dispatch(setCurrentApplication({ appId: data.apps[0].appId }));
+        setHasSetInitialApp(true);
       }
     }
-  }, [data, isSuccess, dispatch]);
+  }, [data, isSuccess, dispatch, currentApp, hasSetInitialApp]);
 
   // Sync search term with URL params
   useEffect(() => {
@@ -95,5 +104,6 @@ export const useApplications = () => {
     goToPage,
     updateSearchParams,
     data,
+    totalApps,
   };
 };

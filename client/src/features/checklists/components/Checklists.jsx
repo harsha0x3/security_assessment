@@ -32,6 +32,7 @@ import {
   CheckCircle2,
   EllipsisVertical,
   Star,
+  PlusIcon,
 } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -42,22 +43,16 @@ import {
 import { useChecklists } from "@/features/checklists/hooks/useChecklists";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/label";
+import ChecklistFilters from "./ChecklistFilters";
+import CreateChecklist from "./CreateChecklist";
 
 const Checklists = () => {
   const { currentApp } = useApplications();
 
   const {
-    currentChecklist,
     updateSearchParams: updateCListSearchParams,
-    cListPage,
-    cListPageSize,
     cListSortBy,
     cListSortOrder,
-    cListSearchBy,
-    cListSearch,
-    isError,
-    error,
-    goToPage,
     data: allChecklists,
   } = useChecklists();
 
@@ -65,7 +60,6 @@ const Checklists = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const apps = useSelector(loadAllApps);
-  const filteredChecklists = useSelector(selectAllChecklists);
   const [selectedAppId, setSelectedAppId] = useState(
     paramAppId || currentApp?.appId
   );
@@ -166,104 +160,17 @@ const Checklists = () => {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="h-full flex flex-col">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-gray-900 dark:text-gray-900">
+      <div className="grid grid-cols-4 gap-2 items-center justify-between bg-card rounded-sm px-2 py-4 border text-card-foreground">
+        <h1 className="flex-shrink-0 text-lg font-bold">
           Checklists{" "}
           {currentApp && (
-            <span className="text-gray-900 dark:text-gray-900 font-bold">
-              for {currentApp.name}
-            </span>
+            <span className="font-bold">for {currentApp.name}</span>
           )}
         </h1>
-        {/* <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-4 text-sm text-gray-800 dark:text-gray-700">
-            <p className="font-semibold">Priorities: </p>
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-green-600" fill="currentColor" />
-              <span>Low</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-blue-600" fill="currentColor" />
-              <span>Medium</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-red-600" fill="currentColor" />
-              <span>High</span>
-            </div>
-          </div>
-        </div> */}
 
-        <div className="relative gap-3 text-left flex">
-          <Button
-            variant={"outline"}
-            onClick={() => setShowChecklistsFilter((prev) => !prev)}
-          >
-            Filters
-          </Button>
-          {showChecklistsFilters && (
-            <div className="absolute mt-2 w-56 rounded-md shadow-lg bg-white border z-[9999]">
-              <div className="p-2">
-                <Label className="block text-sm font-medium">Sort By</Label>
-                <select
-                  value={cListSortBy}
-                  onChange={(e) =>
-                    updateCListSearchParams({ cListSortBy: e.target.value })
-                  }
-                  className="w-full mt-1 px-2 py-1 border rounded-md text-sm"
-                >
-                  <option value="created_at">Created At</option>
-                  <option value="checklist_type">Name</option>
-                  <option value="updated_at">Last Updated</option>
-                  <option value="priority">Priority</option>
-                </select>
-              </div>
-              <div className="p-2">
-                <label className="block text-sm font-medium">Sort Order</label>
-                <select
-                  value={cListSortOrder}
-                  onChange={(e) =>
-                    updateCListSearchParams({ cListSortOrder: e.target.value })
-                  }
-                  className="w-full mt-1 px-2 py-1 border rounded-md text-sm"
-                >
-                  <option value="asc">Low - High</option>
-                  <option value="desc">High - Low</option>
-                </select>
-              </div>
-              {/* <div className="p-2">
-                    <label className="block text-sm font-medium">Status</label>
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full mt-1 px-2 py-1 border rounded-md text-sm"
-                    >
-                      <option value="all">All</option>
-                      <option value="completed">Completed</option>
-                      <option value="pending">Pending</option>
-                    </select>
-                  </div> */}
-            </div>
-          )}
-          {user.role === "admin" && (
-            <div className="">
-              <Button
-                variant={"outline"}
-                onClick={() => setShowModal(true)}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Checklist
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="flex gap-3 w-full items-center py-2 border-y-2">
-        <div className="flex-col w-1/5 flex items-center">
-          <h3>Select application</h3>
+        <div className="relative flex-col flex items-center">
           <AppsCombobox
             items={apps.map((app) => ({ value: app.appId, label: app.name }))}
             selectedValue={selectedAppId}
@@ -274,10 +181,14 @@ const Checklists = () => {
             placeHolder="Select an App"
             searchValue={useSelector(selectAppSearchTerm)}
             onSearchValueChange={(val) => dispatch(setAppSearchTerm(val))}
+            className="relative w-full"
           />
+          <h3 className="absolute -top-3 right-6 bg-card rounded-md px-1 text-sm">
+            Select application
+          </h3>
         </div>
-        <div className="flex-col w-1/5 flex items-center">
-          <h3>Select Checklist</h3>
+
+        <div className="relative flex-col flex items-center">
           <ChecklistCombobox
             checklists={allChecklists?.checklists}
             selectedChecklistId={selectedChecklistId}
@@ -289,12 +200,29 @@ const Checklists = () => {
             searchValue={checklistSearchTerm}
             onSearchValueChange={(val) => dispatch(setChecklistSearchTerm(val))}
             isAdmin={user.role === "admin"}
+            className="relative w-full"
           />
+          <h3 className="absolute -top-3 right-6 bg-card rounded-md px-1 text-sm">
+            Select Checklist
+          </h3>
+        </div>
+
+        <div className="flex gap-2 justify-end items-center">
+          <ChecklistFilters />
+
+          {user.role === "admin" && (
+            <div className="">
+              <Button variant={"secondary"} onClick={() => setShowModal(true)}>
+                <PlusIcon className="w-4 h-4 mr-2" />
+                Add Checklist
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Checklist Management */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div className="bg-background flex-1 overflow-hidden rounded-lg shadow">
         {/* Checklist Content */}
 
         {!selectedChecklistId && (
@@ -320,6 +248,7 @@ const Checklists = () => {
       />
 
       {/* Add Checklist Modal */}
+      {/* <CreateChecklist /> */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-96 max-w-md mx-4">

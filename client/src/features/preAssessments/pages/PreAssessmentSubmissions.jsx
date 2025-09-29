@@ -195,30 +195,32 @@ const PreAssessmentSubmissions = () => {
                 Open Submission
               </Button>
             </DialogTrigger>
-            <DialogContent className="mb-8 flex h-[calc(100vh-2rem)] min-w-[calc(100vw-2rem)] flex-col justify-between gap-0 p-0">
-              <ScrollArea className="flex flex-col justify-between overflow-hidden">
-                <DialogHeader className="contents space-y-0 text-left">
-                  <DialogTitle className="px-6 pt-6">
-                    Product Information
-                  </DialogTitle>
-                </DialogHeader>
+            <div className="mx-auto">
+              <DialogContent className=" mb-8 flex flex-col justify-between gap-0 p-0 h-[calc(100vh-2rem)] max-w-[90vw] w-full items-stretch mx-auto">
+                <ScrollArea className="flex-1 flex flex-col overflow-hidden">
+                  <DialogHeader className="contents space-y-0 text-left">
+                    <DialogTitle className="px-6 pt-6">
+                      {`Pre-Assessment Submission for ${row.original.assessment?.assessment_type} By ${row.original.submitted_user?.username}`}
+                    </DialogTitle>
+                  </DialogHeader>
 
-                <DialogDescription asChild>
-                  {fetchingQs ? (
-                    <p>Loading Qs</p>
-                  ) : fetchingSubRes ? (
-                    <p>Loading Res...</p>
-                  ) : (
-                    <PreAssessmentForm
-                      assessment={row.original.assessment}
-                      questionnaire={questionnaire}
-                      subResponses={subResponses}
-                      submissionId={row.original.id}
-                    />
-                  )}
-                </DialogDescription>
-              </ScrollArea>
-            </DialogContent>
+                  <DialogDescription asChild>
+                    {fetchingQs ? (
+                      <p>Loading Qs</p>
+                    ) : fetchingSubRes ? (
+                      <p>Loading Res...</p>
+                    ) : (
+                      <PreAssessmentForm
+                        assessment={row.original.assessment}
+                        questionnaire={questionnaire}
+                        subResponses={subResponses}
+                        submissionId={row.original.id}
+                      />
+                    )}
+                  </DialogDescription>
+                </ScrollArea>
+              </DialogContent>
+            </div>
           </Dialog>
         ),
       }),

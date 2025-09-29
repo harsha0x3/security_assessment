@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   selectCurrentChecklist,
@@ -13,6 +13,7 @@ import { useGetAllChecklistsQuery } from "@/features/checklists/store/checklists
 export const useChecklists = () => {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { appId: paramAppId } = useParams();
   const currentApp = useSelector(selectCurrentApp);
 
   const cListPage = parseInt(searchParams.get("cListPage") || "1", 10);
@@ -28,7 +29,7 @@ export const useChecklists = () => {
 
   const { data, isSuccess, isError, error } = useGetAllChecklistsQuery(
     {
-      appId: currentApp?.appId,
+      appId: currentApp?.appId ?? paramAppId,
       page: cListPage,
       page_size: cListPageSize,
       sort_by: cListSortBy,
@@ -36,7 +37,7 @@ export const useChecklists = () => {
       search: cListSearch || "",
       search_by: cListSearchBy,
     },
-    { skip: !cListSortBy || !cListSortOrder }
+    { skip: !currentApp?.appId || !paramAppId, refetchOnMountOrArgChange: true }
   );
 
   // Load checklists into Redux when fetched

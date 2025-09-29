@@ -33,11 +33,6 @@ import {
   UploadIcon,
   XIcon,
   AlertTriangle,
-  PlusIcon,
-  ChevronFirstIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronLastIcon,
 } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -81,26 +76,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import {
-  ScrollAreaScrollbar,
-  ScrollAreaViewport,
-} from "@radix-ui/react-scroll-area";
 
 const Controls = () => {
   const isProd = import.meta.env.VITE_PROD_ENV === "true";
@@ -111,7 +86,7 @@ const Controls = () => {
     ? "http://10.160.14.76:8060"
     : "http://127.0.0.1:8000";
 
-  const userInfo = useSelector(selectAuth);
+  const user = useSelector(selectAuth);
   const { checklistId } = useParams();
   const {
     controlsPage,
@@ -253,6 +228,63 @@ const Controls = () => {
     resetEditControl();
   };
 
+  const getVisiblePageNumbers = (current, total) => {
+    const delta = 1; // show ±2 pages around current
+    const range = [];
+    const rangeWithDots = [];
+    let lastPage;
+
+    for (let i = 1; i <= total; i++) {
+      if (
+        i === 1 ||
+        i === total ||
+        (i >= current - delta && i <= current + delta)
+      ) {
+        range.push(i);
+      }
+    }
+
+    for (let page of range) {
+      if (lastPage) {
+        if (page - lastPage === 2) {
+          rangeWithDots.push(lastPage + 1);
+        } else if (page - lastPage > 2) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(page);
+      lastPage = page;
+    }
+
+    return rangeWithDots;
+  };
+
+  const onSubmitResponse = async (formData, controlId) => {
+    const form = new FormData();
+    form.append("current_setting", formData.current_setting);
+    form.append("review_comment", formData.review_comment);
+    if (formData.evidence_file && formData.evidence_file[0]) {
+      form.append("evidence_file", formData.evidence_file[0]);
+    }
+
+    if (formData.remove_evidence) {
+      form.append("remove_evidence", "true");
+    }
+
+    const controlData = allControls?.list_controls?.find(
+      (c) => c.control_id === controlId
+    );
+    const responseId = controlData?.response_id;
+
+    try {
+      await saveResponse({ controlId, payload: form, responseId }).unwrap();
+      setEditingRowId(null);
+      resetRes();
+    } catch (err) {
+      console.error("Failed to save response:", err);
+    }
+  };
+
   // Update existing control
   const onSubmitUpdateControl = async (formData, controlId) => {
     const payload = {
@@ -289,10 +321,6 @@ const Controls = () => {
     }
   };
 
-  const totalControlsPages =
-    Math.ceil(allControls?.total_counts?.total_controls / controlsPageSize) ||
-    1;
-
   // ✅ stable columns
   const columns = useMemo(
     () => [
@@ -323,20 +351,16 @@ const Controls = () => {
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
-            <Select>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder="Severity"
-                  {...registerEditControl("severity")}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Low">Low</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Critical">Critical</SelectItem>
-              </SelectContent>
-            </Select>
+            <select
+              className="border rounded p-1 text-sm max-w-2"
+              {...registerEditControl("severity")}
+            >
+              <option value="">Select Severity</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
           ) : (
             <span
               className={`px-2 py-1 rounded-full text-xs max-w-2 font-medium ${
@@ -455,7 +479,7 @@ const Controls = () => {
           if (editAll) {
             return (
               <>
-                <div className="flex flex-col gap-2">
+                <div className="flex felx-col gap-2">
                   {evidencePath && (
                     <div className="flex items-center gap-2">
                       <a
@@ -539,7 +563,7 @@ const Controls = () => {
           return (
             <div className="flex gap-2 items-center">
               {/* Control editing actions (Admin only) */}
-              {userInfo.role === "admin" && (
+              {user.role === "admin" && (
                 <>
                   {editingControl ? (
                     <>
@@ -584,7 +608,7 @@ const Controls = () => {
                   content="Edit Response"
                 />
               )}
-              {userInfo.role === "admin" && !editingControl && (
+              {user.role === "admin" && !editingControl && (
                 <Tooltip
                   id={`edit-control-tooltip-${controlId}`}
                   place="top"
@@ -607,7 +631,7 @@ const Controls = () => {
         },
       },
     ],
-    [editingControlId, userInfo, editAll]
+    [editingRowId, editingControlId, user.role, editAll]
   );
 
   const handleSortingChange = (newSorting) => {
@@ -670,251 +694,153 @@ const Controls = () => {
 
     onSortingChange: setSorting,
   });
-  const AddControlsComp = () => {
-    return (
-      <div>
-        <form onSubmit={handleAddSubmit(onSubmitAddControl)}>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-            <Input
-              type="text"
-              placeholder="Control Area"
-              {...registerAdd("control_area", { required: true })}
-            />
-            <Select>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder="Severity"
-                  {...registerAdd("severity")}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Low">Low</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Critical">Critical</SelectItem>
-              </SelectContent>
-            </Select>
-            <Textarea
-              placeholder="Control Text"
-              {...registerAdd("control_text", { required: true })}
-            />
-            <Textarea
-              placeholder="Description"
-              {...registerAdd("description", { required: true })}
-            />
-          </div>
-          <div className="flex justify-center gap-3 mt-1">
-            <Button type="submit" variant="">
-              Save Control
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                setAdding(false);
-                resetAdd();
-              }}
-              variant="destructive"
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </div>
-    );
-  };
-
-  // Table Rendering Component
-
-  const RenderTable = () => {
-    return (
-      <Table
-        className={`table-fixed ${
-          editAll ? "ring-green-500 border-amber-500" : ""
-        }`}
-        style={{
-          width: table.getCenterTotalSize(),
-        }}
-      >
-        <TableHeader className="">
-          {table.getHeaderGroups().map((hg) => (
-            <TableRow key={hg.id}>
-              {hg.headers.map((header) => (
-                <TableHead
-                  key={header.id}
-                  className="group/head relative h-10 select-none last:[&>.cursor-col-resize]:opacity-0"
-                  {...{
-                    colSpan: header.colSpan,
-                    style: {
-                      width: header.getSize(),
-                    },
-                  }}
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  {header.column.getCanResize() && (
-                    <div
-                      {...{
-                        onDoubleClick: () => header.column.resetSize(),
-                        onMouseDown: header.getResizeHandler(),
-                        onTouchStart: header.getResizeHandler(),
-                        className:
-                          "group-last/head:hidden absolute top-0 h-full w-4 cursor-col-resize user-select-none touch-none -right-2 z-10 flex justify-center before:absolute before:w-px before:inset-y-0 before:bg-border before:translate-x-px",
-                      }}
-                    />
-                  )}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.original.control_id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    );
-  };
-
-  const ControlsPagination = () => {
-    return (
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationLink
-              aria-label="Go to first page"
-              size="icon"
-              className="rounded-full"
-              onClick={() => goToControlsPage(1)}
-            >
-              <ChevronFirstIcon className="h-4 w-4" />
-            </PaginationLink>
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationLink
-              aria-label="Go to previous page"
-              size="icon"
-              className="rounded-full"
-              onClick={() => {
-                if (controlsPage <= 1) return;
-                goToControlsPage(controlsPage - 1);
-              }}
-              disabled={controlsPage <= 1}
-            >
-              <ChevronLeftIcon className="h-4 w-4" />
-            </PaginationLink>
-          </PaginationItem>
-          <PaginationItem>
-            <Select
-              value={String(controlsPage)}
-              aria-label="Select page"
-              onValueChange={(value) => goToControlsPage(Number(value))}
-            >
-              <SelectTrigger
-                id="select-page"
-                className="w-fit whitespace-nowrap"
-                aria-label="Select page"
-              >
-                <SelectValue placeholder="Select page" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from(
-                  {
-                    length: totalControlsPages,
-                  },
-                  (_, i) => i + 1
-                ).map((page) => (
-                  <SelectItem key={page} value={String(page)}>
-                    Page {page}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationLink
-              onClick={() => {
-                if (controlsPage === totalControlsPages) return;
-                goToControlsPage(controlsPage + 1);
-              }}
-              disabled={controlsPage === totalControlsPages}
-              aria-label="Go to next page"
-              size="icon"
-              className="rounded-full"
-            >
-              <ChevronRightIcon className="h-4 w-4" />
-            </PaginationLink>
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationLink
-              onClick={() => goToControlsPage(totalControlsPages)}
-              aria-label="Go to last page"
-              size="icon"
-              className="rounded-full"
-            >
-              <ChevronLastIcon className="h-4 w-4" />
-            </PaginationLink>
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
-    );
-  };
 
   if (!allControls?.list_controls?.length)
     return (
-      <Card className="flex-1 h-full flex flex-col items-center">
-        <CardHeader className="items-center">
-          <CardTitle>No Controls Found for this checklist</CardTitle>
-          <CardDescription>
-            {userInfo.role === "admin"
-              ? "Add the first control"
-              : "Controls for this checklist will be added soon."}
-          </CardDescription>
-          <CardContent>
-            <Settings fill="" className="w-20 h-20 mx-auto mb-4" />
-            {userInfo.role === "admin" && adding ? (
-              <AddControlsComp />
-            ) : (
-              <div>
-                <div className="flex gap-3 items-center justify-center">
-                  <Button onClick={() => setAdding(true)}>
-                    <PlusIcon className="w-5 h-5" /> Add First Control
-                  </Button>
-                  <ImportControls />
-                  <UploadControls />
-                </div>
+      <div className="flex flex-col overflow-hidden">
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center">
+            <div className="mb-6">
+              <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-lg text-gray-600 mb-2">
+                No controls found for this checklist
+              </p>
+              <p className="text-sm text-gray-400">
+                Add your first control to get started
+              </p>
+            </div>
+            {/* Add Control Section (admins only) */}
+            {user.role === "admin" && (
+              <div className="max-w-2xl mx-auto">
+                {adding ? (
+                  <form
+                    onSubmit={handleAddSubmit(onSubmitAddControl)}
+                    className="bg-[var(--card)] p-4 rounded-lg space-y-4"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <Input
+                        type="text"
+                        placeholder="Control Area"
+                        {...registerAdd("control_area", { required: true })}
+                      />
+                      <select
+                        className="border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        {...registerAdd("severity", { required: true })}
+                      >
+                        <option value="">Select Severity</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                      </select>
+                      <div className="md:col-span-1">
+                        <Textarea
+                          placeholder="Control Text"
+                          {...registerAdd("control_text", { required: true })}
+                        />
+                      </div>
+                      <div className="md:col-span-1">
+                        <Textarea
+                          placeholder="Description"
+                          {...registerAdd("description", { required: true })}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-center gap-3">
+                      <Button type="submit" variant="primary">
+                        Save Control
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setAdding(false);
+                          resetAdd();
+                        }}
+                        variant="destructive"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  <div>
+                    <div className="flex gap-3 items-center justify-center">
+                      <Button
+                        onClick={() => setAdding(true)}
+                        className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg"
+                      >
+                        <Plus className="w-5 h-5" /> Add First Control
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setShowImportModal(true);
+                          console.log(showImportModal);
+                        }}
+                        className="inline-flex items-center gap-2 px-6 py-3 text-sm rounded-lg"
+                      >
+                        <ImportIcon className="w-5 h-5" /> Import Controls
+                      </Button>
+                      <Button
+                        onClick={() => setShowUploadModal(true)}
+                        variant="secondary"
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg"
+                      >
+                        <Upload className="w-5 h-5" /> Upload Controls
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </CardContent>
-        </CardHeader>
-      </Card>
+          </div>
+        </div>
+        {showImportModal && (
+          <Modal
+            className="w-full max-w-4xl mx-auto p-6"
+            open={showImportModal}
+            onClose={() => {
+              setShowImportModal(false);
+              console.log("first", showImportModal);
+            }}
+            title={"Import controls"}
+          >
+            <ImportControls targetChecklistId={checklistId} />
+          </Modal>
+        )}
+        {showUploadModal && (
+          <Modal
+            className="w-full max-w-2xl mx-auto p-6"
+            open={showUploadModal}
+            onClose={() => setShowUploadModal(false)}
+            title="Upload Controls"
+          >
+            <UploadControls
+              checklistId={checklistId}
+              onClose={() => setShowUploadModal(false)}
+            />
+          </Modal>
+        )}
+      </div>
     );
 
   return (
     <TooltipProvider>
-      <Card className="flex-1 h-full flex flex-col ">
-        <CardHeader className="flex flex-row shrink-0 justify-between items-center p-2 bg-muted rounded-t-lg">
-          <CardTitle>
-            Controls for Checklist - {currentChecklist?.checklistType}
-          </CardTitle>
+      <div className="h-full flex-1 flex flex-col">
+        {/* Header - Fixed */}
+        <div className="flex-shrink-0 flex justify-between gap-2 pb-4 max-sm:flex-col items-center">
+          <div className="flex items-center space-x-2">
+            {currentChecklist && (
+              <div className="flex items-center gap-2 pt-3">
+                <h3 className="text-lg font-semibold text-[var(--foreground)">
+                  Controls for Checklist - {currentChecklist.checklistType}
+                </h3>
+                <div className="text-sm text-[var(--muted-foreground)]">
+                  {allControls?.list_controls?.length} control
+                  {allControls?.list_controls?.length !== 1 ? "s" : ""}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <div>
               {editAll ? (
@@ -965,7 +891,6 @@ const Controls = () => {
                     Cancel
                   </span>
                 )}
-
                 <Switch
                   id="edit-app"
                   checked={editAll}
@@ -973,7 +898,6 @@ const Controls = () => {
                   aria-labelledby={`edit-app-yes edit-app-no`}
                   className="focus-visible:border-ring-green-600 dark:focus-visible:border-ring-green-400 focus-visible:ring-green-600/20 data-[state=checked]:bg-green-600 dark:focus-visible:ring-green-400/40 dark:data-[state=checked]:bg-green-400"
                 />
-
                 <span
                   id={`edit-app-no`}
                   className="group-data-[state=unchecked]:text-muted-foreground/70 cursor-pointer text-left text-sm font-medium"
@@ -985,21 +909,300 @@ const Controls = () => {
               </div>
             </div>
           </div>
-        </CardHeader>
-        <ScrollArea className="h-full w-full">
-          <ScrollAreaViewport className="w-max">
-            <CardContent className="p-0">
-              <RenderTable />
-            </CardContent>
-          </ScrollAreaViewport>
-          <ScrollBar orientation="vertical" />
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        </div>
+        {/* Controls Table - Scrollable */}
+        <div
+          className={`flex-1 overflow-auto border rounded-lg shadow bg-[var(--card)] text-[var(--card-foreground)] ${
+            editAll ? "ring-green-500 border-green-500" : ""
+          }`}
+        >
+          {/* <div className="flex justify-between items-center mb-4">
+          <Button
+            onClick={() => {
+              setEditAll(!editAll);
+              console.log("DATA IN USE FORM", registerRes);
+            }}
+          >
+            {editAll ? "Cancel Edit All" : "Edit All Responses"}
+          </Button>
+          {editAll && (
+            <Button onClick={handleSubmit(onSubmitAll)} disabled={saving}>
+              {saving ? "Saving..." : "Save All"}
+            </Button>
+          )}
+        </div> */}
+          <Table
+            className={`table-fixed ${
+              editAll ? "ring-green-500 border-amber-500" : ""
+            }`}
+            style={{
+              width: table.getCenterTotalSize(),
+            }}
+          >
+            <TableHeader className="">
+              {table.getHeaderGroups().map((hg) => (
+                <TableRow key={hg.id}>
+                  {hg.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      className="group/head relative h-10 select-none last:[&>.cursor-col-resize]:opacity-0"
+                      {...{
+                        colSpan: header.colSpan,
+                        style: {
+                          width: header.getSize(),
+                        },
+                      }}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                      {header.column.getCanResize() && (
+                        <div
+                          {...{
+                            onDoubleClick: () => header.column.resetSize(),
+                            onMouseDown: header.getResizeHandler(),
+                            onTouchStart: header.getResizeHandler(),
+                            className:
+                              "group-last/head:hidden absolute top-0 h-full w-4 cursor-col-resize user-select-none touch-none -right-2 z-10 flex justify-center before:absolute before:w-px before:inset-y-0 before:bg-border before:translate-x-px",
+                          }}
+                        />
+                      )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.original.control_id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        {/* Pagination */}
+        <div className="flex-shrink-0 flex justify-center mt-4">
+          <Pagination>
+            <PaginationContent>
+              {/* Previous button */}
+              <PaginationItem>
+                <Button
+                  asChild
+                  disabled={controlsPage <= 1}
+                  variant="ghost"
+                  className={`hover:cursor-pointer ${
+                    controlsPage <= 1 ? "cursor-not-allowed" : ""
+                  }`}
+                >
+                  <PaginationPrevious
+                    className={`hover:cursor-pointer ${
+                      controlsPage <= 1 ? "cursor-not-allowed" : ""
+                    }`}
+                    onClick={() => {
+                      if (controlsPage > 1) {
+                        goToControlsPage(controlsPage - 1);
+                      }
+                    }}
+                  />
+                </Button>
+              </PaginationItem>
 
-        <CardFooter className="p-1 bg-muted rounded-b-lg">
-          <ControlsPagination />
-        </CardFooter>
-      </Card>
+              {/* Dynamic page links */}
+              {getVisiblePageNumbers(
+                controlsPage,
+                Math.ceil(
+                  allControls?.total_counts?.total_controls / controlsPageSize
+                ) || 1
+              ).map((page, idx) => (
+                <PaginationItem key={idx}>
+                  {page === "…" ? (
+                    <span className="px-2">
+                      <Ellipsis />
+                    </span>
+                  ) : (
+                    <PaginationLink
+                      isActive={controlsPage === page}
+                      onClick={() => {
+                        if (page !== "...") goToControlsPage(page);
+                      }}
+                    >
+                      {page}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))}
+
+              {/* Next button */}
+              <PaginationItem>
+                <PaginationNext
+                  className={`hover:cursor-pointer ${
+                    controlsPage >=
+                    Math.ceil(
+                      allControls?.total_counts?.total_controls /
+                        controlsPageSize
+                    )
+                      ? "cursor-not-allowed"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    if (
+                      controlsPage >
+                      Math.ceil(
+                        allControls?.total_counts?.total_controls /
+                          controlsPageSize
+                      )
+                    )
+                      goToControlsPage(controlsPage + 1);
+                  }}
+                  disabled={
+                    controlsPage ===
+                    Math.ceil(
+                      allControls?.total_counts?.total_controls /
+                        controlsPageSize
+                    )
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+        {/* Footer Actions - Fixed */}
+        <div className="flex-shrink-0 flex justify-between items-center space-x-4 border-t pt-4 mt-4">
+          {/* Add Control Section (admins only) */}
+          <div className="flex-1">
+            {user.role === "admin" && (
+              <div>
+                {adding ? (
+                  <form
+                    onSubmit={handleAddSubmit(onSubmitAddControl)}
+                    className="rounded-lg space-y-4"
+                  >
+                    <h4 className="font-medium text-gray-900 mb-3">
+                      Add New Control
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <input
+                        type="text"
+                        placeholder="Control Area"
+                        className="border rounded px-3 py-2 text-sm focus:ring-2 w-full focus:ring-blue-500 focus:border-transparent"
+                        {...registerAdd("control_area", { required: true })}
+                      />
+                      <select
+                        className="border rounded px-3 py-2 text-sm focus:ring-2 w-full focus:ring-blue-500 focus:border-transparent"
+                        {...registerAdd("severity", { required: true })}
+                      >
+                        <option value="">Select Severity</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                      </select>
+                      <div className="md:col-span-1">
+                        <textarea
+                          placeholder="Control Text"
+                          className="border rounded px-3 py-2 text-sm focus:ring-2 w-full focus:ring-blue-500 focus:border-transparent"
+                          {...registerAdd("control_text", { required: true })}
+                        />
+                      </div>
+                      <div className="md:col-span-1">
+                        <textarea
+                          placeholder="Description"
+                          className="border rounded px-3 py-2 text-sm focus:ring-2 w-full focus:ring-blue-500 focus:border-transparent"
+                          {...registerAdd("description", { required: true })}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-3">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setAdding(false);
+                          resetAdd();
+                        }}
+                        variant="destructive"
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit">Save Control</Button>
+                    </div>
+                  </form>
+                ) : (
+                  <Button
+                    onClick={() => setAdding(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm"
+                  >
+                    <Plus className="w-5 h-5" /> Add Control
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex-shrink-0">
+            <span
+              data-tooltip-id="submit-tooltip"
+              data-tooltip-content="Complete the checklist to submit"
+              className="inline-block"
+            >
+              <Button
+                variant="secondary"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm disabled:cursor-not-allowed"
+                disabled={
+                  !(
+                    allControls?.list_controls.length !== 0 &&
+                    allControls?.total_counts?.total_controls ===
+                      allControls?.total_counts?.total_responses
+                  )
+                }
+                onClick={async () => {
+                  try {
+                    await submitChecklistMutation(checklistId).unwrap();
+                    alert("Checklist submitted successfully!");
+                  } catch (err) {
+                    console.error("Failed to submit checklist:", err);
+                    alert("Failed to submit checklist. Please try again.");
+                  }
+                }}
+              >
+                Submit
+              </Button>
+            </span>
+            <Tooltip id="submit-tooltip" place="top" />
+          </div>
+          {showImportResponsesModal && (
+            <div>
+              <ImportResponsesDialog
+                checklistId={checklistId}
+                open={showImportResponsesModal}
+                onClose={() => setShowImportResponsesModal(false)}
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </TooltipProvider>
   );
 };

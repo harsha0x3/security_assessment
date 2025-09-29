@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { selectCurrentApp } from "../features/applications/store/applicationSlice";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/context/themeContext/useTheme";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +23,9 @@ import {
   ClipboardCheck,
   ChevronRight,
   LayoutDashboard,
+  Sun,
+  Moon,
+  Laptop,
 } from "lucide-react";
 import {
   Tooltip,
@@ -42,6 +46,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
   const navigate = useNavigate();
   const currentApp = useSelector(selectCurrentApp);
   const userInfo = selectUser();
+  const { theme, setTheme } = useTheme();
 
   const navigationItems = [
     { name: "Applications", path: "/applications", icon: LayoutGrid },
@@ -81,89 +86,6 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
       >
         {/* Navigation Items */}
         <nav className="p-2 space-y-1">
-          {/* Dashboard Collapsible */}
-          {/* Dashboard Collapsible */}
-          {/* <Collapsible
-            defaultOpen
-            open={!isCollapsed}
-            className="group/collapsible"
-          >
-            <CollapsibleTrigger
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                !isCollapsed ? "justify-between" : "justify-center"
-              }`}
-              onClick={() => {
-                if (isCollapsed) onToggle(); // open sidebar if collapsed
-              }}
-            >
-              <LayoutDashboard className="w-5 h-5 shrink-0" />
-              {!isCollapsed && (
-                <>
-                  <span className="ml-3 font-medium">Dashboard</span>
-                  <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                </>
-              )}
-            </CollapsibleTrigger>
-
-            <CollapsibleContent className="space-y-1">
-              {/* User Dashboard */}
-          {/* <TooltipProvider>
-                <Tooltip delayDuration={200}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to="/user_dashboard"
-                      className={`flex items-center px-3 py-2 rounded-lg transition-colors relative ${
-                        isActiveRoute("/user_dashboard")
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      }`}
-                      onClick={isMobile ? onToggle : undefined}
-                    >
-                      {!isCollapsed && (
-                        <span className="ml-3 font-medium truncate">
-                          User Dashboard
-                        </span>
-                      )}
-                    </Link>
-                  </TooltipTrigger>
-                  {isCollapsed && (
-                    <TooltipContent side="right">User Dashboard</TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider> */}
-
-          {/* Admin Dashboard (only for admins) */}
-          {/* {userInfo?.role === "admin" && (
-                <TooltipProvider>
-                  <Tooltip delayDuration={200}>
-                    <TooltipTrigger asChild>
-                      <Link
-                        to="/admin_dashboard"
-                        className={`flex items-center px-3 py-2 rounded-lg transition-colors relative ${
-                          isActiveRoute("/admin_dashboard")
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                        }`}
-                        onClick={isMobile ? onToggle : undefined}
-                      >
-                        {!isCollapsed && (
-                          <span className="ml-3 font-medium truncate">
-                            Admin Dashboard
-                          </span>
-                        )}
-                      </Link>
-                    </TooltipTrigger>
-                    {isCollapsed && (
-                      <TooltipContent side="right">
-                        Admin Dashboard
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </CollapsibleContent>
-          </Collapsible> */}
-
           {/* Other navigation items */}
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -230,6 +152,36 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   Settings
                 </DropdownMenuItem>
+                {/* Theme switcher */}
+                <DropdownMenuItem className="flex flex-col items-start gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Theme
+                  </span>
+                  <div className="flex justify-between items-center w-full">
+                    {["light", "dark", "system"].map((t) => {
+                      const isActive = theme === t;
+
+                      const Icon =
+                        t === "light" ? Sun : t === "dark" ? Moon : Laptop;
+
+                      return (
+                        <button
+                          key={t}
+                          onClick={() => setTheme(t)}
+                          className={`flex items-center gap-1 px-2 py-1 rounded-md text-sm transition-colors ${
+                            isActive
+                              ? "bg-accent text-accent-foreground"
+                              : "hover:bg-accent/20 text-muted-foreground"
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {t.charAt(0).toUpperCase() + t.slice(1)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </DropdownMenuItem>
+
                 <DropdownMenuItem onClick={handleLogout}>
                   Logout
                 </DropdownMenuItem>
