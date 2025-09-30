@@ -13,7 +13,6 @@ import {
   useReactTable,
   getCoreRowModel,
   flexRender,
-  getPaginationRowModel,
   getSortedRowModel,
 } from "@tanstack/react-table";
 import { selectCurrentChecklist } from "../store/checklistsSlice";
@@ -24,14 +23,8 @@ import {
   Plus,
   Settings,
   Shredder,
-  Upload,
   Info,
-  ImportIcon,
-  Ellipsis,
   FileSpreadsheetIcon,
-  DownloadIcon,
-  UploadIcon,
-  XIcon,
   AlertTriangle,
   PlusIcon,
   ChevronFirstIcon,
@@ -40,8 +33,6 @@ import {
   ChevronLastIcon,
 } from "lucide-react";
 import { Tooltip } from "react-tooltip";
-import { useFieldArray, useForm } from "react-hook-form";
-import Modal from "../../../components/ui/Modal";
 import ImportControls from "./ImportControls";
 import UploadControls from "./UploadControls";
 import ImportResponsesDialog from "./ImportResponses";
@@ -101,6 +92,16 @@ import {
   ScrollAreaScrollbar,
   ScrollAreaViewport,
 } from "@radix-ui/react-scroll-area";
+import { useForm } from "react-hook-form";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const Controls = () => {
   const isProd = import.meta.env.VITE_PROD_ENV === "true";
@@ -116,30 +117,19 @@ const Controls = () => {
   const {
     controlsPage,
     controlsPageSize,
-    controlsSortBy,
-    controlsSortOrder,
-    isError,
-    error,
     goToPage: goToControlsPage,
     updateSearchParams,
     data: allControls,
   } = useControlsNResponses(checklistId);
   const [sorting, setSorting] = useState([]);
 
-  const [submitChecklistMutation] = useSubmitChecklistMutation();
-
   const [saveResponse] = useSaveResponseMutation();
   const [addControl] = useAddControlMutation();
   const [updateControl] = useUpdateControlsMutation();
-
-  const [editingRowId, setEditingRowId] = useState(null);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showImportResponsesModal, setShowImportResponsesModal] =
-    useState(false);
   const [editingControlId, setEditingControlId] = useState(null);
   const [adding, setAdding] = useState(false);
   const currentChecklist = useSelector(selectCurrentChecklist);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // react-hook-form for editing responses
   const {
@@ -147,7 +137,6 @@ const Controls = () => {
     register: registerRes,
     handleSubmit,
     reset: resetRes,
-    watch,
   } = useForm({
     defaultValues: {
       responses:
@@ -162,10 +151,6 @@ const Controls = () => {
     },
   });
 
-  const { fields } = useFieldArray({
-    control,
-    name: "responses",
-  });
   const onSubmitAll = async (data) => {
     setSaving(true);
     try {
@@ -244,7 +229,7 @@ const Controls = () => {
       control_area: rowData.control_area || "",
       severity: rowData.severity || "",
       control_text: rowData.control_text || "",
-      description: "",
+      description: rowData.description || "",
     });
   };
 
@@ -384,10 +369,10 @@ const Controls = () => {
         maxSize: 700,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
-          return editingRowId === controlId ? (
+          return editingControlId === controlId ? (
             <Textarea
               className="min-h-[80px]"
-              {...registerAdd("description")}
+              {...registerEditControl("description")}
             />
           ) : (
             <Textarea
@@ -405,7 +390,6 @@ const Controls = () => {
         minSize: 300,
         maxSize: 600,
         cell: ({ row }) => {
-          const controlId = row.original.control_id;
           const idx = row.index;
           return editAll ? (
             <Textarea
@@ -428,7 +412,6 @@ const Controls = () => {
         minSize: 300,
         maxSize: 600,
         cell: ({ row }) => {
-          const controlId = row.original.control_id;
           const idx = row.index;
           return editAll ? (
             <Textarea {...registerRes(`responses.${idx}.review_comment`)} />
@@ -448,7 +431,6 @@ const Controls = () => {
         minSize: 70,
         maxSize: 120,
         cell: ({ row }) => {
-          const controlId = row.original.control_id;
           const evidencePath = row.original.evidence_path;
           const idx = row.index;
 
@@ -459,7 +441,7 @@ const Controls = () => {
                   {evidencePath && (
                     <div className="flex items-center gap-2">
                       <a
-                        href={`http://localhost:8000/uploads/${evidencePath}`}
+                        href={`${apiBaseUrl}/${evidencePath}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 underline"
@@ -515,27 +497,35 @@ const Controls = () => {
         maxSize: 120,
         cell: ({ row }) => {
           const controlId = row.original.control_id;
-          const editingResponse = editingRowId === controlId;
           const editingControl = editingControlId === controlId;
           console.log("DATE", row.original.control_created_at);
           const tooltipContent = `
-      Control Created: ${new Date(
-        row.original.control_created_at + "Z"
-      ).toLocaleString()}
-      Control Updated: ${new Date(
-        row.original.control_updated_at + "Z"
-      ).toLocaleString()}
-      Response Created: ${
-        row.original.response_created_at + "Z"
-          ? new Date(row.original.response_created_at + "Z").toLocaleString()
-          : "N/A"
-      }
-      Response Updated: ${
-        row.original.response_updated_at
-          ? new Date(row.original.response_updated_at + "Z").toLocaleString()
-          : "N/A"
-      }
-    `;
+Control Created: ${
+            row.original.control_created_at
+              ? new Date(row.original.control_created_at + "Z").toLocaleString()
+              : "N/A"
+          }
+Control Updated: ${
+            row.original.control_updated_at
+              ? new Date(row.original.control_updated_at + "Z").toLocaleString()
+              : "N/A"
+          }
+Response Created: ${
+            row.original.response_created_at
+              ? new Date(
+                  row.original.response_created_at + "Z"
+                ).toLocaleString()
+              : "N/A"
+          }
+Response Updated: ${
+            row.original.response_updated_at
+              ? new Date(
+                  row.original.response_updated_at + "Z"
+                ).toLocaleString()
+              : "N/A"
+          }
+`;
+
           return (
             <div className="flex gap-2 items-center">
               {/* Control editing actions (Admin only) */}
@@ -576,14 +566,6 @@ const Controls = () => {
                 </>
               )}
 
-              {/* Tooltips for non-editing states */}
-              {!editingResponse && (
-                <Tooltip
-                  id={`edit-response-tooltip-${controlId}`}
-                  place="top"
-                  content="Edit Response"
-                />
-              )}
               {userInfo.role === "admin" && !editingControl && (
                 <Tooltip
                   id={`edit-control-tooltip-${controlId}`}
@@ -878,6 +860,10 @@ const Controls = () => {
     );
   };
 
+  console.log("!@#$%$#@!!CHK ID#@!$%^", checklistId);
+
+  if (!checklistId || checklistId === "undefined")
+    return <p>No Checklist Selected</p>;
   if (!allControls?.list_controls?.length)
     return (
       <Card className="flex-1 h-full flex flex-col items-center">
@@ -898,7 +884,7 @@ const Controls = () => {
                   <Button onClick={() => setAdding(true)}>
                     <PlusIcon className="w-5 h-5" /> Add First Control
                   </Button>
-                  <ImportControls />
+                  <ImportControls targetChecklistId={checklistId} />
                   <UploadControls />
                 </div>
               </div>
@@ -937,11 +923,8 @@ const Controls = () => {
                       <FileSpreadsheetIcon className="mr-2 h-4 w-4" />
                       Download as csv
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setShowImportResponsesModal(true)}
-                    >
-                      <UploadIcon className="mr-2 h-4 w-4" />
-                      Upload Responses
+                    <DropdownMenuItem asChild>
+                      <ImportResponsesDialog checklistId={checklistId} />
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -960,7 +943,9 @@ const Controls = () => {
                     id={`edit-app-yes`}
                     className="group-data-[state=checked]:text-muted-foreground/70 cursor-pointer text-right text-sm font-medium"
                     aria-controls="edit-app"
-                    onClick={() => setEditAll(false)}
+                    onClick={() => {
+                      setShowCancelDialog(true);
+                    }}
                   >
                     Cancel
                   </span>
@@ -969,7 +954,12 @@ const Controls = () => {
                 <Switch
                   id="edit-app"
                   checked={editAll}
-                  onCheckedChange={setEditAll}
+                  onCheckedChange={() => {
+                    setEditAll((prev) => !prev);
+                    if (editAll) {
+                      setShowCancelDialog(true);
+                    }
+                  }}
                   aria-labelledby={`edit-app-yes edit-app-no`}
                   className="focus-visible:border-ring-green-600 dark:focus-visible:border-ring-green-400 focus-visible:ring-green-600/20 data-[state=checked]:bg-green-600 dark:focus-visible:ring-green-400/40 dark:data-[state=checked]:bg-green-400"
                 />
@@ -982,6 +972,39 @@ const Controls = () => {
                 >
                   Edit
                 </span>
+
+                <Dialog
+                  open={showCancelDialog}
+                  onOpenChange={setShowCancelDialog}
+                >
+                  <DialogTrigger asChild></DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>
+                        Do You Want to Cancel all your changes
+                      </DialogTitle>
+                    </DialogHeader>
+                    <DialogDescription asChild>
+                      <div>
+                        <p>You will loose all your changes if not saved</p>
+                        <div className="flex gap-3">
+                          <Button
+                            variant="destructive"
+                            onClick={() => {
+                              setEditAll(false);
+                              setShowCancelDialog(false);
+                            }}
+                          >
+                            Yes
+                          </Button>
+                          <DialogClose asChild>
+                            <Button>Keep Editing</Button>
+                          </DialogClose>
+                        </div>
+                      </div>
+                    </DialogDescription>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </div>

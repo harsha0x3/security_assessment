@@ -6,31 +6,52 @@ import { selectAuth } from "@/features/auth/store/authSlice";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import {
-  Sheet,
-  SheetClose,
-  SheetContent,
   SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import { useEffect, useState } from "react";
-import { CheckIcon, Edit3, Edit3Icon, XIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronUpIcon,
+  Edit3,
+  Edit3Icon,
+  Star,
+  XIcon,
+} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useChecklists } from "@/features/checklists/hooks/useChecklists";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import {
   useAddApplicationMutation,
   useUpdateApplicationMutation,
 } from "../store/applicationApiSlice";
 import { toast } from "sonner";
+import {
+  Card,
+  CardTitle,
+  CardAction,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/Card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import ChecklistItem from "@/features/checklists/components/ChecklistItem";
 
 const AppDetailsSheet = ({ selectedApp = null }) => {
+  console.log("SESELCTED APP IN SHEET", selectedApp);
   const user = useSelector(selectAuth);
   const [isEditing, setIsEditing] = useState(false);
   const isAdmin = user.role === "admin";
   const isNew = isAdmin && !selectedApp;
+
+  const { data: appChecklists } = useChecklists({ appIdProp: selectedApp.id });
+  console.log("APP CHECKLISTS", appChecklists);
 
   const {
     register,
@@ -95,18 +116,19 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
   };
 
   const onSubmit = async (data) => {
-    console.log("DATA IN SHEET", data);
     if (isEditing) {
-      console.log("Editing the app");
       await handleSaveEdit(data);
     } else {
-      console.log("Createing New app");
       await handleNewApp(data);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} id="app_details">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      id="app_details"
+      className="flex flex-col h-full"
+    >
       <SheetHeader>
         <SheetTitle className="">
           <Label htmlFor="name">Application Name</Label>
@@ -117,7 +139,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
               {...register("name", { required: true })}
             />
           ) : (
-            <p className="text-xl text-gray-700">{selectedApp?.name}</p>
+            <p className="text-xl text-primary">{selectedApp?.name}</p>
           )}
           {errors.name && <p className="text-red-500">Name is required</p>}
         </SheetTitle>
@@ -129,172 +151,210 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
       </SheetHeader>
 
       {/* Fields */}
-      <div className="px-4 flex flex-col gap-3 pt-2">
-        <div className="relative border rounded-md px-3 pt-5 pb-2">
-          <Label
-            htmlFor="description"
-            className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
-          >
-            Description:
-          </Label>
-          {isAdmin && (isEditing || isNew) ? (
-            <Textarea
-              className="shadow-none"
-              id="description"
-              {...register("description")}
-            />
-          ) : (
-            <p className="text-sm">{selectedApp?.description || "—"}</p>
+      <ScrollArea>
+        <div className="px-4 flex-1 flex flex-col gap-3 pt-2 overflow-auto">
+          <div className="relative border rounded-md px-3 pt-5 pb-2">
+            <Label
+              htmlFor="description"
+              className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
+            >
+              Description:
+            </Label>
+            {isAdmin && (isEditing || isNew) ? (
+              <Textarea
+                className="shadow-none"
+                id="description"
+                {...register("description")}
+              />
+            ) : (
+              <p className="text-sm">{selectedApp?.description || "—"}</p>
+            )}
+          </div>
+
+          <div className="relative border rounded-md px-3 pt-5 pb-2">
+            <Label
+              htmlFor="owner_name"
+              className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
+            >
+              Owner Name
+            </Label>
+            {isAdmin && (isEditing || isNew) ? (
+              <Input
+                className="shadow-none"
+                id="owner_name"
+                {...register("owner_name")}
+              />
+            ) : (
+              <p className="text-sm">{selectedApp?.owner_name || "—"}</p>
+            )}
+          </div>
+
+          <div className="relative border rounded-md px-3 pt-5 pb-2">
+            <Label
+              htmlFor="provider_name"
+              className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
+            >
+              Provider / Vendor
+            </Label>
+            {isAdmin && (isEditing || isNew) ? (
+              <Input
+                className="shadow-none"
+                id="provider_name"
+                {...register("provider_name")}
+              />
+            ) : (
+              <p className="text-sm">{selectedApp?.provider_name || "—"}</p>
+            )}
+          </div>
+
+          <div className="relative border rounded-md px-3 pt-5 pb-2">
+            <Label
+              htmlFor="platform"
+              className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
+            >
+              Platform
+            </Label>
+            {isAdmin && (isEditing || isNew) ? (
+              <Input
+                className="shadow-none"
+                id="platform"
+                {...register("platform")}
+              />
+            ) : (
+              <p className="text-sm">{selectedApp?.platform || "—"}</p>
+            )}
+          </div>
+
+          <div className="relative border rounded-md px-3 pt-5 pb-2">
+            <Label
+              htmlFor="region"
+              className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
+            >
+              Region
+            </Label>
+            {isAdmin && (isEditing || isNew) ? (
+              <Input
+                className="shadow-none"
+                id="region"
+                {...register("region")}
+              />
+            ) : (
+              <p className="text-sm">{selectedApp?.region || "—"}</p>
+            )}
+          </div>
+
+          <div className="relative border rounded-md px-3 pt-5 pb-2">
+            <Label
+              htmlFor="app_tech"
+              className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
+            >
+              App Technology
+            </Label>
+            {isAdmin && (isEditing || isNew) ? (
+              <Input
+                className="shadow-none"
+                id="app_tech"
+                {...register("app_tech")}
+              />
+            ) : (
+              <p className="text-sm">{selectedApp?.app_tech || "—"}</p>
+            )}
+          </div>
+
+          <div className="relative border rounded-md px-3 pt-5 pb-2">
+            <Label
+              htmlFor="infra_host"
+              className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
+            >
+              Infra Host
+            </Label>
+            {isAdmin && (isEditing || isNew) ? (
+              <Input
+                className="shadow-none"
+                id="infra_host"
+                {...register("infra_host")}
+              />
+            ) : (
+              <p className="text-sm">{selectedApp?.infra_host || "—"}</p>
+            )}
+          </div>
+
+          <div className="relative border rounded-md px-3 pt-5 pb-2">
+            <Label
+              htmlFor="department"
+              className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
+            >
+              Department
+            </Label>
+            {isAdmin && (isEditing || isNew) ? (
+              <Input
+                className="shadow-none"
+                id="department"
+                {...register("department")}
+              />
+            ) : (
+              <p className="text-sm">{selectedApp?.department || "—"}</p>
+            )}
+          </div>
+
+          <div className="relative border rounded-md px-3 pt-5 pb-2">
+            <Label
+              htmlFor="created_at"
+              className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
+            >
+              Created On
+            </Label>
+
+            <p className="text-sm">{selectedApp?.created_at || "—"}</p>
+          </div>
+          <div className="relative border rounded-md px-3 pt-5 pb-2">
+            <Label
+              htmlFor="updated_at"
+              className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
+            >
+              Updated On
+            </Label>
+
+            <p className="text-sm">{selectedApp?.updated_at || "—"}</p>
+          </div>
+          {!isNew && !isEditing && (
+            <Card>
+              <Collapsible>
+                <div className="flex items-center justify-between px-6 py-3">
+                  <CardTitle>Show App checklists: </CardTitle>
+                  <CardDescription asChild>
+                    <p>{`Total Checklists: ${
+                      appChecklists?.total_count || 0
+                    }`}</p>
+                  </CardDescription>
+                  <CardAction>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <span className="[[data-state=open]>&]:hidden">
+                          Show
+                        </span>
+                        <span className="[[data-state=closed]>&]:hidden">
+                          Hide
+                        </span>
+                        <ChevronUpIcon className="[[data-state=closed]>&]:rotate-180" />
+                      </Button>
+                    </CollapsibleTrigger>
+                  </CardAction>
+                </div>
+                <CollapsibleContent>
+                  <CardContent>
+                    {appChecklists &&
+                      appChecklists.checklists &&
+                      appChecklists.checklists.map((chk) => (
+                        <ChecklistItem checklist={chk} />
+                      ))}
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
           )}
         </div>
-
-        <div className="relative border rounded-md px-3 pt-5 pb-2">
-          <Label
-            htmlFor="owner_name"
-            className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
-          >
-            Owner Name
-          </Label>
-          {isAdmin && (isEditing || isNew) ? (
-            <Input
-              className="shadow-none"
-              id="owner_name"
-              {...register("owner_name")}
-            />
-          ) : (
-            <p className="text-sm">{selectedApp?.owner_name || "—"}</p>
-          )}
-        </div>
-
-        <div className="relative border rounded-md px-3 pt-5 pb-2">
-          <Label
-            htmlFor="provider_name"
-            className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
-          >
-            Provider / Vendor
-          </Label>
-          {isAdmin && (isEditing || isNew) ? (
-            <Input
-              className="shadow-none"
-              id="provider_name"
-              {...register("provider_name")}
-            />
-          ) : (
-            <p className="text-sm">{selectedApp?.provider_name || "—"}</p>
-          )}
-        </div>
-
-        <div className="relative border rounded-md px-3 pt-5 pb-2">
-          <Label
-            htmlFor="platform"
-            className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
-          >
-            Platform
-          </Label>
-          {isAdmin && (isEditing || isNew) ? (
-            <Input
-              className="shadow-none"
-              id="platform"
-              {...register("platform")}
-            />
-          ) : (
-            <p className="text-sm">{selectedApp?.platform || "—"}</p>
-          )}
-        </div>
-
-        <div className="relative border rounded-md px-3 pt-5 pb-2">
-          <Label
-            htmlFor="region"
-            className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
-          >
-            Region
-          </Label>
-          {isAdmin && (isEditing || isNew) ? (
-            <Input
-              className="shadow-none"
-              id="region"
-              {...register("region")}
-            />
-          ) : (
-            <p className="text-sm">{selectedApp?.region || "—"}</p>
-          )}
-        </div>
-
-        <div className="relative border rounded-md px-3 pt-5 pb-2">
-          <Label
-            htmlFor="app_tech"
-            className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
-          >
-            App Technology
-          </Label>
-          {isAdmin && (isEditing || isNew) ? (
-            <Input
-              className="shadow-none"
-              id="app_tech"
-              {...register("app_tech")}
-            />
-          ) : (
-            <p className="text-sm">{selectedApp?.app_tech || "—"}</p>
-          )}
-        </div>
-
-        <div className="relative border rounded-md px-3 pt-5 pb-2">
-          <Label
-            htmlFor="infra_host"
-            className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
-          >
-            Infra Host
-          </Label>
-          {isAdmin && (isEditing || isNew) ? (
-            <Input
-              className="shadow-none"
-              id="infra_host"
-              {...register("infra_host")}
-            />
-          ) : (
-            <p className="text-sm">{selectedApp?.infra_host || "—"}</p>
-          )}
-        </div>
-
-        <div className="relative border rounded-md px-3 pt-5 pb-2">
-          <Label
-            htmlFor="department"
-            className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
-          >
-            Department
-          </Label>
-          {isAdmin && (isEditing || isNew) ? (
-            <Input
-              className="shadow-none"
-              id="department"
-              {...register("department")}
-            />
-          ) : (
-            <p className="text-sm">{selectedApp?.department || "—"}</p>
-          )}
-        </div>
-
-        <div className="relative border rounded-md px-3 pt-5 pb-2">
-          <Label
-            htmlFor="created_at"
-            className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
-          >
-            Created On
-          </Label>
-
-          <p className="text-sm">{selectedApp?.created_at || "—"}</p>
-        </div>
-        <div className="relative border rounded-md px-3 pt-5 pb-2">
-          <Label
-            htmlFor="updated_at"
-            className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
-          >
-            Updated On
-          </Label>
-
-          <p className="text-sm">{selectedApp?.updated_at || "—"}</p>
-        </div>
-      </div>
+      </ScrollArea>
 
       <SheetFooter>
         <div className="flex gap-2 items-center">

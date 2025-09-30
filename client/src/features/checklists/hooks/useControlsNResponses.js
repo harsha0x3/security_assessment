@@ -1,12 +1,9 @@
 import { useSearchParams } from "react-router-dom";
-import { useSelector } from "react-redux";
 
-import { selectCurrentChecklist } from "@/features/checklists/store/checklistsSlice";
 import { useGetAllControlsWithResponsesQuery } from "@/features/checklists/store/controlsApiSlice";
 
 export const useControlsNResponses = (checklistId) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const currentChecklist = useSelector(selectCurrentChecklist);
   const controlsPage = parseInt(searchParams.get("controlsPage") || "1", 10);
   const controlsPageSize = parseInt(
     searchParams.get("controlsPageSize") || "10",

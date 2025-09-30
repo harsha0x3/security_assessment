@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,16 +6,20 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useImportResposesMutation } from "@/features/checklists/store/responsesApiSlice";
 import { toast } from "react-toastify";
-import { Upload } from "lucide-react";
+import { Upload, ImportIcon, UploadIcon } from "lucide-react";
 
 const ImportResponsesDialog = ({ checklistId, open, onClose }) => {
   const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [importResponses, { isLoading, error }] = useImportResposesMutation();
+  useEffect(() => {
+    console.log("FILE::::::::", file);
+  }, [file]);
 
   const handleFileSelect = (file) => {
     // Validate file type
@@ -64,10 +68,7 @@ const ImportResponsesDialog = ({ checklistId, open, onClose }) => {
   const handleImport = async () => {
     if (!file) return alert("Please select a CSV file");
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      await importResponses({ checklistId, payload: formData }).unwrap();
+      await importResponses({ checklistId, inputFile: file }).unwrap();
       toast.info("Responses imported successfully!");
       setFile(null);
       onClose();
@@ -79,9 +80,15 @@ const ImportResponsesDialog = ({ checklistId, open, onClose }) => {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" className="p-2">
+          <UploadIcon />
+          Upload responses
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Import Responses</DialogTitle>
+          <DialogTitle>Upload Responses</DialogTitle>
         </DialogHeader>
         <DialogDescription>
           Upload a CSV or Excel file to import responses into this checklist.

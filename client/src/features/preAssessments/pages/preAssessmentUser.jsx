@@ -89,15 +89,15 @@ const PreAssessmentUser = () => {
           )}
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-auto flex justify-center">
-        <ScrollArea className="w-full max-w-4xl">
-          <PreAssessmentForm
-            assessment={currentAssessment}
-            questionnaire={questionnaireFetched ? questionnaire : []}
-            subResponses={[]} // empty array means no previous answers
-            onSubmit={handleSubmit}
-          />
-        </ScrollArea>
+
+      {/* Scrollable form area */}
+      <CardContent className="flex-1 overflow-y-auto flex justify-center">
+        <PreAssessmentForm
+          assessment={currentAssessment}
+          questionnaire={questionnaireFetched ? questionnaire : []}
+          subResponses={[]} // empty array = no previous answers
+          onSubmit={handleSubmit}
+        />
       </CardContent>
     </Card>
   );

@@ -33,6 +33,11 @@ export function AppsCombobox({
     (item) => item.value === selectedValue
   )?.label;
 
+  console.log("VALUES IN COMBO", items);
+
+  console.log(
+    `SELECED LABEL INCOM - ${selectedLabel}, slected Value - ${selectedValue}`
+  );
   const handleSelect = (itemValue) => {
     // Find the actual item to make sure we're passing the correct value
     const selectedItem = items.find((item) => item.value === itemValue);

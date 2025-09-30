@@ -33,11 +33,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+
+import { selectCurrentChecklist } from "@/features/checklists/store/checklistsSlice";
 
 export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
   const { logout, selectUser } = useAuth();
@@ -45,22 +42,32 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
   const location = useLocation();
   const navigate = useNavigate();
   const currentApp = useSelector(selectCurrentApp);
+  const currentChecklist = useSelector(selectCurrentChecklist);
   const userInfo = selectUser();
+  const searchParams = location.search;
   const { theme, setTheme } = useTheme();
 
   const navigationItems = [
-    { name: "Applications", path: "/applications", icon: LayoutGrid },
+    {
+      name: "Applications",
+      path: `/applications${searchParams}`,
+      icon: LayoutGrid,
+    },
     {
       name: "Checklists",
-      path: `/${currentApp?.appId}/checklists`,
+      path: `/${currentApp?.appId}/checklists/${currentChecklist?.checklistId}${searchParams}`,
       icon: CheckSquare,
     },
     ...(userInfo && userInfo.role === "admin"
-      ? [{ name: "Add Users", path: "/addUsers", icon: Users }]
+      ? [{ name: "Add Users", path: `/addUsers${searchParams}`, icon: Users }]
       : []),
-    { name: "Profile", path: "/profile", icon: User },
+    { name: "Profile", path: `/profile${searchParams}`, icon: User },
     { name: "Trash", path: "/trash", icon: Trash },
-    { name: "Pre Assessment", path: "/pre-assessment", icon: ClipboardCheck },
+    {
+      name: "Pre Assessment",
+      path: `/pre-assessment${searchParams}`,
+      icon: ClipboardCheck,
+    },
   ];
 
   const handleLogout = async () => {
@@ -126,19 +133,24 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="w-full flex items-center justify-start gap-2"
+                className="w-full flex items-center py-5 gap-2"
               >
-                <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-medium text-sm">
-                    {userInfo?.firstName?.[0] || userInfo?.username?.[0] || "U"}
-                  </span>
+                <div>
+                  <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-medium text-sm">
+                      {userInfo?.firstName?.[0] ||
+                        userInfo?.username?.[0] ||
+                        "U"}
+                    </span>
+                  </div>
                 </div>
+
                 {!isCollapsed && (
-                  <div className="flex flex-col text-left">
+                  <div className="flex flex-col text-left flex-wrap truncate">
                     <span className="text-sm font-medium">
                       {userInfo?.username}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground ">
                       {userInfo?.email}
                     </span>
                   </div>
@@ -153,7 +165,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
                   Settings
                 </DropdownMenuItem>
                 {/* Theme switcher */}
-                <DropdownMenuItem className="flex flex-col items-start gap-2">
+                <DropdownMenuLabel className="flex flex-col items-start gap-2 hover:none">
                   <span className="text-xs font-medium text-muted-foreground">
                     Theme
                   </span>
@@ -165,22 +177,18 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
                         t === "light" ? Sun : t === "dark" ? Moon : Laptop;
 
                       return (
-                        <button
+                        <Button
                           key={t}
                           onClick={() => setTheme(t)}
-                          className={`flex items-center gap-1 px-2 py-1 rounded-md text-sm transition-colors ${
-                            isActive
-                              ? "bg-accent text-accent-foreground"
-                              : "hover:bg-accent/20 text-muted-foreground"
-                          }`}
+                          variant={isActive ? "default" : "ghost"}
                         >
                           <Icon className="w-4 h-4" />
                           {t.charAt(0).toUpperCase() + t.slice(1)}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
-                </DropdownMenuItem>
+                </DropdownMenuLabel>
 
                 <DropdownMenuItem onClick={handleLogout}>
                   Logout

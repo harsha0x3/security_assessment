@@ -150,12 +150,57 @@ const applicationSlice = createSlice({
       console.log("NO PAYLOAD IN SET CURRENT APP", action.payload);
       state.currentApp = { ...initialState.currentApp };
     },
+
+    setCurrentApp: (state, action) => {
+      if (action.payload) {
+        console.log("PAYLOAD IN SET CURRENT APP", action.payload);
+        const {
+          id,
+          name,
+          description,
+          platform,
+          region,
+          owner_name,
+          provider_name,
+          infra_host,
+          app_tech,
+          is_completed,
+          is_active,
+          priority,
+          department,
+        } = action.payload;
+
+        const formattedData = {
+          appId: id,
+          name,
+          description,
+          platform,
+          region,
+          ownerName: owner_name,
+          providerName: provider_name,
+          infraHost: infra_host,
+          appTech: app_tech,
+          isCompleted: is_completed,
+          isActive: is_active,
+          priority,
+          department,
+        };
+
+        state.currentApp = formattedData;
+      }
+    },
   },
 });
 
 export const loadAllApps = (state) => state.applications.apps;
 export const selectCurrentApp = (state) => state.applications.currentApp;
-export const { addApp, removeApp, updateApp, loadApps, setCurrentApplication } =
-  applicationSlice.actions;
+export const {
+  addApp,
+  removeApp,
+  updateApp,
+  loadApps,
+  setCurrentApplication,
+  setCurrentApp,
+} = applicationSlice.actions;
 
 export default applicationSlice.reducer;

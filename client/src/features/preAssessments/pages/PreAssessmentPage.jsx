@@ -38,7 +38,7 @@ const PreAssessmentPage = () => {
 
       {/* Bottom Card (fills remaining height, scrolls internally) */}
       <Card className="flex-1 min-h-0 overflow-hidden">
-        <CardContent className="h-full overflow-y-auto p-2">
+        <CardContent className=" p-2">
           <Outlet />
         </CardContent>
       </Card>

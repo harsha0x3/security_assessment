@@ -58,22 +58,59 @@ const AddUsers = () => {
         header: "Actions",
         cell: ({ row }) => (
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setSelectedUser(row.original)}
-              disabled={!row.original.mfa_enabled}
-            >
-              View MFA
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSelectedUser(row.original);
-                setShowEditProfile(true);
-              }}
-            >
-              Edit User Profile
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedUser(row.original)}
+                  disabled={!row.original.mfa_enabled}
+                >
+                  View MFA
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{`MFA for ${row.original?.username}`}</DialogTitle>
+                </DialogHeader>
+                {row.original?.mfa_enabled ? (
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                        row.original.mfa_uri
+                      )}`}
+                      alt="MFA QR"
+                    />
+                    <p className="text-sm text-gray-600 mt-2 break-all">
+                      {row.original.mfa_uri}
+                    </p>
+                  </div>
+                ) : (
+                  <p>This user does not have MFA enabled.</p>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedUser(row.original);
+                    setShowEditProfile(true);
+                  }}
+                >
+                  Edit User Profile
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="p-0">
+                <DialogHeader>
+                  <DialogTitle>
+                    {`Edit Profile For user - ${row.original.username}`}
+                  </DialogTitle>
+                  <Profile userDetails={row.original} />
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
           </div>
         ),
       },

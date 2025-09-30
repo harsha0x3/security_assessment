@@ -11,7 +11,9 @@ const LoginPage = () => {
   const isAuthenticated = auth.isAuthenticated;
 
   // Get the intended destination or default to dashboard
-  const from = location.state?.from?.pathname || "/applications";
+  const fromPath = location.state?.from?.pathname || "/applications";
+  const fromSearch = location.state?.from?.search;
+  const from = `${fromPath}${fromSearch}`;
 
   useEffect(() => {
     if (isAuthenticated) {

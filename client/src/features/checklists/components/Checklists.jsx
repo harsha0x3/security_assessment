@@ -1,19 +1,13 @@
 // Updated Checklists component with better layout integration
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
-import {
-  setCurrentApplication,
-  loadAllApps,
-} from "../../applications/store/applicationSlice";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { setCurrentApp } from "../../applications/store/applicationSlice";
 import { selectAuth } from "../../auth/store/authSlice";
 import { AppsCombobox } from "@/features/applications/components/applicationCombobox";
 import { ChecklistCombobox } from "@/features/checklists/components/ChecklistCombobox";
 
-import {
-  setCurrentChecklist,
-  selectAllChecklists,
-} from "../store/checklistsSlice";
+import { setCurrentChecklist } from "../store/checklistsSlice";
 import { useApplications } from "@/features/applications/hooks/useApplications";
 import {
   selectAppSearchTerm,
@@ -24,16 +18,7 @@ import {
   useDeleteChecklistMutation,
   usePatchChecklistMutation,
 } from "../store/checklistsApiSlice";
-import AssignUsersModal from "../../userManagement/components/AssignUsersModal";
-import {
-  Plus,
-  Users,
-  CheckSquare,
-  CheckCircle2,
-  EllipsisVertical,
-  Star,
-  PlusIcon,
-} from "lucide-react";
+import { CheckSquare, PlusIcon } from "lucide-react";
 import { toast } from "react-toastify";
 
 import {
@@ -44,38 +29,27 @@ import { useChecklists } from "@/features/checklists/hooks/useChecklists";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/label";
 import ChecklistFilters from "./ChecklistFilters";
-import CreateChecklist from "./CreateChecklist";
 
 const Checklists = () => {
-  const { currentApp } = useApplications();
+  const { currentApp, data: appsData } = useApplications();
+  console.log("APPS DARTA IJN CHK", appsData);
+  const apps = useMemo(() => appsData?.apps ?? [], [appsData]);
 
-  const {
-    updateSearchParams: updateCListSearchParams,
-    cListSortBy,
-    cListSortOrder,
-    data: allChecklists,
-  } = useChecklists();
+  const { data: allChecklists } = useChecklists();
 
   const { appId: paramAppId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const apps = useSelector(loadAllApps);
-  const [selectedAppId, setSelectedAppId] = useState(
-    paramAppId || currentApp?.appId
-  );
   const { checklistId: paramChecklistId } = useParams();
-  const [selectedChecklistId, setSelectedChecklistId] =
-    useState(paramChecklistId);
   const [deleteChecklist, { isLoading: isDeleting, error: deleteError }] =
     useDeleteChecklistMutation();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // Modal state
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [checklistType, setChecklistType] = useState("");
   const [customChecklist, setCustomChecklist] = useState("");
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [showChecklistsFilters, setShowChecklistsFilter] = useState(false);
   const [newPriority, setNewPriority] = useState("Medium");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editChecklistData, setEditChecklistData] = useState({
@@ -91,27 +65,21 @@ const Checklists = () => {
   const user = useSelector(selectAuth);
   const [updateChecklist] = usePatchChecklistMutation();
 
-  const toggleMenu = (id) => {
-    setOpenMenuId(openMenuId === id ? null : id);
-  };
-
   // Handle app tab click
   const handleSelectApp = (app) => {
-    setSelectedAppId(app.appId);
-    dispatch(setCurrentApplication({ appId: app.appId }));
-    setSelectedChecklistId(null);
-    navigate(`/${app.appId}/checklists`);
+    dispatch(setCurrentApp(app));
+    const appPage = searchParams.get("appPage") || 1;
+    navigate(`/${app.id}/checklists?appPage=${appPage}`);
   };
 
   // Handle checklist click
   const handleSelectChecklist = (chk) => {
     dispatch(setCurrentChecklist({ checklistId: chk.id }));
-    setSelectedChecklistId(chk.id);
-    navigate(`/${selectedAppId}/checklists/${chk.id}`);
+    const appPage = searchParams.get("appPage") || 1;
+    navigate(`/${paramAppId}/checklists/${chk.id}?appPage=${appPage}`);
   };
 
   const handleDeleteChecklist = async (checklistId) => {
-    setOpenMenuId(null);
     try {
       await deleteChecklist(checklistId).unwrap();
       toast.success("Checklist deleted successfully");
@@ -120,13 +88,7 @@ const Checklists = () => {
     }
   };
 
-  const handleAssignUsersFromCombobox = (checklistId) => {
-    setSelectedChecklistId(checklistId);
-    setIsAssignModalOpen(true);
-  };
-
   const handleEditChecklist = (chk) => {
-    setOpenMenuId(null);
     setEditChecklistData({
       checklistId: chk.id,
       checklistType: chk.checklist_type,
@@ -146,7 +108,7 @@ const Checklists = () => {
         priority: newPriority ? priorityMap[newPriority] : null,
       };
       await addChecklist({
-        appId: selectedAppId,
+        appId: paramAppId,
         payload,
       }).unwrap();
 
@@ -172,10 +134,13 @@ const Checklists = () => {
 
         <div className="relative flex-col flex items-center">
           <AppsCombobox
-            items={apps.map((app) => ({ value: app.appId, label: app.name }))}
-            selectedValue={selectedAppId}
+            items={apps.map((app) => ({
+              value: app.id,
+              label: app.name,
+            }))}
+            selectedValue={paramAppId}
             onSelect={(value) => {
-              const app = apps.find((a) => a.appId === value);
+              const app = apps.find((a) => a.id === value);
               if (app) handleSelectApp(app);
             }}
             placeHolder="Select an App"
@@ -191,11 +156,10 @@ const Checklists = () => {
         <div className="relative flex-col flex items-center">
           <ChecklistCombobox
             checklists={allChecklists?.checklists}
-            selectedChecklistId={selectedChecklistId}
+            selectedChecklistId={paramChecklistId}
             onSelect={handleSelectChecklist}
             onEdit={handleEditChecklist}
             onDelete={handleDeleteChecklist}
-            onAssignUsers={handleAssignUsersFromCombobox}
             placeHolder="Select a checklist..."
             searchValue={checklistSearchTerm}
             onSearchValueChange={(val) => dispatch(setChecklistSearchTerm(val))}
@@ -212,7 +176,7 @@ const Checklists = () => {
 
           {user.role === "admin" && (
             <div className="">
-              <Button variant={"secondary"} onClick={() => setShowModal(true)}>
+              <Button onClick={() => setShowModal(true)}>
                 <PlusIcon className="w-4 h-4 mr-2" />
                 Add Checklist
               </Button>
@@ -225,7 +189,7 @@ const Checklists = () => {
       <div className="bg-background flex-1 overflow-hidden rounded-lg shadow">
         {/* Checklist Content */}
 
-        {!selectedChecklistId && (
+        {!paramChecklistId && (
           <div className="p-1">
             <div className="text-center py-12">
               <CheckSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -240,13 +204,6 @@ const Checklists = () => {
         )}
       </div>
 
-      {/* Assign Users Modal */}
-      <AssignUsersModal
-        isOpen={isAssignModalOpen}
-        onClose={() => setIsAssignModalOpen(false)}
-        checklistId={selectedChecklistId}
-      />
-
       {/* Add Checklist Modal */}
       {/* <CreateChecklist /> */}
       {showModal && (
@@ -257,9 +214,9 @@ const Checklists = () => {
             </h2>
             <form onSubmit={handleAddChecklist} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <Label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Checklist Type
-                </label>
+                </Label>
                 <select
                   value={checklistType}
                   onChange={(e) => setChecklistType(e.target.value)}
@@ -278,9 +235,9 @@ const Checklists = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <Label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Priority
-                </label>
+                </Label>
                 <select
                   value={newPriority}
                   onChange={(e) => setNewPriority(e.target.value)}
@@ -292,21 +249,13 @@ const Checklists = () => {
                     </option>
                   ))}
                 </select>
-                {/* <input
-                  type="text"
-                  value={newPriority}
-                  onChange={(e) => setNewPriority(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter custom checklist name"
-                  required
-                /> */}
               </div>
 
               {checklistType === "Other" && (
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  <Label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                     Custom Checklist Name
-                  </label>
+                  </Label>
                   <input
                     type="text"
                     value={customChecklist}
@@ -370,9 +319,9 @@ const Checklists = () => {
               }}
             >
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <Label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Checklist Name
-                </label>
+                </Label>
                 <input
                   type="text"
                   value={editChecklistData.checklistType}
@@ -388,9 +337,9 @@ const Checklists = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <Label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Priority
-                </label>
+                </Label>
                 <select
                   value={editChecklistData.priority}
                   onChange={(e) =>

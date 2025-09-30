@@ -6,15 +6,13 @@ import {
   loadChecklists,
   setCurrentChecklist,
 } from "@/features/checklists/store/checklistsSlice";
-import { selectCurrentApp } from "@/features/applications/store/applicationSlice";
 import { selectChecklistSearchTerm } from "@/store/appSlices/filtersSlice";
 import { useGetAllChecklistsQuery } from "@/features/checklists/store/checklistsApiSlice";
 
-export const useChecklists = () => {
+export const useChecklists = ({ appIdProp = null } = {}) => {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
   const { appId: paramAppId } = useParams();
-  const currentApp = useSelector(selectCurrentApp);
 
   const cListPage = parseInt(searchParams.get("cListPage") || "1", 10);
   const cListPageSize = parseInt(searchParams.get("cListPageSize") || "10", 10);
@@ -29,7 +27,7 @@ export const useChecklists = () => {
 
   const { data, isSuccess, isError, error } = useGetAllChecklistsQuery(
     {
-      appId: currentApp?.appId ?? paramAppId,
+      appId: paramAppId || appIdProp,
       page: cListPage,
       page_size: cListPageSize,
       sort_by: cListSortBy,
@@ -37,7 +35,10 @@ export const useChecklists = () => {
       search: cListSearch || "",
       search_by: cListSearchBy,
     },
-    { skip: !currentApp?.appId || !paramAppId, refetchOnMountOrArgChange: true }
+    {
+      skip: !(paramAppId || appIdProp),
+      refetchOnMountOrArgChange: true,
+    }
   );
 
   // Load checklists into Redux when fetched
@@ -76,9 +77,9 @@ export const useChecklists = () => {
     setSearchParams(newParams);
   };
 
-  const goToPage = (appPage) => {
-    updateSearchParams({ appPage });
-    console.log("APP PAGE RECIEVED TO GOT FUNC", appPage);
+  const goToPage = (cListPage) => {
+    updateSearchParams({ cListPage });
+    console.log("APP PAGE RECIEVED TO GOT FUNC", cListPage);
   };
 
   return {

@@ -39,6 +39,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import AssignUsersModal from "@/features/userManagement/components/AssignUsersModal";
 
 export function ChecklistCombobox({
   checklists,
@@ -114,7 +115,7 @@ export function ChecklistCombobox({
             className="w-full justify-between p-5"
           >
             {selectedChecklist ? (
-              <div className="flex items-center space-x-2 flex-1 truncate">
+              <div className="flex items-center space-x-2 flex-1 truncate text-primary">
                 <span className="truncate">
                   {selectedChecklist.checklist_type}
                 </span>
@@ -219,13 +220,8 @@ export function ChecklistCombobox({
                           <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuGroup>
-                              <DropdownMenuItem
-                                onClick={(e) =>
-                                  handleAssignUsers(checklist.id, e)
-                                }
-                              >
-                                <Users className="mr-2 h-4 w-4" />
-                                Assign Users
+                              <DropdownMenuItem asChild>
+                                <AssignUsersModal checklist={checklist} />
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem

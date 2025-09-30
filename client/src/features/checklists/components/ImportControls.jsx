@@ -16,6 +16,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -65,6 +66,8 @@ const ImportControls = ({ targetChecklistId }) => {
       target_checklist_id: targetChecklistId,
       source_checklist_id: selectedChecklistId,
     };
+
+    console.log("TARGET CHK", targetChecklistId);
 
     try {
       const result = await importControls({ payload }).unwrap();
@@ -134,6 +137,9 @@ const ImportControls = ({ targetChecklistId }) => {
             </div>
           </div>
         </DialogDescription>
+        <DialogFooter>
+          <Button onClick={handleImportSubmit}>Import</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

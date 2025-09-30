@@ -16,11 +16,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Profile = ({ userDetails = null }) => {
   console.log("userDetails", userDetails);
-  const currentUserStore = useSelector(selectAuth);
-  const currentUser = userDetails || currentUserStore;
+  const loggedInUser = useSelector(selectAuth);
+  const currentUser = userDetails || loggedInUser;
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({
     username: currentUser.username || "",
@@ -72,7 +79,7 @@ const Profile = ({ userDetails = null }) => {
   };
 
   return (
-    <Card className="mx-auto">
+    <Card className="max-w-3xl">
       <CardHeader className="flex flex-row justify-between items-center mb-0">
         <CardTitle className="text-xl flex">
           <UserIcon className="w-6 h-6 text-primary" /> Profile
@@ -109,7 +116,7 @@ const Profile = ({ userDetails = null }) => {
         )}
       </CardHeader>
       <CardContent>
-        <div className="max-w-2xl mx-auto p-6 rounded-2xl shadow-lg border border-black">
+        <div className="">
           {errorMsg && (
             <div className="mb-4 p-3 rounded-md bg-red-100 text-red-700 text-sm">
               {errorMsg}
@@ -119,7 +126,7 @@ const Profile = ({ userDetails = null }) => {
           <div className="space-y-4">
             {/* Username */}
             <div>
-              <Label className="text-gray-500 text-sm">Username</Label>
+              <Label className=" text-sm">Username</Label>
               {editMode ? (
                 <Input
                   type="text"
@@ -137,7 +144,7 @@ const Profile = ({ userDetails = null }) => {
 
             {/* Editable Fields */}
             <div>
-              <Label className="text-gray-500 text-sm">First Name</Label>
+              <Label className=" text-sm">First Name</Label>
               {editMode ? (
                 <Input
                   type="text"
@@ -154,7 +161,7 @@ const Profile = ({ userDetails = null }) => {
             </div>
 
             <div>
-              <Label className="text-gray-500 text-sm">Last Name</Label>
+              <Label className=" text-sm">Last Name</Label>
               {editMode ? (
                 <Input
                   type="text"
@@ -171,8 +178,8 @@ const Profile = ({ userDetails = null }) => {
             </div>
 
             <div>
-              <Label className="text-gray-500 text-sm flex items-center gap-1">
-                <Mail className="w-4 h-4 text-gray-500" /> Email
+              <Label className=" text-sm flex items-center gap-1">
+                <Mail className="w-4 h-4 " /> Email
               </Label>
               {editMode ? (
                 <Input
@@ -191,8 +198,8 @@ const Profile = ({ userDetails = null }) => {
             {editMode && (
               <>
                 <div>
-                  <Label className="text-gray-500 text-sm flex items-center gap-1">
-                    <Lock className="w-4 h-4 text-gray-500" /> New Password
+                  <Label className=" text-sm flex items-center gap-1">
+                    <Lock className="w-4 h-4 " /> New Password
                   </Label>
                   <Input
                     type="password"
@@ -205,8 +212,8 @@ const Profile = ({ userDetails = null }) => {
                 </div>
 
                 <div>
-                  <Label className="text-gray-500 text-sm flex items-center gap-1">
-                    <Lock className="w-4 h-4 text-gray-500" /> Confirm Password
+                  <Label className=" text-sm flex items-center gap-1">
+                    <Lock className="w-4 h-4 " /> Confirm Password
                   </Label>
                   <Input
                     type="password"
@@ -226,19 +233,22 @@ const Profile = ({ userDetails = null }) => {
 
             {/* Role - editable only if current user is admin */}
             <div>
-              <Label className="text-gray-500 text-sm flex items-center gap-1">
-                <Shield className="w-4 h-4 text-gray-500" /> Role
+              <Label className=" text-sm flex items-center gap-1">
+                <Shield className="w-4 h-4 " /> Role
               </Label>
-              {editMode && currentUser.role === "admin" ? (
-                <select
-                  name="role"
-                  value={form.role}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+              {editMode && loggedInUser.role === "admin" ? (
+                <Select
+                  value={form.role || "user"}
+                  onValueChange={(value) => setForm({ ...form, role: value })}
                 >
-                  <option value="user">user</option>
-                  <option value="admin">admin</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="User Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
               ) : (
                 <div className="inline-block px-3 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold text-sm">
                   {currentUser.role}

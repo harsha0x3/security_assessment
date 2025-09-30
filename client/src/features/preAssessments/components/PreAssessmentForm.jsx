@@ -107,22 +107,35 @@ const PreAssessmentForm = ({
     }
   };
 
+  useEffect(() => {
+    console.log("ERROESIN FORM SATE", errors.responses);
+  }, [errors]);
+
   return (
-    <div className=" justify-center w-full">
-      <Card className="border-none shadow-none flex flex-col h-full max-w-4xl w-full gap-10">
-        <CardContent className="flex-1 overflow-y-auto pt-2">
+    <Card className="border-none flex flex-1 flex-col h-full max-h-[80vh] mt-2">
+      {/* Scrollable area */}
+      <ScrollArea className="flex-1 overflow-y-auto">
+        <CardContent>
           <TooltipProvider>
             <form
               id="assessment_sub_form"
               onSubmit={onFormSubmit}
-              className="flex flex-col h-full"
+              className="flex flex-col gap-4"
             >
               {questionnaire.length > 0 ? (
-                <Accordion type="multiple" collapsible forceMount>
-                  {questionnaire.map((section) => (
+                <Accordion
+                  type="multiple"
+                  collapsible
+                  forceMount
+                  className="flex flex-col gap-4"
+                >
+                  {questionnaire.map((section, idx) => (
                     <AccordionItem
                       key={section.section.id}
                       value={section.section.id}
+                      className={`${
+                        idx % 2 === 0 ? "bg-accent/40" : ""
+                      } p-1 rounded-md`}
                     >
                       <AccordionTrigger>
                         {section.section.title}
@@ -137,15 +150,15 @@ const PreAssessmentForm = ({
                             <span className="flex gap-2">
                               <strong>{idx + 1}.</strong>
                               {q.question_text}
+                              <span className="text-red-600">*</span>
                             </span>
-
                             <Tooltip open={!!errors?.responses?.[q.id]}>
                               <TooltipTrigger asChild>
                                 <Textarea
                                   id={q.id}
                                   placeholder={q.placeholder ?? "Answer"}
                                   {...register(`responses.${q.id}`, {
-                                    required: true,
+                                    required: "This field is Required",
                                   })}
                                   readOnly={isReadOnly}
                                 />
@@ -168,35 +181,29 @@ const PreAssessmentForm = ({
             </form>
           </TooltipProvider>
         </CardContent>
+      </ScrollArea>
 
-        <CardFooter className="border-t pt-2 pb-0 flex gap-2 justify-center">
-          {!isReadOnly && (
-            <div className="flex gap-3">
-              <Button
-                type="submit"
-                form="assessment_sub_form"
-                className="flex-1"
-              >
-                Submit
-              </Button>
-              <Button
-                onClick={handleSaveDraft}
-                variant="outline"
-                className="flex-1"
-              >
-                Save Draft
-              </Button>
-            </div>
-          )}
-          {isReadOnly && currentUser.role === "admin" && (
-            <AdminAction
-              submissionId={submissionId}
-              currentUser={currentUser}
-            />
-          )}
-        </CardFooter>
-      </Card>
-    </div>
+      {/* Footer stays pinned */}
+      <CardFooter className="flex-shrink-0 border-t">
+        {!isReadOnly && (
+          <div className="flex gap-3 w-full">
+            <Button type="submit" form="assessment_sub_form" className="flex-1">
+              Submit
+            </Button>
+            <Button
+              onClick={handleSaveDraft}
+              variant="outline"
+              className="flex-1"
+            >
+              Save Draft
+            </Button>
+          </div>
+        )}
+        {isReadOnly && currentUser.role === "admin" && (
+          <AdminAction submissionId={submissionId} currentUser={currentUser} />
+        )}
+      </CardFooter>
+    </Card>
   );
 };
 

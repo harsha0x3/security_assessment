@@ -9,35 +9,17 @@ import {
   CardFooter,
   CardTitle,
   CardDescription,
+  CardAction,
 } from "@/components/ui/Card";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { cn } from "@/lib/utils";
+
 import { Label } from "@/components/ui/label";
-import { loadAllApps, setCurrentApplication } from "../store/applicationSlice";
+import {
+  setCurrentApplication,
+  setCurrentApp,
+} from "../store/applicationSlice";
 import { selectAuth } from "@/features/auth/store/authSlice";
-import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  ChevronFirstIcon,
-  ChevronLastIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ListPlusIcon,
-  Search,
-} from "lucide-react";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { ListPlusIcon, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   selectAppSearchTerm,
@@ -57,17 +39,9 @@ import AppPagination from "../components/AppPagination";
 
 const ApplicationsPage = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const {
-    currentApp,
-    appPage,
     appPageSize,
-    appSortBy,
-    appSortOrder,
-    appSearch,
     appSearchBy,
-    goToPage,
-    updateSearchParams,
     data: allAppData,
     totalApps,
   } = useApplications();
@@ -84,9 +58,10 @@ const ApplicationsPage = () => {
   }, [selectedAppId]);
 
   const handleSelectApp = useCallback(
-    (appId) => {
-      setSelectedAppId(appId);
-      dispatch(setCurrentApplication(appId));
+    (app) => {
+      setSelectedAppId(app.id);
+      // dispatch(setCurrentApplication(app.id));
+      dispatch(setCurrentApp(app));
     },
     [dispatch]
   );
@@ -124,10 +99,8 @@ const ApplicationsPage = () => {
                       </TooltipContent>
                     </Tooltip>
 
-                    <SheetContent className="h-full overflow-auto">
-                      <ScrollArea>
-                        <AppDetailsSheet />
-                      </ScrollArea>
+                    <SheetContent className="h-full">
+                      <AppDetailsSheet />
                     </SheetContent>
                   </Sheet>
                 )}
@@ -201,18 +174,18 @@ const ApplicationsPage = () => {
                         <div></div>
                         <Sheet className="">
                           <SheetTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSelectApp(app.id)}
-                            >
-                              Details
-                            </Button>
+                            <CardAction>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSelectApp(app)}
+                              >
+                                Details
+                              </Button>
+                            </CardAction>
                           </SheetTrigger>
-                          <SheetContent className="h-full overflow-auto">
-                            <ScrollArea>
-                              <AppDetailsSheet selectedApp={app} />
-                            </ScrollArea>
+                          <SheetContent className="h-full">
+                            <AppDetailsSheet selectedApp={app} />
                           </SheetContent>
                         </Sheet>
                       </CardFooter>

@@ -5,6 +5,7 @@ import {
   loadApps,
   setCurrentApplication,
   selectCurrentApp,
+  setCurrentApp,
 } from "@/features/applications/store/applicationSlice";
 import { selectAppSearchTerm } from "@/store/appSlices/filtersSlice";
 import { useGetApplicationsQuery } from "@/features/applications/store/applicationApiSlice";
@@ -26,6 +27,8 @@ export const useApplications = () => {
 
   const [lastAppPage, setLastAppPage] = useState(appPage);
 
+  console.log("APP PAGE", appPage);
+
   // API Query
   const { data, isSuccess, isError, error } = useGetApplicationsQuery(
     {
@@ -36,22 +39,18 @@ export const useApplications = () => {
       search: debouncedSearch || "",
       search_by: appSearchBy,
     },
-    { skip: !appSortBy || !appSortOrder, refetchOnMountOrArgChange: true }
+    { refetchOnMountOrArgChange: true }
   );
 
+  console.log("APP DATA in useAPP", data);
   const totalApps = useMemo(() => data?.total_count, [data]);
 
   // Load apps into Redux when fetched
   useEffect(() => {
     if (isSuccess && data) {
       dispatch(loadApps(data));
-
-      // Only set default current app if:
-      // 1. We haven't set an initial app yet
-      // 2. There's no current app selected
-      // 3. There are apps available
       if (!hasSetInitialApp && !currentApp && data?.apps?.length > 0) {
-        dispatch(setCurrentApplication({ appId: data.apps[0].appId }));
+        dispatch(setCurrentApp(data.apps[0]));
         setHasSetInitialApp(true);
       }
     }
@@ -84,11 +83,12 @@ export const useApplications = () => {
       else newParams.set(key, value);
     });
     setSearchParams(newParams);
+    console.log("NEW PARAMS");
   };
 
   const goToPage = (appPage) => {
-    updateSearchParams({ appPage });
     console.log("APP PAGE RECIEVED TO GOT FUNC", appPage);
+    updateSearchParams({ appPage });
   };
 
   return {

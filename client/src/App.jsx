@@ -14,17 +14,15 @@ import { Toaster } from "sonner";
 // Import components
 import LoginPage from "./features/auth/pages/LoginPage";
 import RegisterPage from "./features/auth/pages/RegisterPage";
-import Profile from "./features/userManagement/pages/Profile";
 import RootLayout from "./layouts/RootLayout";
 import ProtectedLayout from "./layouts/ProtectedLayout";
-
-import Applications from "./features/applications/pages/Applications";
-import Controls from "./features/checklists/components/Controls";
-import ChecklistsPage from "./features/checklists/pages/ChecklistsPage";
-import AddUsers from "./features/userManagement/pages/AddUsers";
 import { setError, selectAuth } from "./features/auth/store/authSlice";
 import TrashPage from "./features/trash/pages/TrashPage";
 import ApplicationsPage from "./features/applications/pages/ApplicationsPage";
+import {
+  ChecklistSkeleton,
+  ControlsSkeleton,
+} from "./features/skeletons/ChecklistSkeleton";
 
 function App() {
   const user = useSelector(selectAuth);
@@ -40,6 +38,17 @@ function App() {
   );
   const PreAssessmentSubmissions = lazy(() =>
     import("@/features/preAssessments/pages/PreAssessmentSubmissions")
+  );
+  const ChecklistsPage = lazy(() =>
+    import("@/features/checklists/pages/ChecklistsPage")
+  );
+
+  const AddUsers = lazy(() =>
+    import("@/features/userManagement/pages/AddUsers")
+  );
+  const Profile = lazy(() => import("@/features/userManagement/pages/Profile"));
+  const Controls = lazy(() =>
+    import("@/features/checklists/components/Controls")
   );
 
   const { data, isSuccess } = useGetApplicationsQuery(
@@ -110,16 +119,44 @@ function App() {
           <Route path="/" element={<RootLayout />}>
             <Route index element={<Navigate to={`applications`} replace />} />
             <Route path="applications" element={<ApplicationsPage />} />
-            <Route path=":appId/checklists" element={<ChecklistsPage />}>
-              <Route path=":checklistId" element={<Controls />} />
+            <Route
+              path=":appId/checklists"
+              element={
+                <Suspense fallback={<ChecklistSkeleton />}>
+                  <ChecklistsPage />
+                </Suspense>
+              }
+            >
+              <Route
+                path=":checklistId"
+                element={
+                  <Suspense fallback={<ControlsSkeleton />}>
+                    <Controls />
+                  </Suspense>
+                }
+              />
             </Route>
-            <Route path="addUsers" element={<AddUsers />} />
-            <Route path="profile" element={<Profile />} />
+            <Route
+              path="addUsers"
+              element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  <AddUsers />
+                </Suspense>
+              }
+            />
+            <Route
+              path="profile"
+              element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  <Profile />
+                </Suspense>
+              }
+            />
             <Route path="trash" element={<TrashPage />} />
             <Route
               path="pre-assessment"
               element={
-                <Suspense fallback={<div>Loading...</div>}>
+                <Suspense fallback={<ChecklistSkeleton />}>
                   <PreAssessmentPage />
                 </Suspense>
               }
@@ -128,7 +165,7 @@ function App() {
               <Route
                 path="user"
                 element={
-                  <Suspense fallback={<div>Loading...</div>}>
+                  <Suspense fallback={<ChecklistSkeleton />}>
                     <PreAssessmentUser />
                   </Suspense>
                 }
@@ -136,7 +173,7 @@ function App() {
               <Route
                 path="modify"
                 element={
-                  <Suspense fallback={<div>Loading...</div>}>
+                  <Suspense fallback={<ChecklistSkeleton />}>
                     <PreAssessmentsDash />
                   </Suspense>
                 }
@@ -144,7 +181,7 @@ function App() {
               <Route
                 path="submissions"
                 element={
-                  <Suspense fallback={<div>Loading...</div>}>
+                  <Suspense fallback={<ChecklistSkeleton />}>
                     <PreAssessmentSubmissions />
                   </Suspense>
                 }
