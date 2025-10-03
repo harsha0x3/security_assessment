@@ -11,7 +11,6 @@ import {
   ChevronRightIcon,
 } from "lucide-react";
 import React from "react";
-import { useApplications } from "../hooks/useApplications";
 import {
   Select,
   SelectContent,
@@ -19,9 +18,11 @@ import {
   SelectValue,
   SelectItem,
 } from "@/components/ui/select";
+import { usePreAssessment } from "../hooks/usePreAssessment";
 
-const AppPagination = () => {
-  const { appPage, goToPage, totalApps, appPageSize } = useApplications();
+const PreAssessSubmissionsPagination = () => {
+  const { preAssessPage, totalPreAssessments, preAssessPageSize, goToPage } =
+    usePreAssessment();
 
   return (
     <Pagination>
@@ -42,17 +43,17 @@ const AppPagination = () => {
             size="icon"
             className="rounded-full"
             onClick={() => {
-              if (appPage <= 1) return;
-              goToPage(appPage - 1);
+              if (preAssessPage <= 1) return;
+              goToPage(preAssessPage - 1);
             }}
-            disabled={appPage <= 1}
+            disabled={preAssessPage <= 1}
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </PaginationLink>
         </PaginationItem>
         <PaginationItem>
           <Select
-            value={String(appPage)}
+            value={String(preAssessPage)}
             aria-label="Select page"
             onValueChange={(value) => goToPage(Number(value))}
           >
@@ -65,7 +66,9 @@ const AppPagination = () => {
             </SelectTrigger>
             <SelectContent>
               {Array.from(
-                { length: Math.ceil(totalApps / appPageSize) },
+                {
+                  length: Math.ceil(totalPreAssessments / preAssessPageSize),
+                },
                 (_, i) => i + 1
               ).map((page) => (
                 <SelectItem key={page} value={String(page)}>
@@ -78,10 +81,17 @@ const AppPagination = () => {
         <PaginationItem>
           <PaginationLink
             onClick={() => {
-              if (appPage === Math.ceil(totalApps / appPageSize)) return;
-              goToPage(appPage + 1);
+              if (
+                preAssessPage ===
+                Math.ceil(totalPreAssessments / preAssessPageSize)
+              )
+                return;
+              goToPage(preAssessPage + 1);
             }}
-            disabled={appPage === Math.ceil(totalApps / appPageSize)}
+            disabled={
+              preAssessPage ===
+              Math.ceil(totalPreAssessments / preAssessPageSize)
+            }
             aria-label="Go to next page"
             size="icon"
             className="rounded-full"
@@ -91,7 +101,9 @@ const AppPagination = () => {
         </PaginationItem>
         <PaginationItem>
           <PaginationLink
-            onClick={() => goToPage(Math.ceil(totalApps / appPageSize))}
+            onClick={() =>
+              goToPage(Math.ceil(totalPreAssessments / preAssessPageSize))
+            }
             aria-label="Go to last page"
             size="icon"
             className="rounded-full"
@@ -104,4 +116,4 @@ const AppPagination = () => {
   );
 };
 
-export default AppPagination;
+export default PreAssessSubmissionsPagination;

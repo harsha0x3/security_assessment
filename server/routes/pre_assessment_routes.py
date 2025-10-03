@@ -1,12 +1,6 @@
 from typing import Annotated
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Path,
-    status,
-)
+from fastapi import APIRouter, Depends, HTTPException, Path, status, Query
 from sqlalchemy.orm import Session
 from db.connection import get_db_conn
 from controllers.pre_assessment_controller import (
@@ -25,17 +19,15 @@ from controllers.pre_assessment_controller import (
 )
 from models.schemas.pre_assessment_schema import (
     AssessmentCreate,
-    AssessmentOut,
     SectionCreate,
-    SectionOut,
     QuestionCreate,
-    QuestionOut,
     AnswerCreate,
     SubmissionsOut,
     PreAssessmentEvaluateSchema,
 )
 from models.schemas.crud_schemas import UserOut
 from services.auth.deps import get_current_user
+from models.schemas.params import PreAssessmentParams
 
 router = APIRouter(tags=["PreAssessment"], prefix="/pre-assessment")
 
@@ -174,14 +166,25 @@ async def submit_responses(
     )
 
 
-@router.get("/submissions/assessments", response_model=list[SubmissionsOut])
+@router.get("/submissions/assessments")
 async def get_submissions(
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
+    page: Annotated[int, Query(description="Page Number to be fetched")],
+    search: Annotated[
+        str | None, Query(description="Search string to be searched")
+    ] = None,
 ):
+    params = PreAssessmentParams(
+        search=search, page=page, sort_by="created_at", sort_order="desc"
+    )
     if current_user.role == "admin":
-        return get_assessment_submissions_for_admin(user=current_user, db=db)
-    return get_assessment_submissions_for_user(user_id=current_user.id, db=db)
+        return get_assessment_submissions_for_admin(
+            user=current_user, db=db, params=params
+        )
+    return get_assessment_submissions_for_user(
+        user_id=current_user.id, db=db, params=params
+    )
 
 
 @router.get("/submissions/{submission_id}/responses")

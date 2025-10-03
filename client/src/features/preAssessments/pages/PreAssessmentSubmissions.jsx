@@ -1,7 +1,4 @@
 import {
-  useGetSubmittedAssessmentsQuery,
-  useGetAssessmentQuestionnaireQuery,
-  useGetSubmittedResponsesQuery,
   useLazyGetAssessmentQuestionnaireQuery,
   useLazyGetSubmittedResponsesQuery,
 } from "@/features/preAssessments/store/preAssessmentApiSlice";
@@ -9,8 +6,6 @@ import {
   useReactTable,
   getCoreRowModel,
   flexRender,
-  getPaginationRowModel,
-  getSortedRowModel,
   createColumnHelper,
 } from "@tanstack/react-table";
 
@@ -32,7 +27,7 @@ import {
 } from "../../../components/ui/Card";
 import { Label } from "../../../components/ui/label";
 import { useMemo, useState } from "react";
-import { ChevronLeftIcon } from "lucide-react";
+import { ChevronLeftIcon, SearchIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -47,18 +42,15 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import PreAssessmentForm from "../components/PreAssessmentForm";
+import { usePreAssessment } from "../hooks/usePreAssessment";
+import PreAssessSubmissionsPagination from "../components/PreAssessSubmissionsPagination";
+import { Input } from "@/components/ui/input";
 
 const PreAssessmentSubmissions = () => {
   const colHelper = createColumnHelper();
-  const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
-  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [preAssessSearch, setPreAssessSearch] = useState("");
 
-  const {
-    data: subAssessments,
-    isLoading: fetchingingSubAss,
-    isSuccess: fetchedSubAss,
-    error: subAssError,
-  } = useGetSubmittedAssessmentsQuery();
+  const { data: subAssessments } = usePreAssessment(preAssessSearch);
 
   // const {
   //   data: questionnaire,
@@ -98,8 +90,6 @@ const PreAssessmentSubmissions = () => {
       isSuccess: resFetchedsuccess,
     },
   ] = useLazyGetSubmittedResponsesQuery();
-
-  const [openSubResForm, setOpenSubResForm] = useState(false);
 
   const columns = useMemo(
     () => [
@@ -226,54 +216,76 @@ const PreAssessmentSubmissions = () => {
   );
 
   const table = useReactTable({
-    data: subAssessments ?? [],
+    data: subAssessments?.submissions ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
 
   return (
-    <div className="w-full">
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+    <Card className="flex flex-col flex-1 h-[87vh] border-none shadow-none">
+      <CardHeader className="bg-muted py-1 flex flex-row items-center justify-between">
+        <CardTitle>Submissions</CardTitle>
+        <div className="flex gap-2">
+          <div className="relative max-w-70 min-w-40">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-primary h-4 w-4" />
+            <Input
+              type="text"
+              name="email_or_username"
+              value={preAssessSearch}
+              onChange={(e) => setPreAssessSearch(e.target.value)}
+              placeholder={`Search app by ${"submission id"}`}
+              className="w-full pl-10 pr-3 py-2 border"
+            />
+          </div>
+          <div></div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-y-auto border rounded-md">
+        <ScrollArea className="h-full overflow-auto">
+          <Table className="h-full">
+            <TableHeader>
+              {table.getHeaderGroups().map((hg) => (
+                <TableRow key={hg.id}>
+                  {hg.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow></TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>No contents Available</TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </ScrollArea>
+      </CardContent>
+      <CardFooter>
+        <PreAssessSubmissionsPagination />
+      </CardFooter>
+    </Card>
   );
 };
 

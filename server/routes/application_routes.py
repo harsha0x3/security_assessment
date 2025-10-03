@@ -46,7 +46,7 @@ async def get_applications(
     sort_order: Annotated[Literal["asc", "desc"], Query()] = "desc",
     search: Annotated[str | None, Query()] = None,
     page: Annotated[int, Query()] = 1,
-    page_size: Annotated[int, Query()] = 10,
+    page_size: Annotated[int, Query()] = 15,
     search_by: Annotated[
         Literal[
             "name", "platform", "region", "owner_name", "provider_name", "department"

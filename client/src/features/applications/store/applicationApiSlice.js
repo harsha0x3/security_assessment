@@ -53,7 +53,7 @@ export const applicationApiSlice = apiSlice.injectEndpoints({
         sort_by,
         sort_order,
         page = 1,
-        page_size = 10,
+        page_size = 15,
         search = "",
         search_by = "name",
       }) => {

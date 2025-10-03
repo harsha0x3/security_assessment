@@ -61,7 +61,14 @@ const preAssessmentApiSlice = apiSlice.injectEndpoints({
     }),
 
     getSubmittedAssessments: builder.query({
-      query: () => `/pre-assessment/submissions/assessments`,
+      query: ({ page = 1, search = "" }) => {
+        const params = new URLSearchParams({
+          page,
+          search,
+        });
+
+        return `/pre-assessment/submissions/assessments?${params.toString()}`;
+      },
       providesTags: ["PreAssessmentResponses"],
     }),
 

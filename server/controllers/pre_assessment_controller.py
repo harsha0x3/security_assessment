@@ -4,10 +4,9 @@ from models.pre_assessment.questions import Question
 from models.pre_assessment.sections import Section
 from models.pre_assessment.submissions import Submission
 from models import Application
-from models.schemas.crud_schemas import ApplicationCreate
-
+from models.schemas.params import PreAssessmentParams
 from fastapi import HTTPException, status
-from sqlalchemy import select, and_, desc
+from sqlalchemy import select, desc, asc, func
 from sqlalchemy.orm import Session
 from datetime import date
 from services.notifications.email_notify import send_email
@@ -314,12 +313,42 @@ async def submit_answers(
         )
 
 
-def get_assessment_submissions_for_admin(user: UserOut, db: Session):
+def get_assessment_submissions_for_admin(
+    user: UserOut, db: Session, params: PreAssessmentParams
+):
     try:
         # db.scalars(select(Submission).where(Submission.user_id))
-        stmt = select(Submission)
 
-        submissions = db.scalars(stmt).all()
+        sort_column = getattr(Submission, params.sort_by)
+
+        if params.sort_order == "desc":
+            sort_column = desc(sort_column)
+        else:
+            sort_column = asc(sort_column)
+
+        stmt = select(Submission).order_by(sort_column)
+
+        total_count = db.scalar(select(func.count()).select_from(stmt.subquery()))
+
+        if (
+            params.search
+            and params.search != "null"
+            and params.search_by
+            and params.search.strip() != ""
+        ):
+            search_value = f"%{params.search}%"
+            search_column = getattr(Submission, params.search_by)
+            stmt = stmt.where(search_column.ilike(search_value))
+
+        if params.page >= 1:
+            submissions = db.scalars(
+                stmt.limit(params.page_size).offset(
+                    (params.page_size * params.page - params.page_size)
+                )
+            ).all()
+
+        else:
+            submissions = db.scalars(stmt).all()
 
         result = []
         for sub in submissions:
@@ -337,7 +366,8 @@ def get_assessment_submissions_for_admin(user: UserOut, db: Session):
                 )
             )
 
-        return result
+        return {"total_count": total_count, "submissions": result}
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -345,11 +375,47 @@ def get_assessment_submissions_for_admin(user: UserOut, db: Session):
         )
 
 
-def get_assessment_submissions_for_user(user_id: str, db: Session):
+def get_assessment_submissions_for_user(
+    user_id: str, db: Session, params: PreAssessmentParams
+):
     try:
-        stmt = select(Submission).where(Submission.user_id == user_id)
+        sort_column = getattr(Submission, params.sort_by, None)
+        if not sort_column:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid sort_by field: {params.sort_by}",
+            )
+        if params.sort_order == "desc":
+            sort_column = desc(sort_column)
+        else:
+            sort_column = asc(sort_column)
 
-        submissions = db.scalars(stmt).all()
+        stmt = (
+            select(Submission)
+            .where(Submission.user_id == user_id)
+            .order_by(sort_column)
+        )
+        total_count = db.scalar(select(func.count()).select_from(stmt.subquery()))
+
+        if (
+            params.search
+            and params.search != "null"
+            and params.search_by
+            and params.search.strip() != ""
+        ):
+            search_value = f"%{params.search}%"
+            search_column = getattr(Submission, params.search_by)
+            stmt = stmt.where(search_column.ilike(search_value))
+
+        if params.page >= 1:
+            submissions = db.scalars(
+                stmt.limit(params.page_size).offset(
+                    (params.page_size * params.page - params.page_size)
+                )
+            ).all()
+
+        else:
+            submissions = db.scalars(stmt).all()
 
         result = []
         for sub in submissions:
@@ -367,7 +433,7 @@ def get_assessment_submissions_for_user(user_id: str, db: Session):
                 )
             )
 
-        return result
+        return {"total_count": total_count, "submissions": result}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

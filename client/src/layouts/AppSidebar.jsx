@@ -58,16 +58,15 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
       path: `/${currentApp?.appId}/checklists/${currentChecklist?.checklistId}${searchParams}`,
       icon: CheckSquare,
     },
-    ...(userInfo && userInfo.role === "admin"
-      ? [{ name: "Add Users", path: `/addUsers${searchParams}`, icon: Users }]
-      : []),
-    { name: "Profile", path: `/profile${searchParams}`, icon: User },
-    { name: "Trash", path: "/trash", icon: Trash },
     {
       name: "Pre Assessment",
       path: `/pre-assessment${searchParams}`,
       icon: ClipboardCheck,
     },
+    ...(userInfo && userInfo.role === "admin"
+      ? [{ name: "Add Users", path: `/addUsers${searchParams}`, icon: Users }]
+      : []),
+    { name: "Profile", path: `/profile${searchParams}`, icon: User },
   ];
 
   const handleLogout = async () => {

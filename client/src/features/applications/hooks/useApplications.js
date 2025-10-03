@@ -15,7 +15,7 @@ export const useApplications = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const appPage = parseInt(searchParams.get("appPage") || "1", 10);
-  const appPageSize = parseInt(searchParams.get("appPageSize") || "10", 10);
+  const appPageSize = parseInt(searchParams.get("appPageSize") || "15", 10);
   const appSortBy = searchParams.get("appSortBy") || "created_at";
   const appSortOrder = searchParams.get("appSortOrder") || "desc";
   const appSearchBy = searchParams.get("appSearchBy") || "name";
