@@ -244,7 +244,6 @@ def update_checklist_status(checklist_id: str, user: UserOut, db: Session):
     Check if all controls in the checklist have responses for the given user.
     Update checklist.is_completed accordingly.
     """
-    print("Inside checklist submission")
     checklist = db.get(Checklist, checklist_id)
     if not checklist:
         print(f"Checklist with ID {checklist_id} not found.")
@@ -263,31 +262,25 @@ def update_checklist_status(checklist_id: str, user: UserOut, db: Session):
     # Count responses by this user for these controls
     if user.role == "admin":
         # Admins can see all responses
-        print("Admin user, counting all responses for controls.")
         responses_count = db.scalar(
             select(func.count(UserResponse.id)).where(
                 UserResponse.control_id.in_(control_ids),
             )
         )
     else:
-        print(f"Counting responses for user {user.id} for controls.")
         responses_count = db.scalar(
             select(func.count(UserResponse.id)).where(
                 # UserResponse.user_id == user.id,
                 UserResponse.control_id.in_(control_ids),
             )
         )
-    print(
-        f"Responses count, controls count for checklist {checklist_id}: {responses_count} , {len(control_ids)}"
-    )
+
     checklist.is_completed = responses_count == len(control_ids)
     print(f"Updated checklist status {responses_count == len(control_ids)}")
     db.commit()  # ensures SQLAlchemy tracks the change
     db.refresh(checklist)  # refresh to get the updated state
 
     app = checklist.app
-    print("app in chk controller")
-    print(app)
 
     update_app_completion(app.id, db)
 

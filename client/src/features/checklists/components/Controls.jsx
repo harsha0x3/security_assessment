@@ -124,6 +124,7 @@ const Controls = () => {
   const [sorting, setSorting] = useState([]);
 
   const [saveResponse] = useSaveResponseMutation();
+  const [submitChecklist] = useSubmitChecklistMutation();
   const [addControl] = useAddControlMutation();
   const [updateControl] = useUpdateControlsMutation();
   const [editingControlId, setEditingControlId] = useState(null);
@@ -157,8 +158,16 @@ const Controls = () => {
       toast.promise(
         (async () => {
           console.log("DATA>RESPONSES", data);
+
+          let processed = 0; // track how many responses we saved
+
           for (const r of data.responses) {
-            console.log(":::::SOMETHING r IN DATA", r);
+            if (
+              !(r.current_setting || r.review_comment || r.evidence_file?.[0])
+            ) {
+              continue;
+            }
+
             const form = new FormData();
             form.append("current_setting", r.current_setting);
             form.append("review_comment", r.review_comment);
@@ -171,16 +180,22 @@ const Controls = () => {
               payload: form,
               responseId: r.response_id,
             }).unwrap();
+
+            processed++;
+          }
+
+          if (processed === 0) {
+            return "No responses to save"; // <- explicit return for empty case
           }
 
           setEditAll(false);
           resetRes(data);
-          return "All responses saved";
+          return "All responses saved"; // <- explicit return for processed case
         })(),
         {
           loading: "Saving responses...",
-          success: "Responses saved successfully!",
-          error: "Failed to save responses",
+          success: (msg) => msg, // show returned message
+          error: "Failed to save responses...",
         }
       );
     } catch (err) {
@@ -190,6 +205,7 @@ const Controls = () => {
       console.error("Failed to save responses:", err);
     }
     setSaving(false);
+    setEditAll(false);
   };
 
   // react-hook-form for editing controls
@@ -277,6 +293,40 @@ const Controls = () => {
   const totalControlsPages =
     Math.ceil(allControls?.total_counts?.total_controls / controlsPageSize) ||
     1;
+
+  const total_controls = useMemo(
+    () => allControls?.total_counts?.total_controls || 0,
+    [allControls]
+  );
+  const total_responses = useMemo(
+    () => allControls?.total_counts?.total_responses || 0,
+    [allControls]
+  );
+
+  const progress = useMemo(
+    () => Math.ceil((total_responses / total_controls) * 100 || 0),
+    [total_controls, total_responses]
+  );
+
+  const submitChecklistFinal = async () => {
+    try {
+      toast.promise(
+        (async () => {
+          await submitChecklist({ checklistId }).unwrap();
+        })(),
+        {
+          loading: "Submitting the checklist...",
+          success: "Submitted the checklist", // show returned message
+          error: "Failed to submit the checklist",
+        }
+      );
+    } catch (error) {
+      toast.error("Error submitting checklist", {
+        description: error?.data?.detail,
+      });
+    }
+  };
+  console.log("PROGRESS DETAILS", total_responses, total_controls, progress);
 
   // ✅ stable columns
   const columns = useMemo(
@@ -717,13 +767,13 @@ Response Updated: ${
           width: table.getCenterTotalSize(),
         }}
       >
-        <TableHeader className="">
+        <TableHeader>
           {table.getHeaderGroups().map((hg) => (
-            <TableRow key={hg.id}>
+            <TableRow key={hg.id} className="text-ring">
               {hg.headers.map((header) => (
                 <TableHead
                   key={header.id}
-                  className="group/head relative h-10 select-none last:[&>.cursor-col-resize]:opacity-0"
+                  className="group/head relative h-10 select-none last:[&>.cursor-col-resize]:opacity-0 text-ring text-md font-semibold"
                   {...{
                     colSpan: header.colSpan,
                     style: {
@@ -885,7 +935,7 @@ Response Updated: ${
                     <PlusIcon className="w-5 h-5" /> Add First Control
                   </Button>
                   <ImportControls targetChecklistId={checklistId} />
-                  <UploadControls />
+                  <UploadControls checklistId={checklistId} />
                 </div>
               </div>
             )}
@@ -955,9 +1005,10 @@ Response Updated: ${
                   id="edit-app"
                   checked={editAll}
                   onCheckedChange={() => {
-                    setEditAll((prev) => !prev);
                     if (editAll) {
                       setShowCancelDialog(true);
+                    } else {
+                      setEditAll(true);
                     }
                   }}
                   aria-labelledby={`edit-app-yes edit-app-no`}
@@ -977,7 +1028,6 @@ Response Updated: ${
                   open={showCancelDialog}
                   onOpenChange={setShowCancelDialog}
                 >
-                  <DialogTrigger asChild></DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>
@@ -1019,8 +1069,28 @@ Response Updated: ${
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
 
-        <CardFooter className="p-1 bg-muted rounded-b-lg">
+        <CardFooter className="p-1 bg-muted rounded-b-lg flex flex-row gap-3 justify-between items-center">
+          <Button
+            disabled={total_controls !== total_responses}
+            onClick={submitChecklistFinal}
+          >
+            Submit
+          </Button>
           <ControlsPagination />
+          <div className="flex items-center gap-2 w-[250px]">
+            {/* Progress bar container */}
+            <div className="bg-background rounded-lg h-2 flex-1">
+              <div
+                className="bg-primary h-2 rounded-lg"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+
+            {/* Totals text */}
+            <span className="text-sm font-medium">
+              {total_responses} / {total_controls}
+            </span>
+          </div>
         </CardFooter>
       </Card>
     </TooltipProvider>

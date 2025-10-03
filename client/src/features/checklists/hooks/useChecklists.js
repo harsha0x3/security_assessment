@@ -41,6 +41,8 @@ export const useChecklists = ({ appIdProp = null } = {}) => {
     }
   );
 
+  console.log("APP ID in useChecklist", paramAppId + appIdProp);
+
   // Load checklists into Redux when fetched
   useEffect(() => {
     if (isSuccess && data) {

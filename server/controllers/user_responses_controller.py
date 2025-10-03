@@ -236,7 +236,7 @@ def add_responses_from_csv(
         #         detail="Mismatch between control_id and current_setting counts",
         #     )
 
-        print("DF HEAD", df.head())
+        df = df.dropna(subset=["current_setting", "review_comment"], how="all")
 
         for idx, row in df.iterrows():
             da = {

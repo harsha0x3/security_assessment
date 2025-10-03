@@ -17,6 +17,7 @@ from routes import (
     pre_assess_draft_routes,
     responses_routes,
     pre_assessment_routes,
+    admin_inspect_routes,
 )
 
 
@@ -56,3 +57,4 @@ app.include_router(control_routes.router)
 app.include_router(responses_routes.router)
 app.include_router(pre_assessment_routes.router)
 app.include_router(pre_assess_draft_routes.router)
+app.include_router(admin_inspect_routes.router)

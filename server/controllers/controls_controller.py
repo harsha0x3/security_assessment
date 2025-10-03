@@ -230,7 +230,7 @@ def get_controls_with_responses(
                         UserResponse, and_(UserResponse.control_id == Control.id)
                     )
                     .where(Control.checklist_id == checklist_id)
-                    .order_by(sort_column_by)
+                    .order_by(sort_column_by, asc(Control.control_area))
                     .limit(params.page_size)
                     .offset(params.page * params.page_size - params.page_size)
                 )
@@ -465,6 +465,7 @@ def add_controls_from_file(
 
     errors = []
     new_controls = []
+    df["control_area"] = df["control_area"].ffill()
 
     for index, row in df.iterrows():
         control_data = {
