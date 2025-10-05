@@ -91,6 +91,13 @@ const PreAssessmentSubmissions = () => {
     },
   ] = useLazyGetSubmittedResponsesQuery();
 
+  const isToday = (createdAtDate) => {
+    return (
+      new Date(createdAtDate + "Z").toLocaleDateString() ===
+      new Date().toLocaleDateString()
+    );
+  };
+
   const columns = useMemo(
     () => [
       colHelper.accessor((row) => row.id, {
@@ -127,6 +134,11 @@ const PreAssessmentSubmissions = () => {
         cell: (info) => (
           <div className="font-medium">
             {new Date(info.getValue() + "Z").toLocaleString()}
+            {isToday(info.getValue()) && (
+              <span className="text-xs border border-green-700 bg-green-50 text-green-700 rounded-lg px-2 ml-2">
+                New
+              </span>
+            )}
           </div>
         ),
       }),
@@ -264,7 +276,14 @@ const PreAssessmentSubmissions = () => {
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    className={
+                      isToday(row.original.created_at)
+                        ? "dark:bg-green-200/20 bg-green-200/30"
+                        : ""
+                    }
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
                         {flexRender(

@@ -15,6 +15,7 @@ from db.connection import get_db_conn
 from models.schemas.auth_schemas import LoginRequest, RegisterRequest, UserUpdateRequest
 from models.core.users import User
 from services.auth.deps import get_current_user
+from services.auth.csrf_handler import clear_csrf_cookie
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -106,3 +107,4 @@ def logout_user(response: Response):
     Logs out the user by clearing the JWT cookies.
     """
     clear_jwt_cookies(response)
+    clear_csrf_cookie(response)

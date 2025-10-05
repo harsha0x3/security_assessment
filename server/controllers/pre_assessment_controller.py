@@ -10,6 +10,7 @@ from sqlalchemy import select, desc, asc, func
 from sqlalchemy.orm import Session
 from datetime import date
 from services.notifications.email_notify import send_email
+from .pre_assessment_drafts import delete_draft
 
 from models.schemas.pre_assessment_schema import (
     AssessmentCreate,
@@ -268,11 +269,11 @@ async def submit_answers(
             db.add_all(new_answers)
             db.commit()
 
-            await send_email(
-                subject="Assessment Submission recieved",
-                reciepient=user,
-                message=f"We have recieved your submission on ID {new_submission.id}. Please wait until our team evaluates your submission.",
-            )
+            # await send_email(
+            #     subject="Assessment Submission recieved",
+            #     reciepient=user,
+            #     message=f"We have recieved your submission on ID {new_submission.id}. Please wait until our team evaluates your submission.",
+            # )
             admin = UserOut(
                 id="ad",
                 username="is_assessment_team",
@@ -281,11 +282,13 @@ async def submit_answers(
                 first_name="IS Assessment",
                 last_name="Team",
             )
-            await send_email(
-                subject="Assessment Submission recieved",
-                reciepient=admin,
-                message=f"You have new submission for pre assessment evaulation from {user.first_name}.\n Reference ID: {new_submission.id}. Please evaluate the submission.",
-            )
+            # await send_email(
+            #     subject="Assessment Submission recieved",
+            #     reciepient=admin,
+            #     message=f"You have new submission for pre assessment evaulation from {user.first_name}.\n Reference ID: {new_submission.id}. Please evaluate the submission.",
+            # )
+
+            delete_draft(db, user.id, assessment_id)
 
             return {
                 "submission_id": new_submission.id,
@@ -521,11 +524,11 @@ async def evaluate_pre_assessment(
             else f"""We have evaluated you pre assessment and ready to assess your application.\n {payload.reason}"""
         )
 
-        res = await send_email(
-            subject="Assessment Evaluation update",
-            reciepient=submission.submitted_user,
-            message=f"We have evaluated your assessment submission with ID: {submission.id}.\n {status_message}",
-        )
+        # res = await send_email(
+        #     subject="Assessment Evaluation update",
+        #     reciepient=submission.submitted_user,
+        #     message=f"We have evaluated your assessment submission with ID: {submission.id}.\n {status_message}",
+        # )
 
         db.commit()
         db.refresh(submission)

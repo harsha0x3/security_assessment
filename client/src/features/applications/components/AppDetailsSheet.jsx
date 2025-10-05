@@ -50,7 +50,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
   const isAdmin = user.role === "admin";
   const isNew = isAdmin && !selectedApp;
 
-  const { data: appChecklists } = useChecklists({ appIdProp: selectedApp.id });
+  const { data: appChecklists } = useChecklists({ appIdProp: selectedApp?.id });
   console.log("APP CHECKLISTS", appChecklists);
 
   const {

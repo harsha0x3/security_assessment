@@ -13,6 +13,7 @@ from services.auth.jwt_handler import (
 )
 from models.schemas.crud_schemas import UserOut
 from services.auth.utils import qr_png_data_url
+from services.auth.csrf_handler import set_csrf_cookie
 from dotenv import load_dotenv
 import os
 
@@ -122,6 +123,7 @@ def login_user(
         user_id=user.id, role=user.role, mfa_verified=mfa_verified
     )
     set_jwt_cookies(response=response, access_token=access, refresh_token=refresh)
+    set_csrf_cookie(response)
 
     return user.to_dict_safe()
 
@@ -148,6 +150,7 @@ def refresh_access_token(
     )
 
     set_jwt_cookies(response=response, access_token=access, refresh_token=refresh)
+    set_csrf_cookie(response)
 
     return {
         "msg": "Token Refreshed successfully",

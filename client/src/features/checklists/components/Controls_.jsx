@@ -8,7 +8,7 @@ import { useSaveResponseMutation } from "../store/responsesApiSlice";
 import { useState, useMemo, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { selectAuth } from "../../auth/store/authSlice";
-import { downloadFile } from "@/features/checklists/utils/downloadFile";
+import { downloadFile } from "@/utils/downloadFile";
 import {
   useReactTable,
   getCoreRowModel,

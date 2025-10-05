@@ -35,6 +35,7 @@ app.add_middleware(
         "http://10.160.14.76:8057",
         "http://10.160.14.76:5173",
         "http://localhost:8057",
+        "http://192.168.43.240:8057",
     ],
     allow_methods=["*"],
     allow_headers=["*"],

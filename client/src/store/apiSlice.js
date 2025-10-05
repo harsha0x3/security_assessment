@@ -1,14 +1,31 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { userLogout, loginSuccess } from "@/features/auth/store/authSlice";
 const isProd = import.meta.env.VITE_PROD_ENV === "true";
+import { getCSRFToken } from "@/utils/csrf";
+
+getCSRFToken();
 
 const apiBaseUrl = isProd
   ? "http://10.160.14.76:8060"
-  : "http://127.0.0.1:8000";
+  : "http://localhost:8000";
 
 const baseQueryWithAuth = fetchBaseQuery({
   baseUrl: apiBaseUrl,
   credentials: "include",
+  prepareHeaders: (headers) => {
+    const csrfToken = getCSRFToken();
+    if (csrfToken) {
+      headers.set("X-CSRF-Token", csrfToken);
+    } else {
+      console.error(
+        "::::::::********CSRF token not found***********:::::::::::"
+      );
+    }
+    console.error(":::::FOUND CSRF TOKEN:::::", csrfToken);
+    console.error(":::::HEADERS:::::", headers);
+
+    return headers;
+  },
 });
 
 const baseQueryWithReauth = async (args, api, extraOptions) => {
@@ -28,16 +45,12 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
     );
 
     if (refreshResult.data) {
-      // Token refresh successful, update the store and retry the original request
       api.dispatch(loginSuccess(refreshResult.data));
       result = await baseQueryWithAuth(args, api, extraOptions);
     } else {
-      // Token refresh failed, log out the user
       api.dispatch(userLogout());
     }
   }
-
-  // For all other cases (success, other errors), just return the result
   return result;
 };
 

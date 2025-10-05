@@ -1,4 +1,4 @@
-from fastapi import Cookie, Depends, HTTPException, Request, status
+from fastapi import Cookie, Depends, HTTPException, Request, status, Header
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
@@ -15,21 +15,22 @@ def get_current_user(
     request: Request,
     access_token: str | None = Cookie(default=None),
     db: Session = Depends(get_db_conn),
+    csrf_token: str | None = Cookie(default=None, alias="csrf_token"),
+    csrf_header: str | None = Header(default=None, alias="X-CSRF-Token"),
 ) -> UserOut:
     try:
-        # print("Begin", access_token)
         if access_token:
             payload = decode_access_token(access_token)
 
         elif request.cookies.get("access_token"):
             access_token = request.cookies.get("access_token")
-            print("Sec", access_token)
             payload = decode_access_token(access_token)  # type: ignore
 
         else:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="No access token"
             )
+
     except Exception as e:
         print(f"ERROR IN current User {str(e)}")
         raise HTTPException(
@@ -42,6 +43,28 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user"
         )
+
+    # 🔒 CSRF check (for unsafe methods only)
+    if request.method not in ("GET", "HEAD", "OPTIONS", "TRACE"):
+        if not csrf_token:
+            csrf_token = request.cookies.get("csrf_token")
+            print("INSIDE NOT FOUND CSRF")
+        if not csrf_token:
+            print(" NOPE NOT FOUND INSIDE NOT FOUND CSRF")
+
+        if not csrf_header:
+            print("INSIDE NOT FOUND CSRF HEADER")
+            csrf_header = request.headers.get("X-CSRF-Token")
+
+        if not csrf_header:
+            print(" NOPE NOT FOUND INSIDE NOT FOUND CSRF HEADER")
+
+        if not csrf_token or not csrf_header or csrf_token != csrf_header:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="CSRF token missing or invalid",
+            )
+
     return UserOut.model_validate(user)
 
 

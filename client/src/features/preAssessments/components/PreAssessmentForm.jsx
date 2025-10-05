@@ -79,6 +79,10 @@ const PreAssessmentForm = ({
 
   const onFormSubmit = handleSubmit((data) => {
     if (isReadOnly) return;
+    if (errors?.responses) {
+      toast.error("Please fix the errors in the form before submitting.");
+      return;
+    }
 
     const formatted = Object.entries(data.responses).map(([id, text]) => ({
       question_id: id,
@@ -107,9 +111,48 @@ const PreAssessmentForm = ({
     }
   };
 
+  const [openSections, setOpenSections] = useState([]);
+  const [validationAttempt, setValidationAttempt] = useState(0);
   useEffect(() => {
-    console.log("ERROESIN FORM SATE", errors.responses);
-  }, [errors]);
+    const erroredQuestionIds = Object.keys(errors.responses || {});
+    if (erroredQuestionIds.length === 0) return;
+
+    const erroredSection = questionnaire.find((qItem) =>
+      qItem.questions.some((q) => erroredQuestionIds.includes(q.id))
+    );
+
+    if (!erroredSection) return;
+
+    const sectionId = `${erroredSection.section.id}`;
+
+    setOpenSections((prev) =>
+      prev.includes(sectionId) ? prev : [...prev, sectionId]
+    );
+
+    // Scroll/focus the first errored input
+    const el = document.getElementById(erroredQuestionIds[0]);
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.focus();
+      }, 100);
+    }
+  }, [errors, questionnaire, validationAttempt]);
+  // Populate form with draftData
+  useEffect(() => {
+    if (draftData?.responses.length > 0) {
+      const formatted = draftData.responses.reduce((acc, curr) => {
+        acc[curr.question_id] = curr.answer_text ?? "";
+        return acc;
+      }, {});
+      reset({ responses: formatted });
+      toast.info("Loaded responses from draft");
+    }
+  }, [draftData, reset]);
+
+  useEffect(() => {
+    console.log("ERROR SECTIONS", openSections);
+  }, [openSections]);
 
   return (
     <Card className="border-none flex flex-1 flex-col h-full max-h-[80vh] mt-2">
