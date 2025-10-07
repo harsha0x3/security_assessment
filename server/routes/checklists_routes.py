@@ -10,7 +10,6 @@ from controllers.checklist_controller import (
     remove_checklist,
     update_checklist,
     get_trash_checklists,
-    get_checklists_for_user,
 )
 from db.connection import get_db_conn
 from models.schemas.crud_schemas import (
@@ -18,10 +17,10 @@ from models.schemas.crud_schemas import (
     ChecklistOut,
     ChecklistUpdate,
     UserOut,
+    EvaluateChecklist,
 )
 from services.auth.deps import get_current_user
 from models.schemas.params import ChecklistQueryParams
-from models.core.users import User
 
 router = APIRouter(tags=["checklists"])
 
@@ -64,55 +63,6 @@ async def get_app_checklists(
     )
 
 
-# @router.get("/checklists/user-checklists/{user_id}")
-# def get_user_checklists(
-#     db: Annotated[Session, Depends(get_db_conn)],
-#     current_user: Annotated[UserOut, Depends(get_current_user)],
-#     sort_by: Annotated[str, Query()] = "created_at",
-#     sort_order: Annotated[Literal["asc", "desc"], Query()] = "desc",
-#     search: Annotated[str | None, Query()] = None,
-#     page: Annotated[int, Query()] = 1,
-#     page_size: Annotated[int, Query()] = 10,
-#     search_by: Annotated[
-#         Literal["checklist_type", "priority", "is_completed"],
-#         Query(),
-#     ] = "checklist_type",
-#     user_id: Annotated[str | None, Path()] = None,
-# ):
-#     params = ChecklistQueryParams(
-#         sort_by=sort_by,
-#         sort_order=sort_order,
-#         search_by=search_by,
-#         search=search,
-#         page=page,
-#         page_size=page_size,
-#     )
-#     user = current_user
-#     if user_id:
-#         if current_user.role != "admin":
-#             raise HTTPException(
-#                 status_code=status.HTTP_403_FORBIDDEN,
-#                 detail=f"You are not authorised {current_user.username}",
-#             )
-
-#         user = db.get(User, user_id)
-#         if not user:
-#             raise HTTPException(
-#                 status_code=status.HTTP_404_NOT_FOUND,
-#                 detail=f"User not found for ID {user_id}",
-#             )
-#         user = UserOut.model_validate(user)
-
-#     return get_checklists_for_user(user=user, db=db)
-
-
-# async def get_user_checklists(
-#     db: Annotated[Session, Depends(get_db_conn)],
-#     current_user: Annotated[UserOut, Depends(get_current_user)],
-# ):
-#     return get_checklists_for_user(user=current_user, db=db)
-
-
 @router.patch("/checklists/{checklist_id}", response_model=ChecklistOut)
 async def patch_checklist(
     payload: Annotated[ChecklistUpdate, "Payload for updating the checklist"],
@@ -143,7 +93,7 @@ async def delete_checklist(
     return remove_checklist(checklist_id, db)
 
 
-@router.post("/checklists/{checklist_id}/submission")
+@router.patch("/checklists/{checklist_id}/submission")
 async def submit_checklist(
     checklist_id: Annotated[str, Path(title="Checklist ID")],
     db: Annotated[Session, Depends(get_db_conn)],
@@ -152,7 +102,28 @@ async def submit_checklist(
     """
     Endpoint to submit a checklist.
     """
-    return update_checklist_status(checklist_id, current_user, db)
+    return update_checklist_status(
+        checklist_id=checklist_id, db=db, checklist_status="in-progress"
+    )
+
+
+@router.patch("/checklists/{checklist_id}/evaluate")
+async def evaluate_checklist(
+    checklist_id: Annotated[str, Path(title="Checklist ID")],
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+    payload: Annotated[EvaluateChecklist, "Payload for evaluating the checklist"],
+):
+    """
+    Endpoint to submit a checklist.
+    """
+    return update_checklist_status(
+        checklist_id,
+        current_user,
+        db,
+        checklist_status=payload.status,
+        comment=payload.comment,
+    )
 
 
 @router.get("/applications/{app_id}/checklists/trash")

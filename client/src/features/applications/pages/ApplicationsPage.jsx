@@ -1,83 +1,272 @@
-import { useApplications } from "../hooks/useApplications";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   CardHeader,
   CardContent,
-  CardFooter,
   CardTitle,
   CardDescription,
+  CardFooter,
   CardAction,
 } from "@/components/ui/Card";
-
-import { Label } from "@/components/ui/label";
-import {
-  setCurrentApplication,
-  setCurrentApp,
-} from "../store/applicationSlice";
-import { selectAuth } from "@/features/auth/store/authSlice";
 import { Button } from "@/components/ui/button";
-import { ListPlusIcon, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Search,
+  ListPlus,
+  MoreVertical,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  Circle,
+  Eye,
+  ListPlusIcon,
+} from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useApplications } from "../hooks/useApplications";
+import AppDetailsSheet from "../components/AppDetailsSheet";
+import { useSelector, useDispatch } from "react-redux";
+import { selectAuth } from "@/features/auth/store/authSlice";
+import { ChecklistMiniCard } from "@/features/checklists/components/ChecklistItem";
+
 import {
   selectAppSearchTerm,
   setAppSearchTerm,
 } from "@/store/appSlices/filtersSlice";
 import AppFilters from "../components/AppFilters";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import AppDetailsSheet from "../components/AppDetailsSheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { setCurrentApp } from "../store/applicationSlice";
+import { Label } from "@/components/ui/label";
 import AppPagination from "../components/AppPagination";
-import AppStats from "../components/AppStats";
+const groupChecklistsByStatus = (checklists) => {
+  return {
+    pending: checklists.filter(
+      (c) => c.status === "pending" || c.status === ""
+    ),
+    inProgress: checklists.filter(
+      (c) => c.status === "in-progress" || c.status === "inprogress"
+    ),
+    approved: checklists.filter((c) => c.status === "approved"),
+    rejected: checklists.filter((c) => c.status === "rejected"),
+  };
+};
+
+const getAppStatus = (app) => {
+  if (!app) return "pending";
+
+  if (app.status === "pending" || app.status === "") return "pending";
+  if (app.status === "in-progress" || app.status === "inprogress")
+    return "in-progress";
+  if (app.status === "completed" || app.is_completed) return "completed";
+
+  return "pending";
+};
+const AppCard = ({ app, onDetailsClick }) => {
+  const groupedChecklists = app.checklists
+    ? groupChecklistsByStatus(app.checklists)
+    : { pending: [], inProgress: [], approved: [], rejected: [] };
+  const totalChecklists = app.checklists ? app.checklists.length : 0;
+
+  // Calculate completion percentage
+  const completedChecklists = groupedChecklists.approved.length;
+  const progressPercent = totalChecklists
+    ? Math.round((completedChecklists / totalChecklists) * 100)
+    : 0;
+
+  const isNewApp =
+    new Date(app.created_at + "Z").toLocaleDateString() ===
+    new Date().toLocaleDateString();
+
+  return (
+    <Card className="flex flex-col p-0 border rounded-lg shadow hover:shadow-lg transition-transform transform hover:-translate-y-1 max-h-[28rem]">
+      {/* Header */}
+      <CardHeader className="p-0 mb-2 bg-muted rounded-t-lg w-full ">
+        <div className="flex flex-row items-center justify-between px-4 pt-2">
+          <CardTitle className="text-lg font-bold line-clamp-2">
+            {app.name}
+          </CardTitle>
+          {isNewApp && (
+            <Badge className="ml-2 bg-green-500 text-white text-xs shrink-0">
+              New
+            </Badge>
+          )}
+        </div>
+        <CardDescription className="text-accent-muted line-clamp-2 px-4 pb-1">
+          {app.description || "No description"}
+        </CardDescription>
+        {/* Minimal progress bar */}
+        {totalChecklists > 0 && (
+          <div className="h-1 bg-gray-200 rounded-full mx-4 mb-2">
+            <div
+              className="h-1 bg-emerald-500 rounded-full"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        )}
+      </CardHeader>
+
+      {/* Checklists */}
+      <CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden pb-2 px-4">
+        {totalChecklists > 0 ? (
+          <div className="flex-1 flex flex-col min-h-0 space-y-2 overflow-hidden">
+            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground px-4">
+              <span>Checklists</span>
+              <Badge variant="outline" className="text-xs">
+                {totalChecklists}
+              </Badge>
+            </div>
+
+            {/* Scrollable area */}
+            <ScrollArea className="flex-1 min-h-0 overflow-auto">
+              <div className="pr-2 space-y-1">
+                {groupedChecklists.pending.map((checklist) => (
+                  <ChecklistMiniCard key={checklist.id} checklist={checklist} />
+                ))}
+                {groupedChecklists.inProgress.map((checklist) => (
+                  <ChecklistMiniCard key={checklist.id} checklist={checklist} />
+                ))}
+                {groupedChecklists.approved.map((checklist) => (
+                  <ChecklistMiniCard key={checklist.id} checklist={checklist} />
+                ))}
+                {groupedChecklists.rejected.map((checklist) => (
+                  <ChecklistMiniCard key={checklist.id} checklist={checklist} />
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        ) : (
+          <div className="h-full flex items-center justify-center text-xs text-muted-foreground italic text-center px-4">
+            No checklists created yet
+          </div>
+        )}
+      </CardContent>
+
+      {/* Footer */}
+      <CardFooter className="flex justify-between items-center px-4 pb-2 pt-0">
+        <div className="flex items-center gap-3">
+          <Label className="text-md">Ticket Id:</Label>
+          <p className="text-primary">
+            {app?.ticket_id ? app?.ticket_id : "Not available"}
+          </p>
+        </div>
+
+        <Sheet>
+          <SheetTrigger asChild>
+            <CardAction>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDetailsClick(app)}
+              >
+                Details
+              </Button>
+            </CardAction>
+          </SheetTrigger>
+          <SheetContent className="h-full">
+            <AppDetailsSheet selectedApp={app} />
+          </SheetContent>
+        </Sheet>
+      </CardFooter>
+    </Card>
+  );
+};
+
+const KanbanColumn = ({ title, apps, count, color, onDetailsClick }) => {
+  return (
+    <div
+      className={`flex flex-col bg-gradient-to-b from-muted/40 to-muted/20 rounded-lg flex-1 h-full border shadow-sm `}
+    >
+      <div
+        className={`flex items-center justify-between py-3 rounded-t-md px-4 border-b ${color} w-full`}
+      >
+        <div className="flex items-center gap-2">
+          <div
+            className={`w-4 h-4 rounded-full shadow-sm bg-background flex items-center justify-center`}
+          >
+            <div className={`w-2 h-2 rounded-full ${color} shadow-sm p-0`} />
+          </div>
+
+          <h3 className="font-semibold text-sm uppercase tracking-wide">
+            {title}
+          </h3>
+        </div>
+        <Badge variant="default" className="text-xs font-bold">
+          {count}
+        </Badge>
+      </div>
+
+      <ScrollArea className="flex-1 pr-4 pb-2 pt-1 px-4">
+        <div className="space-y-3">
+          {apps.length > 0 ? (
+            apps.map((app) => (
+              <AppCard key={app.id} app={app} onDetailsClick={onDetailsClick} />
+            ))
+          ) : (
+            <div className="text-center text-sm text-muted-foreground py-8">
+              No applications in this status
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+};
 
 const ApplicationsPage = () => {
   const dispatch = useDispatch();
-  const {
-    appPageSize,
-    appSearchBy,
-    data: allAppData,
-    totalApps,
-  } = useApplications();
-  const appSearchTerm = useSelector(selectAppSearchTerm);
   const userInfo = useSelector(selectAuth);
-  const totalPages = useMemo(
-    () => totalApps / appPageSize,
-    [appPageSize, totalApps]
-  );
+  const appSearchTerm = useSelector(selectAppSearchTerm);
+  const [selectedApp, setSelectedApp] = useState(null);
+  const { data: appsData, isLoadingApps, appSearchBy } = useApplications();
+  const isAdmin = userInfo?.role === "admin";
 
-  const [selectedAppId, setSelectedAppId] = useState();
-  useEffect(() => {
-    console.log("SELECTED APP", selectedAppId);
-  }, [selectedAppId]);
+  const groupedApps = useMemo(() => {
+    if (!appsData?.apps) {
+      return {
+        pending: [],
+        inProgress: [],
+        completed: [],
+      };
+    }
 
-  const handleSelectApp = useCallback(
-    (app) => {
-      setSelectedAppId(app.id);
-      // dispatch(setCurrentApplication(app.id));
-      dispatch(setCurrentApp(app));
-    },
-    [dispatch]
-  );
+    const filtered = appsData.apps.filter((app) =>
+      app.name?.toLowerCase().includes(appSearchTerm.toLowerCase())
+    );
 
-  useEffect(() => {
-    console.log("TOTAL APPS", totalApps);
-    console.log("TOTAL PAGES", totalPages);
-  }, [totalApps, totalPages]);
+    return {
+      pending: filtered.filter((app) => getAppStatus(app) === "pending"),
+      inProgress: filtered.filter((app) => getAppStatus(app) === "in-progress"),
+      completed: filtered.filter((app) => getAppStatus(app) === "completed"),
+    };
+  }, [appsData, appSearchTerm]);
+
+  if (isLoadingApps) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading applications...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleDetailsClick = (app) => {
+    setSelectedApp(app);
+    dispatch(setCurrentApp(app));
+  };
 
   return (
     <TooltipProvider>
-      {/* <div className="w-full h-full flex gap-2"> */}
-      <Card className="h-full flex flex-col overflow-hidden rounded-md shadow-none">
+      <div className="h-full w-full flex flex-col gap-4 p-4 overflow-hidden">
         {/* Header */}
-        <CardHeader className="bg-muted p-2 text-accent-foreground">
+        <div className="bg-muted p-2 text-accent-foreground">
           <div className="flex items-center justify-between w-full">
             <div className="flex gap-2 items-center justify-center">
               <CardTitle className="text-xl font-semibold">
@@ -121,112 +310,39 @@ const ApplicationsPage = () => {
                 />
               </div>
               <AppFilters />
+              <AppPagination />
             </div>
           </div>
-        </CardHeader>
-
-        {/* Content */}
-        <ScrollArea>
-          <CardContent className="flex-1 overflow-auto p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.isArray(allAppData?.apps) && allAppData.apps.length > 0 ? (
-              allAppData.apps.map((app) => {
-                const isSelected = app.id === selectedAppId;
-                return (
-                  <Card
-                    key={app.appId}
-                    className={`p-4 border rounded-lg shadow hover:shadow-lg transition-transform transform hover:-translate-y-1 ${
-                      isSelected ? "border-primary border-l-8" : "border-black"
-                    }`}
-                    onClick={() => setSelectedAppId(app.id)}
-                  >
-                    <CardHeader className="p-0 mb-2">
-                      <div className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-lg font-bold ">
-                          {app.name}
-                        </CardTitle>
-                        {new Date(app.created_at + "Z").toLocaleDateString() ===
-                          new Date().toLocaleDateString() && (
-                          <span className="bg-green-100 text-green-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded dark:bg-green-200 dark:text-green-900">
-                            New
-                          </span>
-                        )}
-                      </div>
-
-                      <CardDescription className="text-accent-muted">
-                        {app.description || "No description"}
-                      </CardDescription>
-                    </CardHeader>
-
-                    <CardContent className="p-0 grid grid-cols-1 gap-2">
-                      <Label className="flex justify-between">
-                        Owner:{" "}
-                        <span className="font-medium">{app.owner_name}</span>
-                      </Label>
-                      <Label className="flex justify-between">
-                        Vendor:{" "}
-                        <span className="font-medium">
-                          {app.provider_name || "None"}
-                        </span>
-                      </Label>
-                      <Label className="flex justify-between">
-                        Created At:{" "}
-                        <span className="font-medium">
-                          {new Date(app.created_at + "Z").toLocaleString()}
-                        </span>
-                      </Label>
-                      <Label className="flex justify-between">
-                        Due Date: <span className="font-medium">None</span>
-                      </Label>
-                    </CardContent>
-                    <CardFooter className="pb-0 pt-2 text-right flex justify-between px-1">
-                      <div></div>
-                      <Sheet className="">
-                        <SheetTrigger asChild>
-                          <CardAction>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSelectApp(app)}
-                            >
-                              Details
-                            </Button>
-                          </CardAction>
-                        </SheetTrigger>
-                        <SheetContent className="h-full">
-                          <AppDetailsSheet selectedApp={app} />
-                        </SheetContent>
-                      </Sheet>
-                    </CardFooter>
-                  </Card>
-                );
-              })
-            ) : (
-              <div className="text-muted col-span-full text-center mt-20">
-                No apps available
-              </div>
-            )}
-          </CardContent>
-        </ScrollArea>
-
-        {/* Footer */}
-
-        {allAppData?.apps?.length < totalApps && (
-          <CardFooter className="bg-accent p-1 shrink-0 bottom-0">
-            <AppPagination />
-          </CardFooter>
-        )}
-      </Card>
-      {/* <Card className="w-2/5 max-w-2/5 h-full flex flex-col overflow-hidden rounded-md shadow-none">
-          <CardHeader className="bg-muted p-2 text-accent-foreground rounded-t-md">
-            <div className="flex items-center justify-between w-full">
-              <CardTitle className="text-xl font-semibold">Stats</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <AppStats />
-          </CardContent>
-        </Card> */}
-      {/* </div> */}
+        </div>
+        {/* Kanban Board */}
+        {/* Kanban Section - 75% */}
+        <div className="flex-1 flex flex-row gap-3 overflow-x-auto">
+          <KanbanColumn
+            title="Pending"
+            color="bg-amber-700/50"
+            apps={groupedApps.pending}
+            count={groupedApps.pending.length}
+            onDetailsClick={handleDetailsClick}
+            className="min-w-[250px]"
+          />
+          <KanbanColumn
+            title="In Progress"
+            color="bg-blue-500/50"
+            apps={groupedApps.inProgress}
+            count={groupedApps.inProgress.length}
+            onDetailsClick={handleDetailsClick}
+            className="min-w-[250px]"
+          />
+          <KanbanColumn
+            title="Completed"
+            color="bg-green-500/50"
+            apps={groupedApps.completed}
+            count={groupedApps.completed.length}
+            onDetailsClick={handleDetailsClick}
+            className="min-w-[250px]"
+          />
+        </div>
+      </div>
     </TooltipProvider>
   );
 };

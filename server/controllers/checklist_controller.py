@@ -1,7 +1,7 @@
 from typing import Any
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, asc, desc, func, not_, select
+from sqlalchemy import and_, asc, desc, func, not_, select, or_
 from sqlalchemy.orm import Session
 
 from models.core.applications import Application
@@ -17,7 +17,7 @@ from models.schemas.crud_schemas import (
 from models.schemas.params import ChecklistQueryParams
 from models.core.user_responses import UserResponse
 
-from .application_controller import update_app_completion
+from .application_controller import update_app_status
 
 
 def create_checklist(
@@ -41,7 +41,7 @@ def create_checklist(
         data = checklist.to_dict()
         data["app_name"] = checklist.app.name
 
-        update_app_completion(app.id, db)
+        update_app_status(app.id, db)
         return ChecklistOut(**data)
 
     except Exception as e:
@@ -65,8 +65,10 @@ def get_checklists_for_app(
                 detail=f"Application not found. {app_id}",
             )
 
-        stmt = select(Checklist).where(
-            and_(Checklist.app_id == app.id, Checklist.is_active)
+        stmt = (
+            select(Checklist)
+            .distinct()
+            .where(and_(Checklist.app_id == app.id, Checklist.is_active))
         )
 
         total_count = db.scalar(select(func.count()).select_from(stmt.subquery()))
@@ -104,21 +106,25 @@ def get_checklists_for_app(
                         app_name=app.name,
                         checklist_type=checklist.checklist_type,
                         assigned_users=[
-                            assignment.user.to_dict_safe()
+                            UserOut.model_validate(assignment.user)
                             for assignment in checklist.assignments
                         ],
                         is_completed=checklist.is_completed,
                         priority=checklist.priority,
                         created_at=checklist.created_at,
                         updated_at=checklist.updated_at,
+                        status=checklist.status,
                     )
                 )
 
         else:
             # Non-admins: only checklists assigned to them
 
-            stmt = stmt.join(ChecklistAssignment).where(
-                ChecklistAssignment.user_id == user.id,
+            stmt = stmt.outerjoin(ChecklistAssignment).where(
+                or_(
+                    ChecklistAssignment.user_id == user.id,  # assigned to user
+                    Application.owner_id == user.id,  # owner sees all
+                )
             )
 
             if params.page >= 1:
@@ -140,6 +146,8 @@ def get_checklists_for_app(
                         created_at=checklist.created_at,
                         updated_at=checklist.updated_at,
                         priority=checklist.priority,
+                        status=checklist.status,
+                        comment=checklist.comment,
                     )
                 )
 
@@ -198,6 +206,7 @@ def update_checklist(payload: ChecklistUpdate, checklist_id: str, db: Session):
             created_at=checklist.created_at,
             updated_at=checklist.updated_at,
             priority=checklist.priority,
+            status=checklist.status,
         )
     except HTTPException:
         raise
@@ -239,50 +248,83 @@ def update_checklist(payload: ChecklistUpdate, checklist_id: str, db: Session):
 #         )
 
 
-def update_checklist_status(checklist_id: str, user: UserOut, db: Session):
+def update_checklist_status(
+    checklist_id: str,
+    db: Session,
+    checklist_status: str | None = None,
+    comment: str | None = None,
+):
     """
-    Check if all controls in the checklist have responses for the given user.
-    Update checklist.is_completed accordingly.
+    Update checklist status manually (if checklist_status provided)
+    or automatically based on related control responses.
     """
     checklist = db.get(Checklist, checklist_id)
     if not checklist:
-        print(f"Checklist with ID {checklist_id} not found.")
-        return
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Checklist with ID {checklist_id} not found.",
+        )
 
-    # Get all control IDs for this checklist
-    control_ids = db.scalars(
-        select(Control.id).where(Control.checklist_id == checklist_id)
-    ).all()
+    # --- Manual status update case ---
+    if checklist_status:
+        checklist.status = checklist_status
+        checklist.is_completed = checklist_status in {"approved", "rejected"}
+        checklist.comment = comment
 
-    if not control_ids:
-        print(f"No controls found for checklist {checklist_id}.")
+        db.commit()
+        db.refresh(checklist)
+        update_app_status(checklist.app_id, db)
+
+        return {
+            "msg": f"Checklist '{checklist.checklist_type}' marked as {checklist.status}",
+            "status": checklist.status,
+            "is_completed": checklist.is_completed,
+        }
+
+    # --- Automatic update case ---
+
+    control_count = (
+        db.scalar(
+            select(func.count())
+            .select_from(Control)
+            .where(Control.checklist_id == checklist_id)
+        )
+        or 0
+    )
+
+    if control_count == 0:
+        checklist.status = "pending"
         checklist.is_completed = False
-        return
 
-    # Count responses by this user for these controls
-    if user.role == "admin":
-        # Admins can see all responses
-        responses_count = db.scalar(
-            select(func.count(UserResponse.id)).where(
-                UserResponse.control_id.in_(control_ids),
-            )
-        )
     else:
-        responses_count = db.scalar(
-            select(func.count(UserResponse.id)).where(
-                # UserResponse.user_id == user.id,
-                UserResponse.control_id.in_(control_ids),
+        responses_count = (
+            db.scalar(
+                select(func.count(UserResponse.id))
+                .join(Control, UserResponse.control_id == Control.id)
+                .where(Control.checklist_id == checklist_id)
             )
+            or 0
         )
 
-    checklist.is_completed = responses_count == len(control_ids)
-    print(f"Updated checklist status {responses_count == len(control_ids)}")
-    db.commit()  # ensures SQLAlchemy tracks the change
-    db.refresh(checklist)  # refresh to get the updated state
+        if responses_count == 0:
+            checklist.status = "pending"
+            checklist.is_completed = False
+        elif responses_count < control_count:
+            checklist.status = "in-progress"
+            checklist.is_completed = False
+        else:
+            checklist.status = "completed"
+            checklist.is_completed = True
 
-    app = checklist.app
+    db.commit()
+    db.refresh(checklist)
+    update_app_status(checklist.app_id, db)
 
-    update_app_completion(app.id, db)
+    return {
+        "msg": f"Checklist '{checklist.checklist_type}' marked as {checklist.status}",
+        "status": checklist.status,
+        "is_completed": checklist.is_completed,
+    }
 
 
 def remove_checklist(
@@ -403,13 +445,14 @@ def get_trash_checklists(
                     app_name=app.name,
                     checklist_type=checklist.checklist_type,
                     assigned_users=[
-                        assignment.user.to_dict_safe()
+                        UserOut.model_validate(assignment.user)
                         for assignment in checklist.assignments
                     ],
                     is_completed=checklist.is_completed,
                     created_at=checklist.created_at,
                     updated_at=checklist.updated_at,
                     priority=checklist.priority,
+                    status=checklist.status,
                 )
             )
 

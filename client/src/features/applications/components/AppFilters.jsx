@@ -21,6 +21,7 @@ const AppFilters = () => {
 
   const validSearchBys = [
     { name: "Name" },
+    { ticket_id: "Ticket ID" },
     { platform: "Platform" },
     { region: "Region" },
     { owner_name: "Owner Name" },

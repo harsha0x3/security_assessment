@@ -110,7 +110,7 @@ const Controls = () => {
 
   const apiBaseUrl = isProd
     ? "http://10.160.14.76:8060"
-    : "http://127.0.0.1:8000";
+    : "http://localhost:8000";
 
   const userInfo = useSelector(selectAuth);
   const { checklistId } = useParams();
@@ -312,7 +312,7 @@ const Controls = () => {
     try {
       toast.promise(
         (async () => {
-          await submitChecklist({ checklistId }).unwrap();
+          await submitChecklist(checklistId).unwrap();
         })(),
         {
           loading: "Submitting the checklist...",

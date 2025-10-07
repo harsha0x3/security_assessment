@@ -92,7 +92,7 @@ export const checklistsApiSlice = apiSlice.injectEndpoints({
     submitChecklist: builder.mutation({
       query: (checklistId) => ({
         url: `/checklists/${checklistId}/submission`,
-        method: "POST",
+        method: "PATCH",
       }),
       invalidatesTags: (result, error, checklistId) => [
         { type: "Checklists", id: checklistId },

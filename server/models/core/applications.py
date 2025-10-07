@@ -25,6 +25,7 @@ class Application(Base, BaseMixin):
     ticket_id: Mapped[str] = mapped_column(
         String(40), ForeignKey("submissions.id"), unique=False, nullable=True
     )
+    status: Mapped[str] = mapped_column(String(40), default="pending")
 
     creator = relationship(
         "User", back_populates="created_applications", foreign_keys=[creator_id]

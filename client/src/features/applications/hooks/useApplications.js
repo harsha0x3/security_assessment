@@ -8,9 +8,12 @@ import {
   setCurrentApp,
 } from "@/features/applications/store/applicationSlice";
 import { selectAppSearchTerm } from "@/store/appSlices/filtersSlice";
-import { useGetApplicationsQuery } from "@/features/applications/store/applicationApiSlice";
+import {
+  useGetApplicationsQuery,
+  useGetAppDetailsQuery,
+} from "@/features/applications/store/applicationApiSlice";
 
-export const useApplications = () => {
+export const useApplications = ({ appId = null } = {}) => {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -30,17 +33,22 @@ export const useApplications = () => {
   console.log("APP PAGE", appPage);
 
   // API Query
-  const { data, isSuccess, isError, error } = useGetApplicationsQuery(
-    {
-      page: appPage,
-      page_size: appPageSize,
-      sort_by: appSortBy,
-      sort_order: appSortOrder,
-      search: debouncedSearch || "",
-      search_by: appSearchBy,
-    },
-    { refetchOnMountOrArgChange: true }
-  );
+  const { data, isSuccess, isError, error, isLoading } =
+    useGetApplicationsQuery(
+      {
+        page: appPage,
+        page_size: appPageSize,
+        sort_by: appSortBy,
+        sort_order: appSortOrder,
+        search: debouncedSearch || "",
+        search_by: appSearchBy,
+      },
+      { refetchOnMountOrArgChange: true }
+    );
+  const { data: appDetails, isSuccess: isAppDetailsSuccess } =
+    useGetAppDetailsQuery(appId, {
+      skip: !appId,
+    });
 
   console.log("APP DATA in useAPP", data);
   const totalApps = useMemo(() => data?.total_count, [data]);
@@ -105,5 +113,7 @@ export const useApplications = () => {
     updateSearchParams,
     data,
     totalApps,
+    appDetails,
+    isLoadingApps: isLoading,
   };
 };

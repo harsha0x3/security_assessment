@@ -7,7 +7,13 @@ class AppQueryParams(BaseModel):
     sort_order: Literal["asc", "desc"] = Field("desc", description="Sort order")
     search: str | None
     search_by: Literal[
-        "name", "platform", "region", "owner_name", "provider_name", "department"
+        "name",
+        "platform",
+        "region",
+        "owner_name",
+        "provider_name",
+        "department",
+        "ticket_id",
     ] = Field("name", description="The field you want to search by")
     page: int = 1
     page_size: int = 15

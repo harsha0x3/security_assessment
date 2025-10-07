@@ -89,6 +89,11 @@ export const applicationApiSlice = apiSlice.injectEndpoints({
       // },
     }),
 
+    getAppDetails: builder.query({
+      query: (appId) => `/applications/${appId}`,
+      providesTags: (result, error, appId) => [{ type: "Apps", id: appId }],
+    }),
+
     deleteApp: builder.mutation({
       query: ({ appId }) => ({
         url: `/applications/${appId}`,
@@ -120,4 +125,5 @@ export const {
   useDeleteAppMutation,
   useGetTrashedAppsQuery,
   useRestoreTrashedAppsMutation,
+  useGetAppDetailsQuery,
 } = applicationApiSlice;

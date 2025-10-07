@@ -6,11 +6,13 @@ from sqlalchemy.orm import Session
 from controllers.application_controller import (
     create_app,
     delete_app,
-    list_apps,
+    list_apps_with_details,
     restore_app,
     update_app,
     get_trashed_apps,
     get_app_stats,
+    list_apps,
+    get_app_details,
 )
 from db.connection import get_db_conn
 from models.schemas.crud_schemas import (
@@ -39,7 +41,7 @@ async def create_application(
 
 
 @router.get("")
-async def get_applications(
+async def get_apps(
     db: Annotated[Session, Depends(get_db_conn)],
     current_user: Annotated[UserOut, Depends(get_current_user)],
     sort_by: Annotated[str, Query()] = "created_at",
@@ -49,11 +51,17 @@ async def get_applications(
     page_size: Annotated[int, Query()] = 15,
     search_by: Annotated[
         Literal[
-            "name", "platform", "region", "owner_name", "provider_name", "department"
+            "name",
+            "platform",
+            "region",
+            "owner_name",
+            "provider_name",
+            "department",
+            "ticket_id",
         ],
         Query(),
     ] = "name",
-) -> dict[str, Any]:
+):
     params = AppQueryParams(
         sort_by=sort_by,
         sort_order=sort_order,
@@ -62,7 +70,56 @@ async def get_applications(
         page_size=page_size,
         search_by=search_by,
     )
-    return list_apps(db=db, user=current_user, params=params)
+    return list_apps(
+        db=db,
+        user=current_user,
+        params=params,
+    )
+
+
+@router.get("/with_details")
+async def get_applications_with_routes(
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+    sort_by: Annotated[str, Query()] = "created_at",
+    sort_order: Annotated[Literal["asc", "desc"], Query()] = "desc",
+    search: Annotated[str | None, Query()] = None,
+    page: Annotated[int, Query()] = 1,
+    page_size: Annotated[int, Query()] = 15,
+    search_by: Annotated[
+        Literal[
+            "name",
+            "platform",
+            "region",
+            "owner_name",
+            "provider_name",
+            "department",
+            "ticket_id",
+        ],
+        Query(),
+    ] = "name",
+):
+    params = AppQueryParams(
+        sort_by=sort_by,
+        sort_order=sort_order,
+        search=search,
+        page=page,
+        page_size=page_size,
+        search_by=search_by,
+    )
+    return list_apps_with_details(db=db, user=current_user, params=params)
+
+
+@router.get("/{app_id}", response_model=ApplicationOut)
+async def get_application(
+    app_id: Annotated[str, Path(title="App Id of the app to be fetched")],
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+):
+    """
+    Get a specific application by its ID.
+    """
+    return get_app_details(app_id=app_id, db=db, current_user=current_user)
 
 
 @router.patch("/{app_id}", response_model=ApplicationOut)

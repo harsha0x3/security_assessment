@@ -42,6 +42,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import ChecklistItem from "@/features/checklists/components/ChecklistItem";
+import { useApplications } from "../hooks/useApplications";
 
 const AppDetailsSheet = ({ selectedApp = null }) => {
   console.log("SESELCTED APP IN SHEET", selectedApp);
@@ -50,6 +51,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
   const isAdmin = user.role === "admin";
   const isNew = isAdmin && !selectedApp;
 
+  const { appDetails } = useApplications({ appId: selectedApp?.id });
   const { data: appChecklists } = useChecklists({ appIdProp: selectedApp?.id });
   console.log("APP CHECKLISTS", appChecklists);
 
@@ -59,7 +61,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
     formState: { errors },
     reset,
   } = useForm({
-    defaultValues: selectedApp || {},
+    defaultValues: appDetails || {},
   });
 
   const sheetDesc = selectedApp
@@ -71,14 +73,14 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
     useUpdateApplicationMutation();
 
   useEffect(() => {
-    reset(selectedApp || {});
-  }, [selectedApp, reset]);
+    reset(appDetails || {});
+  }, [appDetails, reset]);
 
   const handleSaveEdit = async (payload) => {
     try {
       toast.promise(
         (async () => {
-          await updateAppMutation({ appId: selectedApp.id, payload }).unwrap();
+          await updateAppMutation({ appId: appDetails.id, payload }).unwrap();
           setIsEditing(false);
         })(),
         {
@@ -139,7 +141,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
               {...register("name", { required: true })}
             />
           ) : (
-            <p className="text-xl text-primary">{selectedApp?.name}</p>
+            <p className="text-xl text-primary">{appDetails?.name}</p>
           )}
           {errors.name && <p className="text-red-500">Name is required</p>}
         </SheetTitle>
@@ -167,7 +169,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
                 {...register("description")}
               />
             ) : (
-              <p className="text-sm">{selectedApp?.description || "—"}</p>
+              <p className="text-sm">{appDetails?.description || "—"}</p>
             )}
           </div>
 
@@ -185,7 +187,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
                 {...register("owner_name")}
               />
             ) : (
-              <p className="text-sm">{selectedApp?.owner_name || "—"}</p>
+              <p className="text-sm">{appDetails?.owner_name || "—"}</p>
             )}
           </div>
 
@@ -203,7 +205,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
                 {...register("provider_name")}
               />
             ) : (
-              <p className="text-sm">{selectedApp?.provider_name || "—"}</p>
+              <p className="text-sm">{appDetails?.provider_name || "—"}</p>
             )}
           </div>
 
@@ -221,7 +223,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
                 {...register("platform")}
               />
             ) : (
-              <p className="text-sm">{selectedApp?.platform || "—"}</p>
+              <p className="text-sm">{appDetails?.platform || "—"}</p>
             )}
           </div>
 
@@ -239,7 +241,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
                 {...register("region")}
               />
             ) : (
-              <p className="text-sm">{selectedApp?.region || "—"}</p>
+              <p className="text-sm">{appDetails?.region || "—"}</p>
             )}
           </div>
 
@@ -257,7 +259,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
                 {...register("app_tech")}
               />
             ) : (
-              <p className="text-sm">{selectedApp?.app_tech || "—"}</p>
+              <p className="text-sm">{appDetails?.app_tech || "—"}</p>
             )}
           </div>
 
@@ -275,7 +277,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
                 {...register("infra_host")}
               />
             ) : (
-              <p className="text-sm">{selectedApp?.infra_host || "—"}</p>
+              <p className="text-sm">{appDetails?.infra_host || "—"}</p>
             )}
           </div>
 
@@ -293,7 +295,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
                 {...register("department")}
               />
             ) : (
-              <p className="text-sm">{selectedApp?.department || "—"}</p>
+              <p className="text-sm">{appDetails?.department || "—"}</p>
             )}
           </div>
 
@@ -305,7 +307,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
               Created On
             </Label>
 
-            <p className="text-sm">{selectedApp?.created_at || "—"}</p>
+            <p className="text-sm">{appDetails?.created_at || "—"}</p>
           </div>
           <div className="relative border rounded-md px-3 pt-5 pb-2">
             <Label
@@ -315,7 +317,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
               Updated On
             </Label>
 
-            <p className="text-sm">{selectedApp?.updated_at || "—"}</p>
+            <p className="text-sm">{appDetails?.updated_at || "—"}</p>
           </div>
           {!isNew && !isEditing && (
             <Card>

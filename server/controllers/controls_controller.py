@@ -19,8 +19,8 @@ from models.schemas.crud_schemas import (
     UserOut,
 )
 from models.core.user_responses import UserResponse
-from .checklist_controller import update_checklist_status
 from models.schemas.params import ControlsResponsesQueryParams
+from .checklist_controller import update_checklist_status
 
 
 def update_checklist_completion_for_user(checklist_id: str, user: UserOut, db: Session):
@@ -88,6 +88,7 @@ def add_controls(control: ControlCreate, checklist_id: str, db: Session) -> Cont
         db.add(new_control)
         db.commit()
         db.refresh(new_control)
+        update_checklist_status(checklist_id=checklist_id, db=db)
 
         return ControlOut.model_validate(new_control)
 
@@ -109,9 +110,12 @@ def remove_controls(control_data: ControlRemove, db: Session):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Checklist Not found {control_data.control_id}",
             )
+
         db.delete(control)
         db.commit()
         db.refresh(control)
+        checklist_id = control.checklist_id
+        update_checklist_status(checklist_id=checklist_id, db=db)
 
     except Exception as e:
         db.rollback()
@@ -288,7 +292,6 @@ def get_controls_with_responses(
                 total_counts=total_counts,
             )
 
-            update_checklist_status(checklist_id=checklist_id, user=current_user, db=db)
             return controls_with_responses
 
         # Check assignment
@@ -350,7 +353,6 @@ def get_controls_with_responses(
             list_controls=controls_with_responses_non,
             total_counts=total_counts,
         )
-        update_checklist_status(checklist_id=checklist_id, user=current_user, db=db)
 
         return controls_with_responses
 
@@ -420,6 +422,7 @@ def import_controls(target_checklist_id: str, source_checklist_id: str, db: Sess
         ]
         db.add_all(new_controls)
         db.commit()
+        update_checklist_status(checklist_id=target_checklist_id, db=db)
 
         return {"msg": f"Succesfully added {len(new_controls)} Controls."}
 
@@ -487,6 +490,8 @@ def add_controls_from_file(
     try:
         db.add_all(new_controls)
         db.commit()
+        update_checklist_status(checklist_id=checklist_id, db=db)
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -498,6 +503,11 @@ def add_controls_from_file(
 
 def export_controls_csv(checklist_id: str, db: Session, current_user: UserOut):
     checklist = db.get(Checklist, checklist_id)
+    if not checklist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Checklist Not found {checklist_id}",
+        )
     params = ControlsResponsesQueryParams(
         sort_by="created_at", sort_order="desc", page=-1, page_size=100
     )

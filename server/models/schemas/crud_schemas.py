@@ -44,6 +44,7 @@ class ApplicationOut(BaseModel):
     updated_at: datetime | None = None
     owner_id: str | None = None
     ticket_id: str | None = None
+    status: str = "pending"
 
     # Automatically convert UTC -> Asia/Kolkata
 
@@ -86,11 +87,13 @@ class UserOut(BaseModel):
 
 class ChecklistOut(BaseModel):
     id: str
-    app_name: str
+    app_name: str | None = None
     checklist_type: str
-    assigned_users: list[dict] | None = None
+    assigned_users: list[UserOut] | None = None
     is_completed: bool
     priority: int
+    status: str
+    comment: str | None = None
 
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -98,9 +101,24 @@ class ChecklistOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ListApplicationsOut(BaseModel):
+    id: str
+    name: str
+    description: str | None = None
+    ticket_id: str | None = None
+    is_completed: bool
+    status: str
+    checklists: list[ChecklistOut] | None = None
+
+
 class ChecklistUpdate(BaseModel):
     checklist_type: str
     priority: int
+
+
+class EvaluateChecklist(BaseModel):
+    status: str = "in-progress"
+    comment: str | None = None
 
 
 class ControlCreate(BaseModel):

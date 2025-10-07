@@ -1,8 +1,14 @@
+import { getCSRFToken } from "./csrf";
+
 export async function downloadFile(url, filename) {
   try {
+    const csrf_token = getCSRFToken;
     const response = await fetch(url, {
       method: "GET",
       credentials: "include",
+      headers: {
+        "X-CSRFToken": csrf_token,
+      },
     });
 
     if (!response.ok) {

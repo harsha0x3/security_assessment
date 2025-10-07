@@ -15,6 +15,7 @@ from models.schemas.crud_schemas import (
     UserResponseOut,
     UserResponseUpdate,
 )
+from .checklist_controller import update_checklist_status
 from models.core.user_responses import UserResponse
 from models.core.checklists import Checklist
 
@@ -35,8 +36,6 @@ def add_user_response(
                 detail=f"Control not found {control_id}",
             )
 
-        checklist = control.checklist
-        # Prevent duplicate response
         existing = db.scalar(
             select(UserResponse).where(
                 and_(
@@ -54,7 +53,7 @@ def add_user_response(
         # Create response
         response = UserResponse(
             control_id=control_id,
-            checklist_id=checklist.id,
+            checklist_id=control.checklist_id,
             user_id=current_user.id,
             current_setting=payload.current_setting,
             review_comment=payload.review_comment,
@@ -65,10 +64,7 @@ def add_user_response(
         db.commit()
         db.refresh(response)
 
-        # Update checklist completion for this user
-        # update_checklist_completion_for_user(control.checklist_id, current_user.id, db)
-        # db.commit()  # commit the checklist update
-
+        update_checklist_status(checklist_id=control.checklist_id, db=db)
         return UserResponseOut.model_validate(response)
 
     except HTTPException:
@@ -111,41 +107,26 @@ def save_bulk_responses(
 def update_user_response(
     payload: UserResponseUpdate, response_id: str, db: Session, current_user: UserOut
 ) -> UserResponseOut:
+    response = db.scalar(select(UserResponse).where(UserResponse.id == response_id))
+    if not response:
+        raise HTTPException(404, f"Response {response_id} not found")
+
+    if response.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not allowed to edit this response",
+        )
     try:
-        response = db.scalar(select(UserResponse).where(UserResponse.id == response_id))
-        if not response:
-            print("Not Found REsponse")
-            return UserResponseOut(
-                id=response_id,
-                control_id="",
-                user_id="",
-                current_setting="",
-                review_comment="",
-                evidence_path="",
-            )
-
-        if response.user_id != current_user.id and current_user.role != "admin":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You are not allowed to edit this response",
-            )
-        update_data = payload.model_dump(exclude_unset=True)
-        print(update_data)
-
-        for key, val in update_data.items():
+        for key, val in payload.model_dump(exclude_unset=True).items():
             setattr(response, key, val)
 
         db.commit()
         db.refresh(response)
-
         return UserResponseOut.model_validate(response)
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update the response. {str(e)}",
-        )
+        raise HTTPException(500, f"Failed to update response: {e}")
 
 
 def save_uploaded_file(
@@ -193,19 +174,11 @@ def add_responses_from_csv(
     try:
         checklist = db.get(Checklist, checklist_id)
         if not checklist:
-            print(f"Checklist with ID {checklist_id} not found.")
-            return
-        assigned_users = [
-            assignment.user.to_dict_safe() for assignment in checklist.assignments
-        ]
+            raise HTTPException(404, f"Checklist {checklist_id} not found")
 
-        if current_user.role != "admin" and current_user.id not in [
-            u["id"] for u in assigned_users
-        ]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"You don't have permission {current_user.username}",
-            )
+        assigned_user_ids = [a.user_id for a in checklist.assignments]
+        if current_user.role != "admin" and current_user.id not in assigned_user_ids:
+            raise HTTPException(403, "Not authorized for this checklist")
 
         df = (
             pd.read_csv(BytesIO(file_content))
@@ -214,68 +187,46 @@ def add_responses_from_csv(
         )
         df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
-        required_columns = [
-            "control_id",
-            "control_area",
-            "severity",
-            "control_text",
-            "description",
-            "current_setting",
-            "review_comment",
-        ]
-        missing_cols = [col for col in required_columns if col not in df.columns]
-        if missing_cols:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Missing required columns: {', '.join(missing_cols)}",
-            )
+        required = {"control_id", "current_setting", "review_comment"}
+        missing = required - set(df.columns)
+        if missing:
+            raise HTTPException(400, f"Missing columns: {', '.join(missing)}")
 
-        # if df["control_id"].notna().sum() != df["current_setting"].notna().sum():
-        #     raise HTTPException(
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #         detail="Mismatch between control_id and current_setting counts",
-        #     )
+        df = df.dropna(subset=["control_id"]).fillna("")
+        control_ids_in_checklist = {c.id for c in checklist.controls}
 
-        df = df.dropna(subset=["current_setting", "review_comment"], how="all")
+        for c_id in df["control_id"]:
+            if c_id not in control_ids_in_checklist:
+                raise HTTPException(400, f"Control ID {c_id} not found in checklist")
 
-        for idx, row in df.iterrows():
-            da = {
-                "response_id": row["response_id"],
-                "current_setting": str(row["current_setting"]),
-                "review_comment": str(row["review_comment"]),
-            }
-            print(f"DF DATA: \n {da}")
-            if pd.notna(row["response_id"]):
+        new_objs, updated_ids = [], []
+
+        for _, row in df.iterrows():
+            if pd.notna(row.get("response_id")):
+                updated_ids.append(row["response_id"])
                 payload = UserResponseUpdate(
                     current_setting=str(row["current_setting"]),
                     review_comment=str(row["review_comment"]),
                 )
-                print(f"UPDATNG RESPONSE FROM FILE\n{payload.model_dump()}")
-                update_user_response(
-                    payload=payload,
-                    response_id=str(row["response_id"]),
-                    db=db,
-                    current_user=current_user,
-                )
-
+                update_user_response(payload, str(row["response_id"]), db, current_user)
             else:
-                payload = UserResponseCreate(
-                    current_setting=str(row["current_setting"]),
-                    review_comment=str(row["review_comment"]),
+                new_objs.append(
+                    UserResponse(
+                        control_id=str(row["control_id"]),
+                        checklist_id=checklist_id,
+                        user_id=current_user.id,
+                        current_setting=str(row["current_setting"]),
+                        review_comment=str(row["review_comment"]),
+                    )
                 )
-                print(f"ADDING RESPONSE FROM FILE\n{payload.model_dump()}")
-                add_user_response(
-                    payload=payload,
-                    control_id=str(row["control_id"]),
-                    db=db,
-                    current_user=current_user,
-                )
-        return {"msg": "Added responses successfully"}
 
-    except HTTPException:
-        raise
+        if new_objs:
+            db.bulk_save_objects(new_objs)
+            db.commit()
+
+        update_checklist_status(checklist_id=checklist_id, db=db)
+        return {"msg": f"Processed {len(df)} rows successfully"}
+
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error in adding response from file {str(e)}",
-        )
+        db.rollback()
+        raise HTTPException(500, f"Error processing CSV: {e}")

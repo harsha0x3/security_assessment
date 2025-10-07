@@ -7,9 +7,10 @@ from fastapi import (
     Depends,
     File,
     Form,
-    Path,
-    UploadFile,
     HTTPException,
+    Path,
+    Request,
+    UploadFile,
     status,
 )
 from sqlalchemy import select
@@ -17,28 +18,31 @@ from sqlalchemy.orm import Session
 
 from controllers.user_responses_controller import (
     UPLOAD_DIR,
+    add_responses_from_csv,
     add_user_response,
+    save_bulk_responses,
     save_uploaded_file,
     update_user_response,
-    add_responses_from_csv,
-    save_bulk_responses,
 )
 from db.connection import get_db_conn
+from models.core.user_responses import UserResponse
 from models.schemas.crud_schemas import (
     UserOut,
     UserResponseCreate,
+    UserResponseCreateBulk,
     UserResponseOut,
     UserResponseUpdate,
-    UserResponseCreateBulk,
 )
-from models.core.user_responses import UserResponse
 from services.auth.deps import get_current_user
+from services.extensions.rate_limiter import limiter
 
 router = APIRouter(tags=["responses"])
 
 
 @router.post("/controls/{control_id}/responses")
+@limiter.limit("300/minute")
 async def create_user_response(
+    request: Request,
     current_setting: Annotated[str, Form(...)],
     review_comment: Annotated[str, Form(...)],
     control_id: Annotated[str, Path(title="Control Id to submit the response")],
