@@ -19,10 +19,7 @@ import {
   CheckSquare,
   Users,
   User,
-  Trash,
   ClipboardCheck,
-  ChevronRight,
-  LayoutDashboard,
   Sun,
   Moon,
   Laptop,
@@ -50,23 +47,23 @@ export function AppSidebar({ isCollapsed, onToggle, isMobile }) {
   const navigationItems = [
     {
       name: "Applications",
-      path: `/applications${searchParams}`,
+      path: `/applications`,
       icon: LayoutGrid,
     },
     {
       name: "Checklists",
-      path: `/${currentApp?.appId}/checklists/${currentChecklist?.checklistId}${searchParams}`,
+      path: `/${currentApp?.appId}/checklists/${currentChecklist?.checklistId}`,
       icon: CheckSquare,
     },
     {
       name: "Pre Assessment",
-      path: `/pre-assessment${searchParams}`,
+      path: `/pre-assessment`,
       icon: ClipboardCheck,
     },
     ...(userInfo && userInfo.role === "admin"
-      ? [{ name: "Add Users", path: `/addUsers${searchParams}`, icon: Users }]
+      ? [{ name: "Add Users", path: `/addUsers`, icon: Users }]
       : []),
-    { name: "Profile", path: `/profile${searchParams}`, icon: User },
+    { name: "Profile", path: `/profile`, icon: User },
   ];
 
   const handleLogout = async () => {

@@ -25,7 +25,7 @@ export const authApiSlice = apiSlice.injectEndpoints({
         try {
           dispatch(setIsLoading(true));
           const { data } = await queryFulfilled;
-          console.log("Dispatching... login");
+          console.log("Dispatching... login", data);
           dispatch(loginSuccess(data));
         } catch (error) {
           console.log("Error in login slice", error);

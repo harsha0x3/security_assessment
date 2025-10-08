@@ -12,17 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Search,
-  ListPlus,
-  MoreVertical,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  Circle,
-  Eye,
-  ListPlusIcon,
-} from "lucide-react";
+import { Search, ListPlusIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useApplications } from "../hooks/useApplications";
 import AppDetailsSheet from "../components/AppDetailsSheet";
@@ -44,6 +34,7 @@ import {
 import { setCurrentApp } from "../store/applicationSlice";
 import { Label } from "@/components/ui/label";
 import AppPagination from "../components/AppPagination";
+import { useNavigate } from "react-router-dom";
 const groupChecklistsByStatus = (checklists) => {
   return {
     pending: checklists.filter(
@@ -54,6 +45,7 @@ const groupChecklistsByStatus = (checklists) => {
     ),
     approved: checklists.filter((c) => c.status === "approved"),
     rejected: checklists.filter((c) => c.status === "rejected"),
+    completed: checklists.filter((c) => c.status === "completed"),
   };
 };
 
@@ -67,11 +59,20 @@ const getAppStatus = (app) => {
 
   return "pending";
 };
-const AppCard = ({ app, onDetailsClick }) => {
+const AppCard = ({ app, onDetailsClick, accentColor }) => {
+  const dispatch = useDispatch();
+  const { appPage } = useApplications();
   const groupedChecklists = app.checklists
     ? groupChecklistsByStatus(app.checklists)
-    : { pending: [], inProgress: [], approved: [], rejected: [] };
+    : {
+        pending: [],
+        inProgress: [],
+        approved: [],
+        rejected: [],
+        completed: [],
+      };
   const totalChecklists = app.checklists ? app.checklists.length : 0;
+  console.log("groupedChecklists", groupedChecklists);
 
   // Calculate completion percentage
   const completedChecklists = groupedChecklists.approved.length;
@@ -82,9 +83,10 @@ const AppCard = ({ app, onDetailsClick }) => {
   const isNewApp =
     new Date(app.created_at + "Z").toLocaleDateString() ===
     new Date().toLocaleDateString();
+  const navigate = useNavigate();
 
   return (
-    <Card className="flex flex-col p-0 border rounded-lg shadow hover:shadow-lg transition-transform transform hover:-translate-y-1 max-h-[28rem]">
+    <Card className="flex flex-col p-0 border rounded-lg shadow hover:shadow-lg transition-transform transform hover:-translate-y-1 max-h-[28rem] ">
       {/* Header */}
       <CardHeader className="p-0 mb-2 bg-muted rounded-t-lg w-full ">
         <div className="flex flex-row items-center justify-between px-4 pt-2">
@@ -112,7 +114,9 @@ const AppCard = ({ app, onDetailsClick }) => {
       </CardHeader>
 
       {/* Checklists */}
-      <CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden pb-2 px-4">
+      <CardContent
+        className={`flex-1 flex flex-col min-h-0 overflow-hidden pb-2 px-4`}
+      >
         {totalChecklists > 0 ? (
           <div className="flex-1 flex flex-col min-h-0 space-y-2 overflow-hidden">
             <div className="flex items-center justify-between text-xs font-medium text-muted-foreground px-4">
@@ -137,6 +141,9 @@ const AppCard = ({ app, onDetailsClick }) => {
                 {groupedChecklists.rejected.map((checklist) => (
                   <ChecklistMiniCard key={checklist.id} checklist={checklist} />
                 ))}
+                {groupedChecklists.completed.map((checklist) => (
+                  <ChecklistMiniCard key={checklist.id} checklist={checklist} />
+                ))}
               </div>
             </ScrollArea>
           </div>
@@ -155,32 +162,49 @@ const AppCard = ({ app, onDetailsClick }) => {
             {app?.ticket_id ? app?.ticket_id : "Not available"}
           </p>
         </div>
-
-        <Sheet>
-          <SheetTrigger asChild>
-            <CardAction>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onDetailsClick(app)}
-              >
-                Details
-              </Button>
-            </CardAction>
-          </SheetTrigger>
-          <SheetContent className="h-full">
-            <AppDetailsSheet selectedApp={app} />
-          </SheetContent>
-        </Sheet>
+        <div className="flex flex-row">
+          <Sheet>
+            <SheetTrigger asChild>
+              <CardAction>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDetailsClick(app)}
+                >
+                  Details
+                </Button>
+              </CardAction>
+            </SheetTrigger>
+            <SheetContent className="h-full">
+              <AppDetailsSheet selectedApp={app} />
+            </SheetContent>
+          </Sheet>
+          <Button
+            variant="link"
+            onClick={() => {
+              navigate(`/${app.id}/checklists?appPage=${appPage}`);
+              dispatch(setCurrentApp(app));
+            }}
+          >
+            Checklists
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
 };
 
-const KanbanColumn = ({ title, apps, count, color, onDetailsClick }) => {
+const KanbanColumn = ({
+  title,
+  apps,
+  count,
+  color,
+  onDetailsClick,
+  bgColor,
+}) => {
   return (
     <div
-      className={`flex flex-col bg-gradient-to-b from-muted/40 to-muted/20 rounded-lg flex-1 h-full border shadow-sm `}
+      className={`flex flex-col rounded-lg flex-1 h-full border shadow-sm ${bgColor}`}
     >
       <div
         className={`flex items-center justify-between py-3 rounded-t-md px-4 border-b ${color} w-full`}
@@ -205,7 +229,12 @@ const KanbanColumn = ({ title, apps, count, color, onDetailsClick }) => {
         <div className="space-y-3">
           {apps.length > 0 ? (
             apps.map((app) => (
-              <AppCard key={app.id} app={app} onDetailsClick={onDetailsClick} />
+              <AppCard
+                key={app.id}
+                app={app}
+                onDetailsClick={onDetailsClick}
+                accentColor={"bg-gradient-to-r from-purple-600 to-blue-600"}
+              />
             ))
           ) : (
             <div className="text-center text-sm text-muted-foreground py-8">
@@ -235,14 +264,14 @@ const ApplicationsPage = () => {
       };
     }
 
-    const filtered = appsData.apps.filter((app) =>
-      app.name?.toLowerCase().includes(appSearchTerm.toLowerCase())
-    );
-
     return {
-      pending: filtered.filter((app) => getAppStatus(app) === "pending"),
-      inProgress: filtered.filter((app) => getAppStatus(app) === "in-progress"),
-      completed: filtered.filter((app) => getAppStatus(app) === "completed"),
+      pending: appsData.apps.filter((app) => getAppStatus(app) === "pending"),
+      inProgress: appsData.apps.filter(
+        (app) => getAppStatus(app) === "in-progress"
+      ),
+      completed: appsData.apps.filter(
+        (app) => getAppStatus(app) === "completed"
+      ),
     };
   }, [appsData, appSearchTerm]);
 
@@ -264,7 +293,7 @@ const ApplicationsPage = () => {
 
   return (
     <TooltipProvider>
-      <div className="h-full w-full flex flex-col gap-4 p-4 overflow-hidden">
+      <div className="h-full w-full flex flex-col gap-2 overflow-hidden">
         {/* Header */}
         <div className="bg-muted p-2 text-accent-foreground">
           <div className="flex items-center justify-between w-full">
@@ -298,7 +327,7 @@ const ApplicationsPage = () => {
 
             {/* Search box */}
             <div className="flex gap-2">
-              <div className="relative max-w-64 min-w-32">
+              <div className="relative max-w-100 min-w-70">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-primary h-4 w-4" />
                 <Input
                   type="text"
@@ -323,6 +352,9 @@ const ApplicationsPage = () => {
             apps={groupedApps.pending}
             count={groupedApps.pending.length}
             onDetailsClick={handleDetailsClick}
+            bgColor={
+              "bg-gradient-to-br from-amber-500/20 dark:from-amber-700/20 to-muted"
+            }
             className="min-w-[250px]"
           />
           <KanbanColumn
@@ -330,6 +362,9 @@ const ApplicationsPage = () => {
             color="bg-blue-500/50"
             apps={groupedApps.inProgress}
             count={groupedApps.inProgress.length}
+            bgColor={
+              "bg-gradient-to-br from-blue-500/20 dark:from-blue-600/10 to-muted"
+            }
             onDetailsClick={handleDetailsClick}
             className="min-w-[250px]"
           />
@@ -339,6 +374,9 @@ const ApplicationsPage = () => {
             apps={groupedApps.completed}
             count={groupedApps.completed.length}
             onDetailsClick={handleDetailsClick}
+            bgColor={
+              "bg-gradient-to-br from-green-500/20 dark:from-green-700/20 to-muted"
+            }
             className="min-w-[250px]"
           />
         </div>

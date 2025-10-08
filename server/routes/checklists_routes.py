@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Path, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, status, Query, Body
 from sqlalchemy.orm import Session
 
 from controllers.checklist_controller import (
@@ -18,9 +18,11 @@ from models.schemas.crud_schemas import (
     ChecklistUpdate,
     UserOut,
     EvaluateChecklist,
+    PriorityVal,
 )
 from services.auth.deps import get_current_user
 from models.schemas.params import ChecklistQueryParams
+from models import Checklist
 
 router = APIRouter(tags=["checklists"])
 
@@ -76,7 +78,7 @@ async def patch_checklist(
             detail=f"You can't access to update {current_user.username}",
         )
 
-    return update_checklist(payload, checklist_id, db)
+    return update_checklist(payload, checklist_id, db, current_user=current_user)
 
 
 @router.delete("/checklists/{checklist_id}")
@@ -117,10 +119,10 @@ async def evaluate_checklist(
     """
     Endpoint to submit a checklist.
     """
+    print(payload.model_dump())
     return update_checklist_status(
-        checklist_id,
-        current_user,
-        db,
+        checklist_id=checklist_id,
+        db=db,
         checklist_status=payload.status,
         comment=payload.comment,
     )
@@ -136,4 +138,31 @@ async def get_trahed_app_checklists(
     return get_trash_checklists(app_id=app_id, db=db, user=current_user, params=params)
 
 
-# @router.patch("/checklists/{checklists_id}/restore")
+@router.patch("/checklists/{checklist_id}/set-priority")
+def set_app_priority(
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+    priority_val: Annotated[
+        PriorityVal,
+        Body(description="Priority value 1 = Low, 2 = Medium, 3 = High"),
+    ],
+    checklist_id: Annotated[str, Path(title="App Id of the app to be updated")],
+):
+    checklist = db.get(Checklist, checklist_id)
+    if not checklist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Checklist not found {checklist_id}",
+        )
+
+    is_assigned = any(a.user_id == current_user.id for a in checklist.assignments)
+
+    if not is_assigned and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorised to edit this checklist",
+        )
+    checklist.set_priority_for_user(
+        user_id=current_user.id, db=db, priority_val=priority_val.priority_val
+    )
+    return ChecklistOut.model_validate(checklist)

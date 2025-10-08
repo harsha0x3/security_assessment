@@ -106,6 +106,7 @@ function App() {
                 "light-dark(var(--color-green-600), var(--color-green-400))",
             },
           },
+          closeButton: true,
         }}
       />
 

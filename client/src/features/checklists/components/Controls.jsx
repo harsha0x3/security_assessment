@@ -3,7 +3,10 @@ import {
   useAddControlMutation,
   useUpdateControlsMutation,
 } from "../store/controlsApiSlice";
-import { useSubmitChecklistMutation } from "../store/checklistsApiSlice";
+import {
+  useSubmitChecklistMutation,
+  useEvaluateChecklistMutation,
+} from "../store/checklistsApiSlice";
 import { useSaveResponseMutation } from "../store/responsesApiSlice";
 import { useState, useMemo, useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -18,9 +21,7 @@ import {
 import { selectCurrentChecklist } from "../store/checklistsSlice";
 import {
   Save,
-  Edit3,
   X,
-  Plus,
   Settings,
   Shredder,
   Info,
@@ -98,10 +99,13 @@ import {
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const Controls = () => {
   const isProd = import.meta.env.VITE_PROD_ENV === "true";
@@ -124,13 +128,20 @@ const Controls = () => {
   const [sorting, setSorting] = useState([]);
 
   const [saveResponse] = useSaveResponseMutation();
-  const [submitChecklist] = useSubmitChecklistMutation();
+  const [submitChecklist, { isLoading: isSubmittingChecklist }] =
+    useSubmitChecklistMutation();
+  const [evaluateChecklist, { isLoading: isEvaluating }] =
+    useEvaluateChecklistMutation();
   const [addControl] = useAddControlMutation();
   const [updateControl] = useUpdateControlsMutation();
   const [editingControlId, setEditingControlId] = useState(null);
   const [adding, setAdding] = useState(false);
   const currentChecklist = useSelector(selectCurrentChecklist);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [checklistEvaluationStatus, setChecklistEvaluationStatus] =
+    useState("");
+  const [checklistEvaluationComment, setChecklistEvaluationComment] =
+    useState("");
 
   // react-hook-form for editing responses
   const {
@@ -224,9 +235,9 @@ const Controls = () => {
 
   // react-hook-form for adding controls
   const {
-    register: registerAdd,
-    handleSubmit: handleAddSubmit,
-    reset: resetAdd,
+    register: registerAddControl,
+    handleSubmit: handleAddControlSubmit,
+    reset: resetAddControl,
   } = useForm({
     defaultValues: {
       control_area: "",
@@ -283,7 +294,7 @@ const Controls = () => {
   const onSubmitAddControl = async (data) => {
     try {
       await addControl({ payload: data, checklistId }).unwrap();
-      resetAdd();
+      resetAddControl();
       setAdding(false);
     } catch (err) {
       console.error("Failed to add control:", err);
@@ -358,20 +369,33 @@ const Controls = () => {
         cell: ({ row }) => {
           const controlId = row.original.control_id;
           return editingControlId === controlId ? (
-            <Select>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder="Severity"
-                  {...registerEditControl("severity")}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Low">Low</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Critical">Critical</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="relative w-full">
+              <select
+                {...registerEditControl("severity")}
+                className="block appearance-none w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Select Severity</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
+              </select>
+              {/* Arrow icon */}
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg
+                  className="h-4 w-4 text-muted-foreground"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.08 1.04l-4.25 4.25a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+            </div>
           ) : (
             <span
               className={`px-2 py-1 rounded-full text-xs max-w-2 font-medium ${
@@ -705,34 +729,48 @@ Response Updated: ${
   const AddControlsComp = () => {
     return (
       <div>
-        <form onSubmit={handleAddSubmit(onSubmitAddControl)}>
+        <form onSubmit={handleAddControlSubmit(onSubmitAddControl)}>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
             <Input
               type="text"
               placeholder="Control Area"
-              {...registerAdd("control_area", { required: true })}
+              {...registerAddControl("control_area", { required: true })}
             />
-            <Select>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder="Severity"
-                  {...registerAdd("severity")}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Low">Low</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Critical">Critical</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="relative w-full">
+              <select
+                {...registerAddControl("severity")}
+                className="block appearance-none w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Select Severity</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
+              </select>
+              {/* Arrow icon */}
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg
+                  className="h-4 w-4 text-muted-foreground"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.08 1.04l-4.25 4.25a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+            </div>
+
             <Textarea
               placeholder="Control Text"
-              {...registerAdd("control_text", { required: true })}
+              {...registerAddControl("control_text", { required: true })}
             />
             <Textarea
               placeholder="Description"
-              {...registerAdd("description", { required: true })}
+              {...registerAddControl("description", { required: true })}
             />
           </div>
           <div className="flex justify-center gap-3 mt-1">
@@ -743,7 +781,7 @@ Response Updated: ${
               type="button"
               onClick={() => {
                 setAdding(false);
-                resetAdd();
+                resetAddControl();
               }}
               variant="destructive"
             >
@@ -1063,6 +1101,7 @@ Response Updated: ${
           <ScrollAreaViewport className="w-max">
             <CardContent className="p-0">
               <RenderTable />
+              {userInfo.role === "admin" && adding && <AddControlsComp />}
             </CardContent>
           </ScrollAreaViewport>
           <ScrollBar orientation="vertical" />
@@ -1070,12 +1109,112 @@ Response Updated: ${
         </ScrollArea>
 
         <CardFooter className="p-1 bg-muted rounded-b-lg flex flex-row gap-3 justify-between items-center">
-          <Button
-            disabled={total_controls !== total_responses}
-            onClick={submitChecklistFinal}
-          >
-            Submit
-          </Button>
+          <div className="flex flex-row gap-3 justify-between items-center">
+            <Button
+              disabled={total_controls !== total_responses || adding}
+              onClick={submitChecklistFinal}
+            >
+              Submit
+            </Button>
+            {userInfo.role === "admin" && !adding && (
+              <div className="flex gap-2">
+                <Button onClick={() => setAdding(true)}>Add Control</Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      disabled={
+                        total_controls !== total_responses ||
+                        currentChecklist.isCompleted
+                      }
+                    >
+                      Evaluate checklist
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Evaluate checklist </DialogTitle>
+                    </DialogHeader>
+                    <DialogDescription asChild>
+                      <div>
+                        <p>
+                          Evalute the checklist based on the responses fro
+                          controls.
+                        </p>
+                        <div className="border p-4">
+                          <RadioGroup
+                            className="flex"
+                            value={checklistEvaluationStatus}
+                            onValueChange={(value) =>
+                              setChecklistEvaluationStatus(value)
+                            }
+                          >
+                            <div className="flex items-center gap-3">
+                              <RadioGroupItem value="approved" id="approve_" />
+                              <Label htmlFor="approve_">Approve</Label>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <RadioGroupItem value="rejected" id="reject_" />
+                              <Label htmlFor="reject_">Reject</Label>
+                            </div>
+                          </RadioGroup>
+                          <div className="mt-2">
+                            <Label htmlFor="checklistEvaluateComment">
+                              Comments
+                            </Label>
+                            <Textarea
+                              placeholder="Write comments for your evaluation"
+                              value={checklistEvaluationComment}
+                              onChange={(e) =>
+                                setChecklistEvaluationComment(e.target.value)
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </DialogDescription>
+                    <DialogFooter>
+                      <div className="flex gap-2 ites-center jsutify-center">
+                        <Button
+                          onClick={async () => {
+                            try {
+                              toast.promise(
+                                (async () => {
+                                  const payload = {
+                                    status: checklistEvaluationStatus,
+                                    comment: checklistEvaluationComment,
+                                  };
+                                  await evaluateChecklist({
+                                    checklistId: checklistId,
+                                    payload: payload,
+                                  });
+                                  setChecklistEvaluationComment("");
+                                  setChecklistEvaluationStatus("");
+                                })(),
+                                {
+                                  loading: "Evaluating..",
+                                  success: "Checklist Evaluated successfully",
+                                  error: "Error Evaluating the checklist",
+                                }
+                              );
+                            } catch (error) {
+                              console.error("ERROR EVALUATING", error);
+                            }
+                          }}
+                          disabled={isEvaluating || !checklistEvaluationStatus}
+                        >
+                          Submit
+                        </Button>
+                        <DialogClose asChild>
+                          <Button variant>Cancel</Button>
+                        </DialogClose>
+                      </div>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            )}
+          </div>
           <ControlsPagination />
           <div className="flex items-center gap-2 w-[250px]">
             {/* Progress bar container */}

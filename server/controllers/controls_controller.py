@@ -312,7 +312,6 @@ def get_controls_with_responses(
                 UserResponse,
                 and_(
                     UserResponse.control_id == Control.id,
-                    UserResponse.user_id == current_user.id,
                 ),
             )
             .where(Control.checklist_id == checklist_id)

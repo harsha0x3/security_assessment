@@ -1,15 +1,12 @@
 import { useSelector, useDispatch } from "react-redux";
 import {
-  loadChecklists,
   selectAllChecklists,
   selectCurrentChecklist,
 } from "../store/checklistsSlice";
 
 import { loadAllApps } from "../../applications/store/applicationSlice";
-import { useGetAllChecklistsQuery } from "../store/checklistsApiSlice";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { Card } from "../../../components/ui/Card";
 import { Button } from "@/components/ui/button";
 import { useImportControlsMutation } from "../store/controlsApiSlice";
 import {
@@ -24,6 +21,7 @@ import {
 import { ImportIcon } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AppPagination from "@/features/applications/components/AppPagination";
+import { useChecklists } from "../hooks/useChecklists";
 
 const ImportControls = ({ targetChecklistId }) => {
   const dispatch = useDispatch();
@@ -37,29 +35,11 @@ const ImportControls = ({ targetChecklistId }) => {
 
   const [selectedAppId, setSelectedAppId] = useState(null);
   const [selectedChecklistId, setSelectedchecklistId] = useState(null);
-  const {
-    data: appChecklists,
-    isSuccess: checklistsSuccess,
-    isError: isChecklistFetchError,
-    error: checklistFetchError,
-  } = useGetAllChecklistsQuery({ appId: selectedAppId });
+
+  const { data: appChecklists } = useChecklists({ appIdProp: selectedAppId });
   console.log("APP CHECK", appChecklists);
 
   const currentChecklist = useSelector(selectCurrentChecklist);
-
-  useEffect(() => {
-    if (isChecklistFetchError && allChecklists.length < 1) {
-      let errText =
-        checklistFetchError?.data?.detail || "Error loading checklists";
-      if (selectedAppId === null) {
-        errText =
-          errText + "\nPlease select an application to view its checklists.";
-      }
-      toast.error(errText || "Error loading checklists for this app", {
-        autoClose: 4000,
-      });
-    }
-  }, [isChecklistFetchError, checklistFetchError, appChecklists]);
 
   const handleImportSubmit = async () => {
     const payload = {

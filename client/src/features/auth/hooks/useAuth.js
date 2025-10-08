@@ -81,25 +81,12 @@ export const useAuth = () => {
     };
   };
 
-  //   const isTokenExpiring = () => {
-  //     if (!auth.tokenExpiresAt) return false;
-  //     const now = Date.now();
-  //     const timeUntilExpiry = auth.tokenExpiresAt - now;
-  //     return timeUntilExpiry < 2 * 60 * 1000;
-  //   };
-
-  //   const refreshTokenIfNeeded = async () => {
-  //     if (isTokenExpiring()) {
-  //       try {
-  //         await refreshTokenMutation().unwrap();
-  //         return true;
-  //       } catch (error) {
-  //         console.error("Error in refresh", error);
-  //         return false;
-  //       }
-  //     }
-  //     return true;
-  //   };
+  const shouldRefresh = () => {
+    if (!auth.accessExp) return false;
+    const now = Date.now() / 1000;
+    const remaining = auth.accessExp - now;
+    return remaining < 180; // less than 3 minutes left
+  };
 
   return {
     isAuthenticated,

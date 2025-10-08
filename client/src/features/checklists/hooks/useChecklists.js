@@ -36,7 +36,10 @@ export const useChecklists = ({ appIdProp = null } = {}) => {
       search_by: cListSearchBy,
     },
     {
-      skip: !(paramAppId || appIdProp),
+      skip:
+        !(paramAppId || appIdProp) ||
+        paramAppId === "null" ||
+        appIdProp === "null",
       refetchOnMountOrArgChange: true,
     }
   );

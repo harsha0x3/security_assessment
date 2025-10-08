@@ -2,6 +2,7 @@ from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, status, Query
 from sqlalchemy.orm import Session
+from models import Application
 
 from controllers.application_controller import (
     create_app,
@@ -20,6 +21,7 @@ from models.schemas.crud_schemas import (
     ApplicationOut,
     ApplicationUpdate,
     UserOut,
+    PriorityVal,
 )
 from services.auth.deps import get_current_user
 from models.schemas.params import AppQueryParams
@@ -180,3 +182,34 @@ def application_stats(
     current_user: Annotated[UserOut, Depends(get_current_user)],
 ):
     return get_app_stats(current_user=current_user, db=db)
+
+
+@router.patch("/{app_id}/set-priority")
+def set_app_priority(
+    db: Annotated[Session, Depends(get_db_conn)],
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+    priority_val: Annotated[
+        PriorityVal,
+        Body(description="Priority value 1 = Low, 2 = Medium, 3 = High"),
+    ],
+    app_id: Annotated[str, Path(title="App Id of the app to be updated")],
+):
+    app = db.get(Application, app_id)
+    if not app:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"App not found {app_id}"
+        )
+
+    is_assigned = any(
+        any(a.user_id == current_user.id for a in checklist.assignments)
+        for checklist in app.checklists
+    )
+
+    if not is_assigned and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorised to edit this app",
+        )
+    app.set_priority_for_user(
+        user_id=current_user.id, db=db, priority_val=priority_val.priority_val
+    )

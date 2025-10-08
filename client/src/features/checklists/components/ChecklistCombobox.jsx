@@ -40,6 +40,77 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import AssignUsersModal from "@/features/userManagement/components/AssignUsersModal";
+import { useSetChecklistPriorityMutation } from "../store/checklistsApiSlice";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+
+const SetChecklistPriority = ({ priorityVal, checklistId }) => {
+  const [
+    setPriorityMutation,
+    { isLoading: isSettingPriority, error: prioritySetError },
+  ] = useSetChecklistPriorityMutation();
+  const [newPriorityVal, setNewPriorityVal] = React.useState(priorityVal);
+
+  const handleSetPriority = async () => {
+    try {
+      await setPriorityMutation({
+        checklistId: checklistId,
+        priority: newPriorityVal,
+      });
+    } catch (error) {
+      toast.error("Error settin the Priority");
+      console.error("Error settin the Priority", error);
+    }
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="ghost" className="w-full justify-start">
+          set priority
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Set priority for checklist</DialogTitle>
+        </DialogHeader>
+        <DialogDescription asChild>
+          <div className="flex gap-2 items-center w-full">
+            <select
+              value={newPriorityVal}
+              onChange={(e) => setNewPriorityVal(Number(e.target.value))}
+              className="block appearance-none w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value={1}>Low</option>
+              <option value={2}>Medium</option>
+              <option value={3}>High</option>
+            </select>
+            <Button
+              size="sm"
+              onClick={handleSetPriority}
+              disabled={isSettingPriority}
+            >
+              Save
+            </Button>
+            <DialogClose asChild>
+              <Button size="sm" variant="outline">
+                Cancel
+              </Button>
+            </DialogClose>
+          </div>
+        </DialogDescription>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export function ChecklistCombobox({
   checklists,
@@ -199,49 +270,58 @@ export function ChecklistCombobox({
                       </HoverCardContent>
                     </HoverCard>
 
-                    {isAdmin && (
-                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                        <DropdownMenu
-                          open={dropdownOpen === checklist.id}
-                          onOpenChange={(open) =>
-                            setDropdownOpen(open ? checklist.id : null)
-                          }
-                        >
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-gray-100"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuGroup>
-                              <DropdownMenuItem asChild>
-                                <AssignUsersModal checklist={checklist} />
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={(e) => handleEdit(checklist, e)}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-red-600 focus:text-red-600"
-                                onClick={(e) => handleDelete(checklist.id, e)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    )}
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      <DropdownMenu
+                        open={dropdownOpen === checklist.id}
+                        onOpenChange={(open) =>
+                          setDropdownOpen(open ? checklist.id : null)
+                        }
+                      >
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-gray-100"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem asChild className="w-full">
+                              <SetChecklistPriority
+                                priorityVal={checklist.priority}
+                                checklistId={checklist.id}
+                                className="w-full"
+                              />
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {isAdmin && (
+                              <>
+                                <DropdownMenuItem asChild>
+                                  <AssignUsersModal checklist={checklist} />
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={(e) => handleEdit(checklist, e)}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-red-600 focus:text-red-600"
+                                  onClick={(e) => handleDelete(checklist.id, e)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 ))}
               </CommandGroup>

@@ -4,6 +4,7 @@ from .core.checklists import Checklist
 from .core.controls import Control
 from .core.user_responses import UserResponse
 from .core.checklist_assignments import ChecklistAssignment
+from .core.user_priorities import UserPriority
 
 from .pre_assessment.sections import Section
 from .pre_assessment.answers import Answer

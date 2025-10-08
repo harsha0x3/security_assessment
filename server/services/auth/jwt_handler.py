@@ -119,6 +119,7 @@ def set_jwt_cookies(response: Response, access_token: str, refresh_token: str):
             path="/",
             expires=int(refresh_exp.timestamp()),
         )
+        return {"access_exp": access_exp}
     except Exception as e:
         print(f"Encountered Error in Setting cookies {str(e)}")
         raise

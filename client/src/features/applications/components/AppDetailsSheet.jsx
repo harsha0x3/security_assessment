@@ -12,14 +12,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useEffect, useState } from "react";
-import {
-  CheckIcon,
-  ChevronUpIcon,
-  Edit3,
-  Edit3Icon,
-  Star,
-  XIcon,
-} from "lucide-react";
+import { ChevronDown, ChevronUpIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useChecklists } from "@/features/checklists/hooks/useChecklists";
@@ -27,6 +20,7 @@ import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import {
   useAddApplicationMutation,
   useUpdateApplicationMutation,
+  useSetAppPriorityMutation,
 } from "../store/applicationApiSlice";
 import { toast } from "sonner";
 import {
@@ -43,6 +37,13 @@ import {
 } from "@/components/ui/collapsible";
 import ChecklistItem from "@/features/checklists/components/ChecklistItem";
 import { useApplications } from "../hooks/useApplications";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const AppDetailsSheet = ({ selectedApp = null }) => {
   console.log("SESELCTED APP IN SHEET", selectedApp);
@@ -50,9 +51,17 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
   const [isEditing, setIsEditing] = useState(false);
   const isAdmin = user.role === "admin";
   const isNew = isAdmin && !selectedApp;
+  const [isEditingPriority, setIsEditingPriority] = useState(false);
+  const [newPriorityVal, setNewPriorityVal] = useState(
+    selectedApp?.priority ?? 2
+  );
 
   const { appDetails } = useApplications({ appId: selectedApp?.id });
   const { data: appChecklists } = useChecklists({ appIdProp: selectedApp?.id });
+  const [
+    setApppriority,
+    { error: prioritySetError, isLoading: isSettingPriority },
+  ] = useSetAppPriorityMutation();
   console.log("APP CHECKLISTS", appChecklists);
 
   const {
@@ -64,17 +73,49 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
     defaultValues: appDetails || {},
   });
 
+  const getPriorityLabel = (priorityVal) => {
+    switch (priorityVal) {
+      case 1:
+        return "Low";
+      case 2:
+        return "Medium";
+      case 3:
+        return "High";
+      default:
+        return "Unset";
+    }
+  };
+
   const sheetDesc = selectedApp
     ? `Below are the details of the app ${selectedApp.name}`
     : "Create New app here";
 
-  const [addAppMutation, { error: appAddError }] = useAddApplicationMutation();
-  const [updateAppMutation, { error: updateAppError }] =
+  const [addAppMutation, { error: appAddError, isLoading: isAdding }] =
+    useAddApplicationMutation();
+  const [updateAppMutation, { error: updateAppError, isLoading: isUpdating }] =
     useUpdateApplicationMutation();
 
   useEffect(() => {
     reset(appDetails || {});
   }, [appDetails, reset]);
+  useEffect(() => {
+    if (appAddError) {
+      toast.error("Failed to create new app", {
+        description: appAddError?.data?.detail || "",
+      });
+    }
+  }, [appAddError]);
+
+  useEffect(() => {
+    if (updateAppError) {
+      toast.error("Failed to edit the app", {});
+    }
+  }, [updateAppError]);
+  useEffect(() => {
+    if (prioritySetError) {
+      toast.error("Failed to edit the app", {});
+    }
+  }, [prioritySetError]);
 
   const handleSaveEdit = async (payload) => {
     try {
@@ -94,6 +135,26 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
         description: JSON.stringify(err),
       });
       console.error("Failed to save app changes:", err);
+    }
+  };
+  const handlePrioritySave = async () => {
+    if (!selectedApp) return;
+
+    try {
+      toast.promise(
+        setApppriority({
+          appId: selectedApp.id,
+          priority: newPriorityVal,
+        }).unwrap(),
+        {
+          loading: "Updating priority...",
+          success: "Priority updated successfully!",
+          error: "Failed to update priority",
+        }
+      );
+      setIsEditingPriority(false);
+    } catch (err) {
+      console.error("Priority update failed:", err);
     }
   };
 
@@ -120,8 +181,10 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
   const onSubmit = async (data) => {
     if (isEditing) {
       await handleSaveEdit(data);
-    } else {
+    } else if (isAdmin && (isEditing || isNew)) {
       await handleNewApp(data);
+    } else {
+      return;
     }
   };
 
@@ -170,6 +233,56 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
               />
             ) : (
               <p className="text-sm">{appDetails?.description || "—"}</p>
+            )}
+          </div>
+
+          <div className="relative border rounded-md px-3 pt-5 pb-2">
+            <Label
+              htmlFor="priority"
+              className="absolute -top-2 left-2 bg-background px-1 text-sm font-medium"
+            >
+              Priority:
+            </Label>
+            {isEditingPriority ? (
+              <div className="flex gap-2 items-center w-full">
+                <select
+                  value={newPriorityVal}
+                  onChange={(e) => setNewPriorityVal(Number(e.target.value))}
+                  className="block appearance-none w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value={1}>Low</option>
+                  <option value={2}>Medium</option>
+                  <option value={3}>High</option>
+                </select>
+                <Button
+                  size="sm"
+                  onClick={handlePrioritySave}
+                  disabled={isSettingPriority}
+                >
+                  Save
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsEditingPriority(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center">
+                <p className="text-sm">
+                  {getPriorityLabel(appDetails?.priority)}
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsEditingPriority(true)}
+                >
+                  Edit
+                </Button>
+              </div>
             )}
           </div>
 
@@ -357,7 +470,7 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
           )}
         </div>
       </ScrollArea>
-
+      <DropdownMenuSeparator />
       <SheetFooter>
         <div className="flex gap-2 items-center">
           {!isNew && (
@@ -395,7 +508,12 @@ const AppDetailsSheet = ({ selectedApp = null }) => {
             </div>
           )}
           {(isEditing || isNew) && (
-            <Button size="sm" form="app_details" type="submit">
+            <Button
+              size="sm"
+              form="app_details"
+              type="submit"
+              disabled={isUpdating || isAdding}
+            >
               Save
             </Button>
           )}

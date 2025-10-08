@@ -40,6 +40,8 @@ export const ChecklistMiniCard = ({ checklist }) => {
         return "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800";
       case "rejected":
         return "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800";
+      case "completed":
+        return "bg-amber-50 border-amber-200 dark:bg-amber-800/20 dark:border-amber-900";
       default:
         return "bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700";
     }

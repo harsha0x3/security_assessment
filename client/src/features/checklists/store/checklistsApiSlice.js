@@ -111,6 +111,29 @@ export const checklistsApiSlice = apiSlice.injectEndpoints({
       query: ({ appId }) => `/applications/${appId}/checklists/trash`,
       providesTags: ["TrashedChecklists"],
     }),
+    setChecklistPriority: builder.mutation({
+      query: ({ checklistId, priority }) => ({
+        url: `checklists/${checklistId}/set-priority`,
+        method: "PATCH",
+        body: { priority_val: priority },
+      }),
+      invalidatesTags: (result) =>
+        result
+          ? [{ type: "Checklists", id: result.id }]
+          : [{ type: "Checklists", id: "LIST" }],
+    }),
+
+    evaluateChecklist: builder.mutation({
+      query: ({ checklistId, payload }) => ({
+        url: `checklists/${checklistId}/evaluate`,
+        method: "PATCH",
+        body: payload,
+      }),
+      invalidatesTags: (result) =>
+        result
+          ? [{ type: "Checklists", id: result.checklist.id }]
+          : [{ type: "Checklists", id: "LIST" }],
+    }),
   }),
 });
 
@@ -122,4 +145,6 @@ export const {
   useDeleteChecklistMutation,
   useGetTrashedChecklistsQuery,
   usePatchChecklistMutation,
+  useSetChecklistPriorityMutation,
+  useEvaluateChecklistMutation,
 } = checklistsApiSlice;

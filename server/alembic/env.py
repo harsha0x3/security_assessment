@@ -10,13 +10,12 @@ import os
 
 from models.core import (
     users,
-)
-from models.core import (
     applications,
     checklist_assignments,
     checklists,
     controls,
     user_responses,
+    user_priorities,
 )
 
 from models.pre_assessment import (

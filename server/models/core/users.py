@@ -58,6 +58,7 @@ class User(Base, BaseMixin):
         back_populates="assessed_person",
         foreign_keys="Submission.assessed_by",
     )
+    priorities = relationship("UserPriority", back_populates="user")
 
     # ----------------------Functions---------------------------------
     def set_password(self, plain_password: str) -> None:

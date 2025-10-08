@@ -16,6 +16,7 @@ from models.schemas.crud_schemas import (
 )
 from models.schemas.params import ChecklistQueryParams
 from models.core.user_responses import UserResponse
+from models import UserPriority
 
 from .application_controller import update_app_status
 
@@ -33,13 +34,22 @@ def create_checklist(
             )
 
         checklist = Checklist(
-            **payload.model_dump(), creator_id=creator.id, app_id=app_id
+            **payload.model_dump(exclude={"priority"}),
+            creator_id=creator.id,
+            app_id=app_id,
         )
         db.add(checklist)
+        db.flush()
+
+        priority_val = payload.priority or 2
+        checklist.set_priority_for_user(
+            user_id=creator.id, db=db, priority_val=priority_val
+        )
         db.commit()
         db.refresh(checklist)
         data = checklist.to_dict()
         data["app_name"] = checklist.app.name
+        data["priority"] = checklist.get_priority_for_user(user_id=creator.id, db=db)
 
         update_app_status(app.id, db)
         return ChecklistOut(**data)
@@ -110,7 +120,9 @@ def get_checklists_for_app(
                             for assignment in checklist.assignments
                         ],
                         is_completed=checklist.is_completed,
-                        priority=checklist.priority,
+                        priority=checklist.get_priority_for_user(
+                            user_id=user.id, db=db
+                        ),
                         created_at=checklist.created_at,
                         updated_at=checklist.updated_at,
                         status=checklist.status,
@@ -145,7 +157,9 @@ def get_checklists_for_app(
                         is_completed=checklist.is_completed,
                         created_at=checklist.created_at,
                         updated_at=checklist.updated_at,
-                        priority=checklist.priority,
+                        priority=checklist.get_priority_for_user(
+                            user_id=user.id, db=db
+                        ),
                         status=checklist.status,
                         comment=checklist.comment,
                     )
@@ -172,7 +186,13 @@ def get_checklists_for_user(user: UserOut, db: Session) -> list[ChecklistOut]:
             "Checklist is complete",
             [checklist.is_completed for checklist in checklists],
         )
-        return [ChecklistOut.model_validate(checklist) for checklist in checklists]
+        return [
+            ChecklistOut(
+                **checklist.to_dict(),
+                priority=checklist.get_priority_for_user(user_id=user.id, db=db),
+            )
+            for checklist in checklists
+        ]
 
     except Exception as e:
         print(f"Error while getting checklists for user: {str(e)}")
@@ -182,7 +202,9 @@ def get_checklists_for_user(user: UserOut, db: Session) -> list[ChecklistOut]:
         )
 
 
-def update_checklist(payload: ChecklistUpdate, checklist_id: str, db: Session):
+def update_checklist(
+    payload: ChecklistUpdate, checklist_id: str, db: Session, current_user: UserOut
+):
     try:
         checklist = db.scalar(select(Checklist).where(Checklist.id == checklist_id))
         if not checklist:
@@ -192,9 +214,13 @@ def update_checklist(payload: ChecklistUpdate, checklist_id: str, db: Session):
             )
 
         for key, val in payload.model_dump(
-            exclude_unset=True, exclude_none=True
+            exclude_unset=True, exclude_none=True, exclude={"priority"}
         ).items():
             setattr(checklist, key, val)
+        priority_val = payload.priority or 2
+        checklist.set_priority_for_user(
+            user_id=current_user.id, db=db, priority_val=priority_val
+        )
 
         db.commit()
         db.refresh(checklist)
@@ -205,15 +231,13 @@ def update_checklist(payload: ChecklistUpdate, checklist_id: str, db: Session):
             is_completed=checklist.is_completed,
             created_at=checklist.created_at,
             updated_at=checklist.updated_at,
-            priority=checklist.priority,
+            priority=checklist.get_priority_for_user(user_id=current_user.id, db=db),
             status=checklist.status,
         )
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        print("ERROR:::")
-        print(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update checklists {str(e)}",
@@ -279,6 +303,8 @@ def update_checklist_status(
             "msg": f"Checklist '{checklist.checklist_type}' marked as {checklist.status}",
             "status": checklist.status,
             "is_completed": checklist.is_completed,
+            "checklist": ChecklistOut.model_validate(checklist),
+            "Recieved status": checklist_status,
         }
 
     # --- Automatic update case ---
@@ -324,6 +350,7 @@ def update_checklist_status(
         "msg": f"Checklist '{checklist.checklist_type}' marked as {checklist.status}",
         "status": checklist.status,
         "is_completed": checklist.is_completed,
+        "checklist": ChecklistOut.model_validate(checklist),
     }
 
 
@@ -451,7 +478,6 @@ def get_trash_checklists(
                     is_completed=checklist.is_completed,
                     created_at=checklist.created_at,
                     updated_at=checklist.updated_at,
-                    priority=checklist.priority,
                     status=checklist.status,
                 )
             )

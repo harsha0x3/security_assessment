@@ -1,6 +1,7 @@
 from typing import Annotated, Any
 
 from fastapi import HTTPException, Response, status
+from fastapi.responses import JSONResponse
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
@@ -122,10 +123,12 @@ def login_user(
     access, refresh = create_tokens(
         user_id=user.id, role=user.role, mfa_verified=mfa_verified
     )
-    set_jwt_cookies(response=response, access_token=access, refresh_token=refresh)
+    access_exp = set_jwt_cookies(
+        response=response, access_token=access, refresh_token=refresh
+    )
     set_csrf_cookie(response)
 
-    return user.to_dict_safe()
+    return {"user": user.to_dict_safe(), "access_exp": access_exp.get("access_exp")}
 
 
 def refresh_access_token(
@@ -149,13 +152,12 @@ def refresh_access_token(
         user_id=user.id, role=user.role, mfa_verified=user.mfa_enabled
     )
 
-    set_jwt_cookies(response=response, access_token=access, refresh_token=refresh)
+    access_exp = set_jwt_cookies(
+        response=response, access_token=access, refresh_token=refresh
+    )
     set_csrf_cookie(response)
 
-    return {
-        "msg": "Token Refreshed successfully",
-        "user": user.to_dict_safe(),
-    }
+    return {"user": user.to_dict_safe(), "access_exp": access_exp.get("access_exp")}
 
 
 def clear_jwt_cookies(response: Response):

@@ -114,6 +114,18 @@ export const applicationApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["TrashedApps"],
     }),
+
+    setAppPriority: builder.mutation({
+      query: ({ appId, priority }) => ({
+        url: `applications/${appId}/set-priority`,
+        method: "PATCH",
+        body: { priority_val: Number(priority) },
+      }),
+      invalidatesTags: (result, error, { appId }) => [
+        { type: "Apps", id: appId },
+        { type: "Apps", id: "LIST" },
+      ],
+    }),
   }),
 });
 
@@ -126,4 +138,5 @@ export const {
   useGetTrashedAppsQuery,
   useRestoreTrashedAppsMutation,
   useGetAppDetailsQuery,
+  useSetAppPriorityMutation,
 } = applicationApiSlice;

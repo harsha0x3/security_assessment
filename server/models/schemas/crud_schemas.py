@@ -2,6 +2,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict
+from typing import Literal
 
 
 class AllUsersOut(BaseModel):
@@ -91,7 +92,7 @@ class ChecklistOut(BaseModel):
     checklist_type: str
     assigned_users: list[UserOut] | None = None
     is_completed: bool
-    priority: int
+    priority: int = 2
     status: str
     comment: str | None = None
 
@@ -108,6 +109,7 @@ class ListApplicationsOut(BaseModel):
     ticket_id: str | None = None
     is_completed: bool
     status: str
+    priority: int = 2
     checklists: list[ChecklistOut] | None = None
 
 
@@ -248,3 +250,7 @@ class ControlsWithChecklist(BaseModel):
 class ImportControlsRequest(BaseModel):
     target_checklist_id: str
     source_checklist_id: str
+
+
+class PriorityVal(BaseModel):
+    priority_val: Literal[1, 2, 3]

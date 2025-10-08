@@ -71,7 +71,7 @@ const AssignUsersModal = ({ checklist }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost">
+        <Button variant="ghost" className="w-full justify-start pl-2">
           <UsersIcon className="mr-2 h-4 w-4" />
           Assign Users
         </Button>

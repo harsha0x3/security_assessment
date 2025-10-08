@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy import select, and_, not_, desc, asc, func, or_
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from models import Application
 from models import ChecklistAssignment
 from models import Checklist
@@ -21,12 +22,25 @@ def create_app(
 ) -> ApplicationOut:
     try:
         app = Application(
-            **payload.model_dump(), creator_id=creator.id, owner_id=owner.id
+            **payload.model_dump(exclude={"priority"}),
+            creator_id=creator.id,
+            owner_id=owner.id,
         )
+
         db.add(app)
+        db.flush()
+        app.set_priority_for_user(user_id=creator.id, db=db, priority_val=2)
         db.commit()
         db.refresh(app)
-        return ApplicationOut.model_validate(app)
+        return ApplicationOut(
+            **app.to_dict(),
+            priority=app.get_priority_for_user(user_id=creator.id, db=db),
+        )
+
+    except IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="App with the same exists"
+        )
 
     except Exception as e:
         db.rollback()
@@ -68,6 +82,7 @@ def list_apps(db: Session, user: UserOut, params: AppQueryParams):
         search_column = getattr(Application, params.search_by, None)
         if search_column is not None:
             stmt = stmt.where(search_column.ilike(search_value))
+            print(stmt)
 
     if params.page >= 1:
         apps = db.scalars(
@@ -76,6 +91,7 @@ def list_apps(db: Session, user: UserOut, params: AppQueryParams):
             .offset(params.page * params.page_size - params.page_size)
         ).all()
     else:
+        print("\nIN ELSE", stmt)
         apps = db.scalars(stmt.order_by(sort_column)).all()
 
     apps_out = []
@@ -91,7 +107,7 @@ def list_apps(db: Session, user: UserOut, params: AppQueryParams):
                         UserOut.model_validate(a.user) for a in chk.assignments
                     ],
                     is_completed=chk.is_completed,
-                    priority=chk.priority,
+                    priority=chk.get_priority_for_user(user_id=user.id, db=db),
                     status=chk.status,
                     comment=chk.comment,
                     created_at=chk.created_at,
@@ -111,7 +127,7 @@ def list_apps(db: Session, user: UserOut, params: AppQueryParams):
                         UserOut.model_validate(a.user) for a in chk.assignments
                     ],
                     is_completed=chk.is_completed,
-                    priority=chk.priority,
+                    priority=chk.get_priority_for_user(user_id=user.id, db=db),
                     status=chk.status,
                     comment=chk.comment,
                     created_at=chk.created_at,
@@ -129,6 +145,7 @@ def list_apps(db: Session, user: UserOut, params: AppQueryParams):
                 status=app.status,
                 checklists=app_checklists,
                 ticket_id=app.ticket_id,
+                priority=app.get_priority_for_user(user_id=user.id, db=db),
             )
         )
 
@@ -184,7 +201,13 @@ def list_apps_with_details(
         apps = db.scalars(stmt.order_by(sort_column)).all()
 
     return {
-        "apps": [ApplicationOut.model_validate(app) for app in apps],
+        "apps": [
+            ApplicationOut(
+                **app.to_dict(),
+                priority=app.get_priority_for_user(user_id=user.id, db=db),
+            )
+            for app in apps
+        ],
         "total_count": total_count,
     }
 
@@ -209,11 +232,21 @@ def update_app(
                 detail=f"App is in trash {app_id}",
             )
 
-        for key, val in payload.model_dump(exclude_unset=True).items():
+        for key, val in payload.model_dump(
+            exclude_unset=True, exclude={"priority"}
+        ).items():
             setattr(app, key, val)
+
+        priority_val = payload.priority or 2
+        app.set_priority_for_user(
+            user_id=current_user.id, db=db, priority_val=priority_val
+        )
         db.commit()
         db.refresh(app)
-        return ApplicationOut.model_validate(app)
+        return ApplicationOut(
+            **app.to_dict(),
+            priority=app.get_priority_for_user(user_id=current_user.id, db=db),
+        )
 
     except HTTPException:
         raise
@@ -249,7 +282,10 @@ def get_app_details(app_id: str, db: Session, current_user: UserOut):
                     detail="You are not authorised to view this application",
                 )
 
-        return ApplicationOut.model_validate(app)
+        return ApplicationOut(
+            **app.to_dict(),
+            priority=app.get_priority_for_user(user_id=current_user.id, db=db),
+        )
 
     except HTTPException:
         raise
@@ -276,7 +312,10 @@ def delete_app(app_id: str, db: Session, current_user: UserOut):
         if not app.is_active:
             db.delete(app)
             db.commit()
-            del_app = ApplicationOut.model_validate(app).model_dump()
+            del_app = ApplicationOut(
+                **app.to_dict(),
+                priority=app.get_priority_for_user(user_id=current_user.id, db=db),
+            ).model_dump()
             del_app["msg"] = "Successfully deleted app"
             return del_app
 
@@ -300,7 +339,10 @@ def delete_app(app_id: str, db: Session, current_user: UserOut):
 
         db.commit()
         db.refresh(app)
-        del_app = ApplicationOut.model_validate(app).model_dump()
+        del_app = ApplicationOut(
+            **app.to_dict(),
+            priority=app.get_priority_for_user(user_id=current_user.id, db=db),
+        ).model_dump()
         del_app["msg"] = "Successfully trashed app"
         return del_app
 
@@ -408,7 +450,11 @@ def get_trashed_apps(db: Session):
                 status_code=status.HTTP_204_NO_CONTENT, detail="No apps in trash"
             )
         return [
-            ApplicationOut.model_validate(trashed_app) for trashed_app in trashed_apps
+            ApplicationOut(
+                **trashed_app.to_dict(),
+                priority=2,
+            )
+            for trashed_app in trashed_apps
         ]
     except HTTPException:
         raise

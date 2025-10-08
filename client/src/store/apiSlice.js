@@ -6,8 +6,8 @@ import { getCSRFToken } from "@/utils/csrf";
 getCSRFToken();
 
 const apiBaseUrl = isProd
-  ? "http://10.160.14.76:8060"
-  : "http://localhost:8000";
+  ? "http://10.160.14.76:8060/api/v1.0"
+  : "http://localhost:8000/api/v1.0";
 
 const baseQueryWithAuth = fetchBaseQuery({
   baseUrl: apiBaseUrl,
@@ -21,19 +21,24 @@ const baseQueryWithAuth = fetchBaseQuery({
         "::::::::********CSRF token not found***********:::::::::::"
       );
     }
-    console.error(":::::FOUND CSRF TOKEN:::::", csrfToken);
-    console.error(":::::HEADERS:::::", headers);
 
     return headers;
   },
 });
 
-const baseQueryWithReauth = async (args, api, extraOptions) => {
-  let result = await baseQueryWithAuth(args, api, extraOptions);
+const shouldRefresh = (exp) => {
+  if (!exp) return false;
+  const now = Date.now() / 1000;
+  const remaining = exp - now;
+  return remaining < 180; // less than 3 minutes left
+};
 
-  // Only handle re-authentication if we get a 401 error
-  if (result.error && result.error.status === 401) {
-    // Try to refresh the token
+const baseQueryWithReauth = async (args, api, extraOptions) => {
+  const state = api.getState();
+  const exp = state.auth?.accessExp;
+
+  // proactive refresh
+  if (shouldRefresh(exp)) {
     const refreshResult = await baseQueryWithAuth(
       {
         url: "/auth/refresh",
@@ -46,16 +51,35 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 
     if (refreshResult.data) {
       api.dispatch(loginSuccess(refreshResult.data));
+    } else {
+      api.dispatch(userLogout());
+    }
+  }
+
+  // proceed with request
+  let result = await baseQueryWithAuth(args, api, extraOptions);
+
+  // fallback: handle expired (401)
+  if (result.error && result.error.status === 401) {
+    const refreshResult = await baseQueryWithAuth(
+      { url: "/auth/refresh", method: "POST", credentials: "include" },
+      api,
+      extraOptions
+    );
+
+    if (refreshResult.data) {
+      api.dispatch(loginSuccess(refreshResult.data));
       result = await baseQueryWithAuth(args, api, extraOptions);
     } else {
       api.dispatch(userLogout());
     }
   }
+
   return result;
 };
 
 export const apiSlice = createApi({
-  baseQuery: baseQueryWithAuth,
+  baseQuery: baseQueryWithReauth,
   tagTypes: [
     "User",
     "Apps",

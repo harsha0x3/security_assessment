@@ -7,7 +7,10 @@ import {
   selectCurrentApp,
   setCurrentApp,
 } from "@/features/applications/store/applicationSlice";
-import { selectAppSearchTerm } from "@/store/appSlices/filtersSlice";
+import {
+  selectAppSearchTerm,
+  setAppSearchTerm,
+} from "@/store/appSlices/filtersSlice";
 import {
   useGetApplicationsQuery,
   useGetAppDetailsQuery,
@@ -22,6 +25,13 @@ export const useApplications = ({ appId = null } = {}) => {
   const appSortBy = searchParams.get("appSortBy") || "created_at";
   const appSortOrder = searchParams.get("appSortOrder") || "desc";
   const appSearchBy = searchParams.get("appSearchBy") || "name";
+
+  useEffect(() => {
+    const urlSearch = searchParams.get("appSearch") || "";
+    if (urlSearch && appSearch !== urlSearch) {
+      dispatch(setAppSearchTerm(urlSearch));
+    }
+  }, []);
 
   const appSearch = useSelector(selectAppSearchTerm);
   const currentApp = useSelector(selectCurrentApp);

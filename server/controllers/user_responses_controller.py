@@ -15,6 +15,7 @@ from models.schemas.crud_schemas import (
     UserResponseOut,
     UserResponseUpdate,
 )
+from models import ChecklistAssignment
 from .checklist_controller import update_checklist_status
 from models.core.user_responses import UserResponse
 from models.core.checklists import Checklist
@@ -111,7 +112,16 @@ def update_user_response(
     if not response:
         raise HTTPException(404, f"Response {response_id} not found")
 
-    if response.user_id != current_user.id and current_user.role != "admin":
+    assigned_user = db.scalar(
+        select(ChecklistAssignment.user_id).where(
+            and_(
+                ChecklistAssignment.checklist_id == response.checklist_id,
+                ChecklistAssignment.user_id == current_user.id,
+            )
+        )
+    )
+
+    if not assigned_user and current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not allowed to edit this response",

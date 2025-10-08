@@ -4,6 +4,8 @@ import { apiSlice } from "./apiSlice";
 import applicationReducer from "../features/applications/store/applicationSlice";
 import checklistReducer from "../features/checklists/store/checklistsSlice";
 import filtersReducer from "./appSlices/filtersSlice";
+
+const isProd = import.meta.env.VITE_PROD_ENV === "true";
 const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -14,7 +16,7 @@ const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(apiSlice.middleware),
-  devTools: true,
+  devTools: !isProd,
 });
 
 export default store;
