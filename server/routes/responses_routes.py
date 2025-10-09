@@ -20,7 +20,6 @@ from controllers.user_responses_controller import (
     UPLOAD_DIR,
     add_responses_from_csv,
     add_user_response,
-    save_bulk_responses,
     save_uploaded_file,
     update_user_response,
 )
@@ -29,7 +28,6 @@ from models.core.user_responses import UserResponse
 from models.schemas.crud_schemas import (
     UserOut,
     UserResponseCreate,
-    UserResponseCreateBulk,
     UserResponseOut,
     UserResponseUpdate,
 )

@@ -7,6 +7,9 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
+import boto3
+from botocore.exceptions import ClientError
+
 from models.core.controls import Control
 from models.schemas.crud_schemas import (
     UserOut,
@@ -139,7 +142,7 @@ def update_user_response(
         raise HTTPException(500, f"Failed to update response: {e}")
 
 
-def save_uploaded_file(
+def save_uploaded_file_old(
     file: UploadFile | None, user_id: str, control_id: str
 ) -> str | None:
     if not file:
@@ -153,6 +156,42 @@ def save_uploaded_file(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     return f"{file_name}"
+
+
+# ---- S3 CONFIG ----
+S3_BUCKET = "infosec-securityassesment"
+s3_client = boto3.client("s3")
+
+
+def save_uploaded_file(
+    file: UploadFile | None, user_id: str, control_id: str
+) -> str | None:
+    """
+    Uploads the file to S3 and returns the S3 object URL.
+    """
+    if not file:
+        return None
+
+    file_key = f"user_uploads/{user_id}/{control_id}/{file.filename}"
+
+    try:
+        s3_client.upload_fileobj(
+            file.file,
+            S3_BUCKET,
+            file_key,
+            ExtraArgs={"ACL": "private"},  # Use 'public-read' if public access needed
+        )
+
+        # You can store either of these:
+        s3_path = f"s3://{S3_BUCKET}/{file_key}"
+
+        return s3_path
+
+    except ClientError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error uploading file to S3: {e}",
+        )
 
 
 def isResponded(control_id: str, db: Session):

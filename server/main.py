@@ -60,36 +60,36 @@ app.add_middleware(
 )
 
 
-@app.middleware("http")
-async def add_csp_header(request, call_next):
-    response: Response = await call_next(request)
+# @app.middleware("http")
+# async def add_csp_header(request, call_next):
+#     response: Response = await call_next(request)
 
-    # === CSP Configuration ===
-    # Local testing over HTTP may require 'unsafe-inline' for React development scripts
-    # Production HTTPS can remove 'unsafe-inline' for better security
-    LOCAL_TESTING = True  # Set False in production
+#     # === CSP Configuration ===
+#     # Local testing over HTTP may require 'unsafe-inline' for React development scripts
+#     # Production HTTPS can remove 'unsafe-inline' for better security
+#     LOCAL_TESTING = True  # Set False in production
 
-    if LOCAL_TESTING:
-        csp = (
-            "default-src 'self'; "
-            "script-src 'self';"  # <-- inline scripts are blocked now
-            "style-src 'self'; "
-            "img-src 'self' data:; "
-            "connect-src 'self';"
-        )
+#     if LOCAL_TESTING:
+#         csp = (
+#             "default-src 'self'; "
+#             "script-src 'unsafe-inline';"  # <-- inline scripts are blocked now
+#             "style-src 'self'; "
+#             "img-src 'self' data:; "
+#             "connect-src 'self';"
+#         )
 
-    else:
-        csp = (
-            "default-src 'self'; "
-            "script-src 'self'; "
-            "style-src 'self'; "
-            "img-src 'self' data:; "
-            "connect-src 'self'; "
-            "upgrade-insecure-requests;"  # upgrade HTTP to HTTPS
-        )
+#     else:
+#         csp = (
+#             "default-src 'self'; "
+#             "script-src 'self'; "
+#             "style-src 'self'; "
+#             "img-src 'self' data:; "
+#             "connect-src 'self'; "
+#             "upgrade-insecure-requests;"  # upgrade HTTP to HTTPS
+#         )
 
-    response.headers["Content-Security-Policy"] = csp
-    return response
+#     response.headers["Content-Security-Policy"] = csp
+#     return response
 
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
