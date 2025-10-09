@@ -27,7 +27,7 @@ export const useChecklists = ({ appIdProp = null } = {}) => {
 
   const { data, isSuccess, isError, error } = useGetAllChecklistsQuery(
     {
-      appId: paramAppId || appIdProp,
+      appId: appIdProp || paramAppId,
       page: cListPage,
       page_size: cListPageSize,
       sort_by: cListSortBy,

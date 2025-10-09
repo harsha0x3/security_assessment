@@ -13,6 +13,9 @@ export default defineConfig({
   server: {
     port: 8057,
     host: "0.0.0.0",
+allowedHosts: [
+      "is-assessment.titancustomers.com",
+    ],
   },
   resolve: {
     alias: {
