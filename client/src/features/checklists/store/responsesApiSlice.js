@@ -27,8 +27,15 @@ export const responsesApiSlice = apiSlice.injectEndpoints({
       },
       invalidatesTags: [{ type: "Controls", id: "LIST" }],
     }),
+
+    viewEvidence: builder.query({
+      query: (fileKey) => `/responses/file-view/${fileKey}`,
+    }),
   }),
 });
 
-export const { useSaveResponseMutation, useImportResposesMutation } =
-  responsesApiSlice;
+export const {
+  useSaveResponseMutation,
+  useImportResposesMutation,
+  useLazyViewEvidenceQuery,
+} = responsesApiSlice;

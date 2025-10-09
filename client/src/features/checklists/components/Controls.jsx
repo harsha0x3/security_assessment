@@ -7,7 +7,10 @@ import {
   useSubmitChecklistMutation,
   useEvaluateChecklistMutation,
 } from "../store/checklistsApiSlice";
-import { useSaveResponseMutation } from "../store/responsesApiSlice";
+import {
+  useSaveResponseMutation,
+  useLazyViewEvidenceQuery,
+} from "../store/responsesApiSlice";
 import { useState, useMemo, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { selectAuth } from "../../auth/store/authSlice";
@@ -128,6 +131,7 @@ const Controls = () => {
   const [sorting, setSorting] = useState([]);
 
   const [saveResponse] = useSaveResponseMutation();
+  const [trigger, { data, isFetching, error }] = useLazyViewEvidenceQuery();
   const [submitChecklist, { isLoading: isSubmittingChecklist }] =
     useSubmitChecklistMutation();
   const [evaluateChecklist, { isLoading: isEvaluating }] =
@@ -138,6 +142,7 @@ const Controls = () => {
   const [adding, setAdding] = useState(false);
   const currentChecklist = useSelector(selectCurrentChecklist);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [evidenceUrl, setEvidenceUrl] = useState(null);
   const [checklistEvaluationStatus, setChecklistEvaluationStatus] =
     useState("");
   const [checklistEvaluationComment, setChecklistEvaluationComment] =
@@ -550,18 +555,33 @@ const Controls = () => {
             );
           }
 
-          return evidencePath ? (
-            <a
-              href={`http://localhost:8000/uploads/${evidencePath}`} // prepend backend URL
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline"
-            >
-              View Evidence
-            </a>
-          ) : (
-            "-"
-          );
+          if (evidencePath) {
+            const getEvidenceURL = async () => {
+              try {
+                const urlRes = await trigger(evidencePath).unwrap();
+                setEvidenceUrl(urlRes.file_url);
+              } catch (error) {
+                console.error("ERROR FETCHING EVIDENCE URL", error);
+                setEvidenceUrl(null);
+              }
+            };
+            return evidenceUrl ? (
+              <a
+                href={evidenceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline"
+              >
+                View Evidence
+              </a>
+            ) : (
+              <Button variant="link" size="sm" onClick={getEvidenceURL}>
+                View
+              </Button>
+            );
+          } else {
+            return "-";
+          }
         },
       },
       {
@@ -1125,7 +1145,7 @@ Response Updated: ${
                       variant="secondary"
                       disabled={
                         total_controls !== total_responses ||
-                        currentChecklist.isCompleted
+                        currentChecklist?.isCompleted
                       }
                     >
                       Evaluate checklist

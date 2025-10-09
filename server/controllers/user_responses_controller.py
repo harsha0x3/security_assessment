@@ -194,6 +194,26 @@ def save_uploaded_file(
         )
 
 
+def get_s3_presigned_url(file_key: str, expires_in: int = 3600) -> str:
+    """
+    Generates a pre-signed URL for a private S3 object.
+    file_key: S3 object key (e.g., "user_uploads/<user_id>/<control_id>/file.json")
+    expires_in: URL expiration in seconds (default 1 hour)
+    """
+    try:
+        url = s3_client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": S3_BUCKET, "Key": file_key},
+            ExpiresIn=expires_in,
+        )
+        return url
+    except ClientError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating S3 URL: {e}",
+        )
+
+
 def isResponded(control_id: str, db: Session):
     try:
         control = db.get(Control, control_id)

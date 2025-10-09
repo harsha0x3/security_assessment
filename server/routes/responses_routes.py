@@ -22,7 +22,9 @@ from controllers.user_responses_controller import (
     add_user_response,
     save_uploaded_file,
     update_user_response,
+    get_s3_presigned_url,
 )
+
 from db.connection import get_db_conn
 from models.core.user_responses import UserResponse
 from models.schemas.crud_schemas import (
@@ -133,3 +135,12 @@ async def upload_controls_file(
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+
+@router.get("/responses/file-view/{file_key}")
+async def view_file(
+    current_user: Annotated[UserOut, Depends(get_current_user)],
+    file_key: Annotated[str, Path(description="S3 URL path")],
+):
+    url = get_s3_presigned_url(file_key=file_key, expires_in=3600)
+    return {"file_url": url}
