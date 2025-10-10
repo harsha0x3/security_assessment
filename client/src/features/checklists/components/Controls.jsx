@@ -559,7 +559,8 @@ const Controls = () => {
             const getEvidenceURL = async () => {
               try {
                 const urlRes = await trigger(evidencePath).unwrap();
-                setEvidenceUrl(urlRes.file_url);
+                console.log("EVIDENCE DATAT,",data)
+		      setEvidenceUrl(urlRes.file_url);
               } catch (error) {
                 console.error("ERROR FETCHING EVIDENCE URL", error);
                 setEvidenceUrl(null);
