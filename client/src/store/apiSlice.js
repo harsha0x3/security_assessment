@@ -6,8 +6,8 @@ import { getCSRFToken } from "@/utils/csrf";
 getCSRFToken();
 
 const apiBaseUrl = isProd
-  ? "http://10.160.14.76:8060/api/v1.0"
-  : "http://localhost:8000/api/v1.0";
+  ? "/api/v1.0"
+  : "/api/v1.0";
 
 const baseQueryWithAuth = fetchBaseQuery({
   baseUrl: apiBaseUrl,

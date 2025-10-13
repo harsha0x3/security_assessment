@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 import boto3
 from botocore.exceptions import ClientError
+from botocore.config import Config
 
 from models.core.controls import Control
 from models.schemas.crud_schemas import (
@@ -160,7 +161,7 @@ def save_uploaded_file_old(
 
 # ---- S3 CONFIG ----
 S3_BUCKET = "infosec-securityassesment"
-s3_client = boto3.client("s3")
+s3_client = boto3.client("s3",region_name='ap-south-1', config=Config(signature_version="s3v4"))
 
 
 def save_uploaded_file(

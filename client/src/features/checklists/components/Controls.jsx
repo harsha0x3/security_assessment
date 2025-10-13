@@ -558,13 +558,12 @@ const Controls = () => {
           if (evidencePath) {
             const getEvidenceURL = async () => {
               try {
-                const urlRes = await trigger(evidencePath).unwrap();
-                console.log("EVIDENCE DATAT,",data)
-		      setEvidenceUrl(urlRes.file_url);
-              } catch (error) {
-                console.error("ERROR FETCHING EVIDENCE URL", error);
-                setEvidenceUrl(null);
-              }
+          const urlRes = await trigger(evidencePath).unwrap();
+          window.open(urlRes.file_url, '_blank');
+        } catch (error) {
+          console.error("ERROR FETCHING EVIDENCE URL", error);
+          toast.error("Failed to load evidence");
+        }
             };
             return evidenceUrl ? (
               <a

@@ -53,6 +53,7 @@ app.add_middleware(
         "http://10.160.14.76:8057",
         "http://localhost:8057",
         "http://192.168.43.240:8057",
+        "https://is-assessment.titancustomers.com"
     ],
     allow_methods=["*"],
     allow_headers=["*"],

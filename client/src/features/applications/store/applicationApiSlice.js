@@ -66,7 +66,7 @@ export const applicationApiSlice = apiSlice.injectEndpoints({
           search_by,
         });
         console.log("PARAMS INAPPSLICE", params.toString());
-        return `/applications/?${params.toString()}`;
+        return `/applications?${params.toString()}`;
       },
       providesTags: (result) =>
         result

@@ -12,6 +12,7 @@ from fastapi import (
     Request,
     UploadFile,
     status,
+    Query
 )
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -137,10 +138,11 @@ async def upload_controls_file(
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
 
-@router.get("/responses/file-view/{file_key}")
+@router.get("/responses/file-view")
 async def view_file(
     current_user: Annotated[UserOut, Depends(get_current_user)],
-    file_key: Annotated[str, Path(description="S3 URL path")],
+    file_key: Annotated[str, Query(description="S3 URL path")],
 ):
+    print(file_key)
     url = get_s3_presigned_url(file_key=file_key, expires_in=3600)
     return {"file_url": url}

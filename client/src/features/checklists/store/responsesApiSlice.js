@@ -28,9 +28,15 @@ export const responsesApiSlice = apiSlice.injectEndpoints({
       invalidatesTags: [{ type: "Controls", id: "LIST" }],
     }),
 
-    viewEvidence: builder.query({
-      query: (fileKey) => `/responses/file-view/${fileKey}`,
-    }),
+   viewEvidence: builder.query({
+  query: (fileKey) => {
+    // Extract the key part from s3://bucket/key format
+    const key = fileKey.replace(/^s3:\/\/[^\/]+\//, '');
+    // URL encode it to handle special characters
+	const params = new URLSearchParams({file_key: key})
+    return `/responses/file-view?${params.toString()}`;
+  },
+}),
   }),
 });
 

@@ -68,7 +68,7 @@ export const checklistsApiSlice = apiSlice.injectEndpoints({
           page,
           page_size,
         });
-        return `applications/${appId}/checklists/?${params.toString()}`;
+        return `applications/${appId}/checklists?${params.toString()}`;
       },
       providesTags: (result) => {
         const checklists = result?.checklists ?? []; // fallback to empty array
