@@ -13,9 +13,13 @@ export default defineConfig({
   server: {
     port: 8057,
     host: "0.0.0.0",
-allowedHosts: [
-      "is-assessment.titancustomers.com",
-    ],
+    allowedHosts: ["is-assessment.titancustomers.com"],
+    proxy: {
+      "/api/v1.0": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
   },
   resolve: {
     alias: {

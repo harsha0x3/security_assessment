@@ -197,28 +197,26 @@ const PreAssessmentSubmissions = () => {
                 Open Submission
               </Button>
             </DialogTrigger>
-            <DialogContent className=" mb-8 flex flex-col gap-0 p-0 h-[calc(100vh-2rem)] max-w-[90vw] w-full dialoggasdf">
+            <DialogContent className="flex flex-col gap-0 p-0 max-w-[90vw] w-full max-h-[90vh] overflow-y-auto">
               <DialogHeader className="contents space-y-0 text-left">
                 <DialogTitle className="px-6 pt-6">
                   {`Pre-Assessment Submission for ${row.original.assessment?.assessment_type} By ${row.original.submitted_user?.username}`}
                 </DialogTitle>
               </DialogHeader>
-              <ScrollArea className="flex-1 flex flex-col overflow-hidden">
-                <DialogDescription asChild>
-                  {fetchingQs ? (
-                    <p>Loading Qs</p>
-                  ) : fetchingSubRes ? (
-                    <p>Loading Res...</p>
-                  ) : (
-                    <PreAssessmentForm
-                      assessment={row.original.assessment}
-                      questionnaire={questionnaire}
-                      subResponses={subResponses}
-                      submissionId={row.original.id}
-                    />
-                  )}
-                </DialogDescription>
-              </ScrollArea>
+              <DialogDescription asChild>
+                {fetchingQs ? (
+                  <p>Loading Qs</p>
+                ) : fetchingSubRes ? (
+                  <p>Loading Res...</p>
+                ) : (
+                  <PreAssessmentForm
+                    assessment={row.original.assessment}
+                    questionnaire={questionnaire}
+                    subResponses={subResponses}
+                    submissionId={row.original.id}
+                  />
+                )}
+              </DialogDescription>
             </DialogContent>
           </Dialog>
         ),

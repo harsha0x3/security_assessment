@@ -50,11 +50,12 @@ const PreAssessmentUser = () => {
     try {
       toast.promise(
         (async () => {
-          const out = await submitResponses({
-            assessmentId,
-            payload: responses,
-          }).unwrap();
-          console.log("SUBMIT SUCCESS", out);
+          // const out = await submitResponses({
+          //   assessmentId,
+          //   payload: responses,
+          // }).unwrap();
+          console.log("SUBMIT SUCCESS");
+          console.log(":::::RESPONSES:::", responses);
         })(),
         {
           loading: "Submitting Responses..",

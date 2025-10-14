@@ -34,7 +34,7 @@ function App() {
     import("@/features/preAssessments/pages/PreAssessmentsDash")
   );
   const PreAssessmentUser = lazy(() =>
-    import("@/features/preAssessments/pages/preAssessmentUser")
+    import("@/features/preAssessments/pages/PreAssessmentUser")
   );
   const PreAssessmentSubmissions = lazy(() =>
     import("@/features/preAssessments/pages/PreAssessmentSubmissions")
