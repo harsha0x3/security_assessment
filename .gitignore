@@ -9,3 +9,6 @@ logs/
 *.txt
 *.json
 *.ipynb
+/client/vite.config.js
+**/node_modules/
+**/dist/
