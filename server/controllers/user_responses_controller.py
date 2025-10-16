@@ -23,6 +23,8 @@ from models import ChecklistAssignment
 from .checklist_controller import update_checklist_status
 from models.core.user_responses import UserResponse
 from models.core.checklists import Checklist
+import mimetypes
+
 
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 UPLOAD_DIR = os.path.join(ROOT_DIR, "uploads")
@@ -161,32 +163,35 @@ def save_uploaded_file_old(
 
 # ---- S3 CONFIG ----
 S3_BUCKET = "infosec-securityassesment"
-s3_client = boto3.client("s3",region_name='ap-south-1', config=Config(signature_version="s3v4"))
+s3_client = boto3.client(
+    "s3", region_name="ap-south-1", config=Config(signature_version="s3v4")
+)
 
 
 def save_uploaded_file(
     file: UploadFile | None, user_id: str, control_id: str
 ) -> str | None:
-    """
-    Uploads the file to S3 and returns the S3 object URL.
-    """
     if not file:
         return None
 
     file_key = f"user_uploads/{user_id}/{control_id}/{file.filename}"
+    content_type, _ = mimetypes.guess_type(file.filename)
+    if content_type is None:
+        content_type = "application/octet-stream"
 
     try:
         s3_client.upload_fileobj(
             file.file,
             S3_BUCKET,
             file_key,
-            ExtraArgs={"ACL": "private"},  # Use 'public-read' if public access needed
+            ExtraArgs={
+                "ACL": "private",
+                "ContentType": content_type,
+                "ContentDisposition": "inline",
+            },
         )
 
-        # You can store either of these:
-        s3_path = f"s3://{S3_BUCKET}/{file_key}"
-
-        return s3_path
+        return f"s3://{S3_BUCKET}/{file_key}"
 
     except ClientError as e:
         raise HTTPException(
@@ -204,7 +209,11 @@ def get_s3_presigned_url(file_key: str, expires_in: int = 3600) -> str:
     try:
         url = s3_client.generate_presigned_url(
             "get_object",
-            Params={"Bucket": S3_BUCKET, "Key": file_key},
+            Params={
+                "Bucket": S3_BUCKET,
+                "Key": file_key,
+                "ResponseContentDisposition": "inline",
+            },
             ExpiresIn=expires_in,
         )
         return url

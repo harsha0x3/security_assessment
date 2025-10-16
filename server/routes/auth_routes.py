@@ -16,6 +16,8 @@ from models.schemas.auth_schemas import LoginRequest, RegisterRequest, UserUpdat
 from models.core.users import User
 from services.auth.deps import get_current_user
 from services.auth.csrf_handler import clear_csrf_cookie
+from models.schemas.crud_schemas import UserOut
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -25,6 +27,9 @@ async def register(
     payload: Annotated[RegisterRequest, "User registration form fields"],
     db: Annotated[Session, Depends(get_db_conn)],
     response: Annotated[Response, "response to pass down to set cookies"],
+    current_user: Annotated[
+        UserOut, Depends(get_current_user), "Fetching logged in user details"
+    ],
 ) -> Annotated[
     dict[str, Any], "Registers users and returns mfa uri and registration status"
 ]:
