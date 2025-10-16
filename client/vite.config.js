@@ -16,7 +16,7 @@ export default defineConfig({
     allowedHosts: ["is-assessment.titancustomers.com"],
     proxy: {
       "/api/v1.0": {
-        target: "http://localhost:8000",
+        target: "http://10.160.14.76:8060/",
         changeOrigin: true,
       },
     },

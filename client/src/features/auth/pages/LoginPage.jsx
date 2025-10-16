@@ -46,18 +46,18 @@ const LoginPage = () => {
 
         {/* Additional Links */}
         <div className="text-center mt-4 space-x-4">
-          <Link
+          {/* <Link
             to="/forgot-password"
             className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
           >
             Forgot Password?
-          </Link>
+          </Link> */}
           <span className="text-gray-300 dark:text-gray-600">•</span>
           <Link
             to="/help"
             className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
           >
-            Help
+            For any Help Contact InfoSec Team.
           </Link>
         </div>
       </div>
