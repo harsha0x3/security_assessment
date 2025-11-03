@@ -13,12 +13,14 @@ const ProtectedLayout = () => {
 
   useEffect(() => {
     (async () => {
-      try {
-        await refreshAuth();
-      } catch (error) {
-        toast.error("Error re logging");
-      } finally {
-        setAuthChecked(true);
+      if (!authChecked) {
+        try {
+          await refreshAuth();
+        } catch (error) {
+          toast.error("Error re logging");
+        } finally {
+          setAuthChecked(true);
+        }
       }
     })();
   }, [isAuthenticated]);

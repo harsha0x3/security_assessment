@@ -1,47 +1,80 @@
-from fastapi import Cookie, Depends, HTTPException, Request, status, Header
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Cookie, Depends, HTTPException, Request, status, Header, Response
 from sqlalchemy.orm import Session
 
 from db.connection import get_db_conn
 from models.schemas.crud_schemas import UserOut
 from models.core.users import User
 
-from .jwt_handler import decode_access_token
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+from .jwt_handler import (
+    decode_access_token,
+    verify_refresh_token,
+    create_tokens,
+    set_jwt_cookies,
+)
 
 
 def get_current_user(
     request: Request,
+    response: Response,
     access_token: str | None = Cookie(default=None),
+    refresh_token: str | None = Cookie(default=None),
     db: Session = Depends(get_db_conn),
     csrf_token: str | None = Cookie(default=None, alias="csrf_token"),
     csrf_header: str | None = Header(default=None, alias="X-CSRF-Token"),
 ) -> UserOut:
-    try:
-        if access_token:
+    payload = None
+
+    # Try decoding access token first
+    if access_token:
+        try:
             payload = decode_access_token(access_token)
+        except Exception as e:
+            print(f"Invalid access token: {e}")
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token not found",
+        )
 
-        elif request.cookies.get("access_token"):
-            access_token = request.cookies.get("access_token")
-            payload = decode_access_token(access_token)  # type: ignore
+    # If no valid access token, try refresh
+    if not payload and refresh_token:
+        try:
+            payload = verify_refresh_token(refresh_token)
+            user = db.get(User, payload.get("sub"))
 
-        else:
+            if not user or not user.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Inactive user",
+                )
+
+            # Create new tokens
+            access, refresh = create_tokens(
+                user_id=user.id, role=user.role, mfa_verified=user.mfa_enabled
+            )
+            set_jwt_cookies(response, access, refresh)
+
+            print("Access token refreshed successfully")
+
+        except Exception as e:
+            print(f"Refresh token invalid: {e}")
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="No access token"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access and refresh token. Login again.",
             )
 
-    except Exception as e:
-        print(f"ERROR IN current User {str(e)}")
+    elif not payload:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired access token.",
         )
-    user_id = payload.get("sub")
-    user = db.get(User, user_id)
 
+    # Fetch the user (works for both valid or refreshed tokens)
+    user = db.get(User, payload.get("sub"))
     if not user or not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Inactive or non-existent user",
         )
 
     # 🔒 CSRF check (for unsafe methods only)
