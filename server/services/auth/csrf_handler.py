@@ -20,7 +20,7 @@ def set_csrf_cookie(response: Response):
         key="csrf_token",
         value=csrf_token,
         httponly=False,  # Allow JavaScript access
-        secure=not is_prod,  # Changed: secure in prod, not secure in dev
+        secure=True,  # Changed: secure in prod, not secure in dev
         samesite="lax" if is_prod else "none",
         path="/",
     )
