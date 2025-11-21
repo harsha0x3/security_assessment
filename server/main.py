@@ -63,6 +63,13 @@ app.add_middleware(
 
 
 @app.middleware("http")
+async def remove_server_header(request: Request, call_next):
+    response = await call_next(request)
+    if "server" in response.headers:
+        del response.headers["server"]
+    return response
+
+@app.middleware("http")
 async def add_csp_header(request, call_next):
     response: Response = await call_next(request)
 

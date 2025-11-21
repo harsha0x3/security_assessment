@@ -28,7 +28,8 @@ class Application(Base, BaseMixin):
         String(40), ForeignKey("submissions.id"), unique=False, nullable=True
     )
     status: Mapped[str] = mapped_column(String(40), default="pending")
-
+    titan_spoc: Mapped[str] = mapped_column(String(100), nullable=True)
+    imitra_ticket_id: Mapped[str] = mapped_column(String(40), nullable=True)
     creator = relationship(
         "User", back_populates="created_applications", foreign_keys=[creator_id]
     )

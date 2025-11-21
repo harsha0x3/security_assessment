@@ -89,6 +89,13 @@ def register_user(
 def login_user(
     log_user: LoginRequest, db: Session, response: Response
 ) -> dict[str, Any]:
+
+    #q = select(User).where(or_(User.username == log_user.email_or_username, User.email == log_user.email_or_username))
+    #print(f"[qq] - {q}")
+    #print(f"select(User).where(or_({User.username} == {log_user.email_or_username}, em {User.email} == {log_user.email_or_username},)")
+    #s = db.scalars(q).all()
+    #print(s)
+    #print(f"[Res - log] ")
     user = db.scalar(
         select(User).where(
             or_(

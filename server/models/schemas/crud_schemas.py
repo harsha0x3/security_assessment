@@ -33,7 +33,7 @@ class ApplicationOut(BaseModel):
     description: str | None = None
     platform: str | None = None
     region: str | None = None
-    owner_name: str
+    owner_name: str | None = None
     provider_name: str | None = None
     infra_host: str | None = None
     app_tech: str | None = None
